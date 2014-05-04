@@ -15,7 +15,7 @@ class EBook: public BaseModel{
 public:
     EMPTY_CONSTRUCT_DESTRUCT(EBook);
     
-    SYNTHESIZE_INT(id);
+    SYNTHESIZE_KEY(id);
     SYNTHESIZE_STRING(name);
     SYNTHESIZE_INT(bring_video);
     SYNTHESIZE_INT(total_page_number);

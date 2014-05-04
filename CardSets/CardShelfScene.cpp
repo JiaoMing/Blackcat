@@ -52,7 +52,7 @@ bool CardShelfScene::init()
     
     CCMenu* pMenu = CCMenu::create(NULL);
     pMenu->setPosition( CCPointZero );
-    CCSprite *spriteShelfExitUnpressed=CCSprite::create("fanhui.png");
+    CCSprite *spriteShelfExitUnpressed=CCSprite::createWithSpriteFrameName("fanhui.png");
     CCMenuItemSprite *menuItem_exit = CCMenuItemSprite::create(
                                                                spriteShelfExitUnpressed,
                                                                NULL,

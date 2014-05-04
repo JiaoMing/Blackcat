@@ -70,7 +70,7 @@ bool LoadingScene::init()
     role->setPosition(S_RM->getPositionWithName("loading_role"));
     role->setScale(0.6);
     this->addChild(role);
-    if (m_loadingRole==kLoadingRolePanda) {
+    if (m_loadingRole==kLoadingRoleXiaobo) {
         role->doAction("jiazai:0", NULL);
     }else{
         role->doAction("heimaoguochang:0", NULL);

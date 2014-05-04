@@ -76,7 +76,7 @@ XieziScene::XieziScene(int hid,XieziSceneDelegate* xieziSceneDelegate,int indexI
     this->m_indexInKapianTable=indexInKapianTable;
     
     m_hanzi=new Hanzi();
-    S_DM->getById(m_hanzi, hid);
+    S_DM->getByKey(m_hanzi, hid);
     
     isWriteFinished=false;
     m_gudieDialogLayer=NULL;
@@ -100,7 +100,7 @@ bool XieziScene::init()
     
     CCMenu* pMenu = CCMenu::create();
     
-    CCSprite* pFanhui_1=CCSprite::create("fanhui.png");
+    CCSprite* pFanhui_1=CCSprite::createWithSpriteFrameName("fanhui.png");
     CCMenuItemSprite* pbackItem=CCMenuItemSprite::create(pFanhui_1, pFanhui_1, this, menu_selector(XieziScene::menuCallback));
     pbackItem->setTag(kTagBack);
     pbackItem->setPosition(S_RM->getPositionWithName("global_back"));
@@ -138,10 +138,11 @@ bool XieziScene::init()
     m_heimao->setPosition(S_RM->getPositionWithName("xiezi_heimao"));
     m_heimao->setScale(1.2);
     m_heimao->action("heimao_stand");
+    m_heimao->setBoxEnabled("z-shenti", true);
+    m_heimao->setCallback(this, cartoon_selector(XieziScene::pressHeimaoCallback));
     this->addChild(m_heimao);
     
-    
-    CCSize mainSize=S_RM->getSizeWithName("xiezi_main_size");
+    CCSize mainSize=S_RM->getSizeWithName("xiezi_webview_size");
     CCPoint mainPoint=S_RM->getPositionWithName("xiezi_main");
     
     //修改上次进入汉字（用于首页）
@@ -185,22 +186,44 @@ bool XieziScene::init()
         }
     }
     
-    //演示或写字切换按钮
-    CCMenuItemSprite* pPen=CCMenuItemSprite::create(CCSprite::createWithSpriteFrameName("pen.png"),NULL,this, menu_selector(XieziScene::callWeb));
-    pPen->setTag(kTagWrite);
-    pPen->setPosition(S_RM->getPositionWithName("xiezi_bi"));
-    pMenu->addChild(pPen);
     
-    CCMenuItemSprite* pQingchu=CCMenuItemSprite::create(CCSprite::createWithSpriteFrameName("xiangpi.png"), NULL, this, menu_selector(XieziScene::callWeb));
-    pQingchu->setPosition(S_RM->getPositionWithName("xiezi_xiangpi"));
-    pQingchu->setTag(kTagRewrite);
-    pMenu->addChild(pQingchu);
+    typedef struct _ResouceStruct
+    {
+        string position;
+        string pic;
+        int tag;
+    }XieziActionStruct;
     
-    //广播
-    CCMenuItemSprite* pGuangbo=CCMenuItemSprite::create(CCSprite::createWithSpriteFrameName("guangbo.png"), NULL, this, menu_selector(XieziScene::callWeb));
-    pGuangbo->setPosition(S_RM->getPositionWithName("xiezi_guangbo"));
-    pGuangbo->setTag(kTagGuangbo);
-    pMenu->addChild(pGuangbo);
+    // 在这里配置每个场景要加载的资源
+    static XieziActionStruct action[] = {
+        {
+            "xiezi_xiangpi",
+            "xiangpi.png",
+            kTagRewrite
+        },
+        {
+            "xiezi_guangbo",
+            "guangbo.png",
+            kTagGuangbo
+        },
+        {
+            "xiezi_bi",
+            "bi.png",
+            kTagWrite
+        }
+    };
+    
+    for (int i=0; i<3; i++) {
+        CCSprite* xiangpiBg1=CCSprite::createWithSpriteFrameName("xiaokuang_1.png");
+        CCSprite* xiangpiBg2=CCSprite::createWithSpriteFrameName("xiaokuang_2.png");
+        CCMenuItemSprite* pQingchu=CCMenuItemSprite::create(xiangpiBg1, xiangpiBg2, this, menu_selector(XieziScene::callWeb));
+        pQingchu->setPosition(S_RM->getPositionWithName(action[i].position.c_str()));
+        pQingchu->setTag(action[i].tag);
+        pMenu->addChild(pQingchu);
+        CCSprite* xiangpi=CCSprite::createWithSpriteFrameName(action[i].pic.c_str());
+        xiangpi->setPosition(S_RM->getPositionWithName(action[i].position.c_str()));
+        this->addChild(xiangpi,2);
+    }
     
     //星星
     this->setStar(true);
@@ -272,7 +295,7 @@ void XieziScene::dingShiTiXing(){
             m_heimao->action("heimao_tishi0");
             break;
     }
-    
+    m_webView->callWebWithJs("setMode(Modes.kWrite);");
 }
 
 void XieziScene::setStar(bool isInit){
@@ -394,6 +417,10 @@ void XieziScene::menuCallback(CCObject* pSender)
     }
 }
 
+void XieziScene::pressHeimaoCallback(){
+    m_heimao->action("heimao_xiezi_press");
+}
+
 void XieziScene::wenziCallback(CCObject* pSender)
 {
     int tag=((CCNode*)pSender)->getTag();
@@ -439,20 +466,20 @@ void XieziScene::callWeb(CCObject* pSender)
     }
 }
 
-void XieziScene::webCallBack(std::string cmd){
-    CCLog("cmd:%s",cmd.c_str());
+void XieziScene::webCallBack(CCWebView* webview,std::string cmd){
     vector<string> splitCmd;
-    StringUtils::split(cmd,",",splitCmd);
+    StringUtils::split(cmd,"$",splitCmd);
     int icmd=atoi(splitCmd[0].c_str());
+    
     switch (icmd) {
         case kWebCallBackLoadedFinish:{
             //加载完成
             CCSize webViewSize=S_RM->getSizeWithName("xiezi_webview_size");
             float scaleX=CCEGLView::sharedOpenGLView()->getScaleX();
             float scaleY=CCEGLView::sharedOpenGLView()->getScaleY();
-            CCString* str=CCString::createWithFormat("init('%s','%s',%f,%f)",m_hanzi->getcontour().c_str(),m_hanzi->getlocus().c_str(),webViewSize.width*scaleX,webViewSize.height*scaleY);
-            m_webView->callWebWithJs(str->getCString());
-            this->scheduleOnce(schedule_selector(XieziScene::dingShiTiXing),5.0f);
+            CCString* str=CCString::createWithFormat("init('%s','%s',%f,%f,%d,Modes.kFillAll)",m_hanzi->getcontour().c_str(),m_hanzi->getlocus().c_str(),webViewSize.width*scaleX,webViewSize.height*scaleY,m_hanzi->getwriteCount());
+            webview->callWebWithJs(str->getCString());
+            this->scheduleOnce(schedule_selector(XieziScene::dingShiTiXing),3.0f);
             
             const char* audio=(CCFileUtils::sharedFileUtils()->getWritablePath()+m_hanzi->getcnAudioPath()).c_str();
             S_AE->playEffect(audio);
@@ -473,25 +500,26 @@ void XieziScene::webCallBack(std::string cmd){
             static_userDefaultIncrement(COLLECT_XINGXING_COUNT,0);
             static_userDefaultIncrement(OVER_XINGXING_COUNT,0);
             
-//            m_heimao->doAction("z-guli","z-daijizhayan:0",NULL);
+            string token=S_UD->getStringForKey(UDKEY_USER_TOKEN);
+            if (token.length()>0&&splitCmd.size()>1&&splitCmd[1].length()>0) {
+                CCString* data=CCString::createWithFormat("hwd.writeData=%s&hwd.hanzi.id=%d",splitCmd[1].c_str(),m_hanzi->getid());
+                CCString* url=CCString::createWithFormat("user_uploadHanziWriteData_feedback?token=%s",token.c_str());
+                ApiStruct apiStruct;
+                apiStruct.url=url->getCString();
+                apiStruct.isBlackcat=true;
+                apiStruct.target=NULL;
+                apiStruct.data=data->getCString();
+                apiStruct.requestType=CCHttpRequest::kHttpPost;
+                CCLog("%s",url->getCString());
+                CCLog("%s",data->getCString());
+                Api* api=Api::create(apiStruct);
+                api->send();
+            }
+            
             string effect="mario1.mp3";
-//            CCArray* audioArray=CCArray::create();
             if (writeCount<=2) {
                 effect="mario2.mp3";
-//                audioArray->addObject(CCString::createWithFormat("heimao028.mp3"));
-//                audioArray->addObject(CCString::createWithFormat("heimao029.mp3"));
-//                if (writeCount==2) {
-//                    audioArray->addObject(CCString::createWithFormat("heimao031.mp3"));
-//                }
-            }else if (writeCount==3){
-//                audioArray->addObject(CCString::createWithFormat("heimao033.mp3"));
-            }else if (writeCount>3){
-//                audioArray->addObject(CCString::createWithFormat("heimao029.mp3:1,heimao027_2.mp3"));
-//                audioArray->addObject(CCString::createWithFormat("heimao031.mp3"));
             }
-//            int random=(int)(CCRANDOM_0_1()*audioArray->count());
-//            CCString* audioPath=(CCString*)audioArray->objectAtIndex(random);
-//            S_ALP->play(audioPath->getCString(),NULL);
             
             if (writeCount<=3) {
                 CCString* str=CCString::createWithFormat("heimao_xieziOk%d",writeCount);
@@ -542,7 +570,7 @@ void XieziScene::webCallBack(std::string cmd){
                 this->addChild(m_gudieDialogLayer,INT_MAX);
                 m_gudieDialogLayer->setGuideDialogData(guideDialog);
                 CC_SAFE_DELETE(guideDialog);
-                m_webView->setVisible(false);
+                webview->setVisible(false);
             }
             this->unschedule(schedule_selector(XieziScene::dingShiTiXing));
         }
@@ -553,6 +581,7 @@ void XieziScene::webCallBack(std::string cmd){
             break;
             
         case kWebCallBackWriteStrokeError:
+            
             //写错时调用
             m_heimao->action("heimao_strokeError");
             break;

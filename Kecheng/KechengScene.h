@@ -12,11 +12,12 @@
 #include "Hanzi.h"
 #include "KechengBaseLayer.h"
 #include "KechengExamScene.h"
+#include "GuideDialogLayer.h"
 using namespace std;
 
 class KechengSceneDelegate;
 
-class KechengScene : public KechengBaseLayer,public KechengExamSceneDelegate{
+class KechengScene : public KechengBaseLayer,public KechengExamSceneDelegate,public GuideDialogDelegate{
 public:
     static CCScene* scene(int kcid,KechengSceneDelegate* kechengSceneDelegate);
 public:
@@ -30,6 +31,9 @@ public:
     
     virtual void runRewardAnimate();
     virtual void runRewardAnimateCallBack(CCObject* obj);
+    
+    virtual int topHandlerPriority(){return kCCMenuHandlerPriority-1;}
+    virtual void dialogCallBack(GuideDialogCMD cmd);
 private:
     void menuCallback(CCObject* object);
 public:
@@ -37,6 +41,8 @@ public:
     vector<Hanzi*>* m_hanziVector;
     KechengSceneDelegate* m_kechengSceneDelegate;
     vector<int> m_hids;
+    int m_badgeCallBackCount;//勋章动画回调次数
+    GuideDialogLayer* m_gudieDialogLayer;
 };
 
 

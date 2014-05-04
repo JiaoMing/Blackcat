@@ -17,7 +17,7 @@ class ECard: public BaseModel{
 public:
     EMPTY_CONSTRUCT_DESTRUCT(ECard);
     
-    SYNTHESIZE_INT(id);
+    SYNTHESIZE_KEY(id);
     SYNTHESIZE_STRING(content);
     SYNTHESIZE_INT(pid);
     SYNTHESIZE_INT(x);

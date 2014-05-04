@@ -316,7 +316,6 @@ void AsyncLoadPlist::loadPlistAsyncCallBack(float dt)
         std::string texturePath = pLoadStruct->texturePath;
         // 从texturePath中取文件名 如/../../filename.png 则filename.png
         std::string textureFileName = texturePath.substr(texturePath.rfind('/') + 1);
-        
         CCTextureCache::sharedTextureCache()->addUIImage(pImage, textureFileName.c_str());
         
         if (target && selector)

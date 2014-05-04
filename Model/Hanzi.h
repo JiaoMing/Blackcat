@@ -32,7 +32,6 @@ class Hanzi: public Kapian{
     
     virtual void registTablenameAndProperty(){
         tablename="hanzi";
-        
         INSERT_PROPERTYMAP(Hanzi,id);
         INSERT_PROPERTYMAP(Hanzi,zi);
         INSERT_PROPERTYMAP(Hanzi,pinyin);

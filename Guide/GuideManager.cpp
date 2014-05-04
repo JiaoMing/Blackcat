@@ -45,6 +45,7 @@ Guide* GuideManager::getGuideDialogWithQueueKeyAndStepKey(const char* queueKey,c
             const CCString* text=dialogDict->valueForKey("text");
             const CCString* autoStep=dialogDict->valueForKey("autoStep");
             const CCString* mode=dialogDict->valueForKey("mode");
+            const CCString* type=dialogDict->valueForKey("type");
             const CCString* action=dialogDict->valueForKey("action");
             
             GuideDialog* guideDialog=new GuideDialog();
@@ -55,6 +56,9 @@ Guide* GuideManager::getGuideDialogWithQueueKeyAndStepKey(const char* queueKey,c
                 guideDialog->setIsAutoStep(autoStep->boolValue());
             }
             guideDialog->setMode((GuideDialogMode)mode->intValue());
+            if (type->length()>0) {
+                guideDialog->setDialogType(kDialogWithText);
+            }
             
             vector<string> rs;
             StringUtils::split(action->getCString(), ",", rs);

@@ -15,46 +15,6 @@ using namespace CocosDenshion;
 USING_NS_CC;
 USING_NS_CC_EXT;
 
-//左右切换
-//class PageTransitionForward : public CCTransitionMoveInR
-//{
-//public:
-//    static CCTransitionScene* create(float t, CCScene* s)
-//    {
-//        CCDirector::sharedDirector()->setDepthTest(true);
-//        return CCTransitionMoveInR::create(t, s);
-//    }
-//};
-//
-//class PageTransitionBackward : public CCTransitionMoveInL
-//{
-//public:
-//    static CCTransitionScene* create(float t, CCScene* s)
-//    {
-//        CCDirector::sharedDirector()->setDepthTest(true);
-//        return CCTransitionMoveInL::create(t, s);
-//    }
-//};
-
-class PageTransitionForward : public CCTransitionPageTurn
-{
-public:
-    static CCTransitionScene* create(float t, CCScene* s)
-    {
-        CCDirector::sharedDirector()->setDepthTest(true);
-        return CCTransitionPageTurn::create(t, s, false);
-    }
-};
-
-class PageTransitionBackward : public CCTransitionPageTurn
-{
-public:
-    static CCTransitionScene* create(float t, CCScene* s)
-    {
-        CCDirector::sharedDirector()->setDepthTest(true);
-        return CCTransitionPageTurn::create(t, s, true);
-    }
-};
 
 CCScene* CardListScene::scene()
 {
@@ -109,7 +69,7 @@ bool CardListScene::init()
     
     CCMenu* pMenu = CCMenu::create(NULL);
     pMenu->setPosition( CCPointZero );
-    CCSprite *spriteMenuBackUnpressed=CCSprite::create("fanhui.png");
+    CCSprite *spriteMenuBackUnpressed=CCSprite::createWithSpriteFrameName("fanhui.png");
     CCMenuItemSprite *menuItem_back = CCMenuItemSprite::create(spriteMenuBackUnpressed,
                                                                NULL,
                                                                this,
@@ -118,7 +78,6 @@ bool CardListScene::init()
     pMenu->addChild(menuItem_back, 1, TAG_MENU_BACK);
     pMenu->setPosition(CCPointZero);
     this->addChild(pMenu, 3, TAG_MENU_BACK);
-    
     
     float minX=(S_DR->getWinSize().width-spritePage->getContentSize().width*scale)/2;
     for (int i=0; i<S_CM->getECards()->size(); i++) {
@@ -144,6 +103,7 @@ bool CardListScene::init()
     this->setKeypadEnabled(true);
     
     this->setTouchEnabled(true);
+    
     return true;
 }
 
@@ -163,10 +123,8 @@ bool CardListScene::ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent)
 
 void CardListScene::ccTouchMoved(CCTouch *pTouch, CCEvent *pEvent)
 {
-    CCPoint touchLocation = pTouch->getLocationInView();
-	touchLocation = CCDirector::sharedDirector()->convertToGL( touchLocation );
-	CCPoint lastLocation =pTouch->getPreviousLocationInView();
-	lastLocation = CCDirector::sharedDirector()->convertToGL( lastLocation );
+    CCPoint touchLocation = pTouch->getLocation();
+	CCPoint lastLocation =pTouch->getPreviousLocation();
     if (m_pageSpriteRect.containsPoint(touchLocation)&&m_pageSpriteRect.containsPoint(lastLocation)) {
         float moveDistance = touchLocation.x - lastLocation.x;
         if((moveDistance>0&&CURRENT_ECARDPAGENUMBER<0)||(moveDistance<0&&CURRENT_ECARDPAGENUMBER>CURRENT_PAGECOUNT-1)){//禁止第一页往回看以及最后一页往前看
@@ -190,98 +148,47 @@ void CardListScene::ccTouchMoved(CCTouch *pTouch, CCEvent *pEvent)
 
 void CardListScene::ccTouchEnded(CCTouch *pTouch, CCEvent *pEvent)
 {
-    CCPoint original_touchLocation = pTouch->getLocationInView();
-	CCPoint touchLocation = CCDirector::sharedDirector()->convertToGL( original_touchLocation );
+    CCPoint touchLocation = pTouch->getLocation();
     if (m_pageSpriteRect.containsPoint(touchLocation)) {
         CCSize s=CCDirector::sharedDirector()->getWinSize();
         int lastPageIndex=CURRENT_ECARDPAGENUMBER;
         int newPageIndex=lastPageIndex;
         //最后一个方向的速度
         cc_timeval endTime=TimeUtils::millisecondNow();
-        int timesInterval=(endTime.tv_sec-m_cctimeStart.tv_sec)*1000+(endTime.tv_usec-m_cctimeStart.tv_usec)/1000;
+        int timesInterval=(int)(endTime.tv_sec-m_cctimeStart.tv_sec)*1000+(endTime.tv_usec-m_cctimeStart.tv_usec)/1000;
         float speed=(float)m_fTouchDirectionDistance/timesInterval;
         
         if(fabsf(speed)>SPEED_THRESHOLD){
             //需再加上起点判断
             if(speed>SPEED_THRESHOLD&&lastPageIndex>0){
                 newPageIndex-=1;
-//                CCLog("迅速左右滑: %d", newPageIndex);
-                updatePageReadNumber(newPageIndex);
-                prevPageTurn();
-                return;
             }else if(speed<-SPEED_THRESHOLD&&lastPageIndex<CURRENT_PAGECOUNT-1){
                 newPageIndex+=1;
-//                CCLog("迅速右左滑: %d", newPageIndex);
-                updatePageReadNumber(newPageIndex);
-                nextPageTurn();
-                return;
             }
         }else if(fabsf(m_fTouchDirectionDistance)>s.width/4){
             if(m_fTouchDirectionDistance>s.width/4&&lastPageIndex>0){
                 newPageIndex-=1;
-//                CCLog("左右滑: %d", newPageIndex);
-                updatePageReadNumber(newPageIndex);
-                prevPageTurn();
-                
-                return;
             }else if(m_fTouchDirectionDistance<-s.width/4&&lastPageIndex<CURRENT_PAGECOUNT-1){
                 newPageIndex+=1;
-//                CCLog("右左滑: %d", newPageIndex);
-                updatePageReadNumber(newPageIndex);
-                nextPageTurn();
-                return;
             }
         }
+        
+        S_CM->setCurrentECardPage(newPageIndex);
+        CCScene* pScene=CCTransitionPageTurn::create(0.8f,this->scene(),newPageIndex<lastPageIndex);
+        S_DR->setDepthTest(true);
+        S_DR->replaceScene(pScene);
+        SimpleAudioEngine::sharedEngine()->playEffect("fanye.mp3");
+        return;
+        
     }
     
     //点击空白
     SimpleAudioEngine::sharedEngine()->playEffect("default.mp3");
-    
-//    for (int i=0; i<S_CM->getECards()->size(); i++) {
-//        ECard* ecard = (*S_CM->getECards())[i];
-//        //CCLog("页码: %d, 卡片: %s, 位置: %d,%d",CURRENT_ECARDPAGENUMBER+1,ecard->getcontent().c_str(),ecard->getx(),ecard->gety());
-//        CCRect ecardRectArea =  CCRectMake(ecard->getx(),ecard->gety(),ecard->getsize(),ecard->getsize());
-//        if (ecardRectArea.containsPoint(original_touchLocation)) {
-//            if (ecard->getwid()!=0) {
-//                CCDirector::sharedDirector()->pushScene(XieziScene::scene(ecard->getwid()));
-//            }
-//            SimpleAudioEngine::sharedEngine()->playEffect("E4.mp3");
-//            return;
-//        }else{
-//            if (i==S_CM->getECards()->size()-1) {
-//                
-//            }
-//        }
-//    }
 }
 
 void CardListScene::ccTouchCancelled(CCTouch *pTouch, CCEvent *pEvent)
 {
     
-}
-
-void CardListScene::updatePageReadNumber(int pageNumber) {
-    S_CM->setCurrentECardPage(pageNumber);
-}
-
-void CardListScene::nextPageTurn()
-{
-    CCScene* pScene = PageTransitionForward::create(0.8f, scene());
-    if (pScene)
-    {
-        CCDirector::sharedDirector()->replaceScene(pScene);
-        SimpleAudioEngine::sharedEngine()->playEffect("fanye.mp3");
-    }
-}
-
-void CardListScene::prevPageTurn()
-{
-    CCScene* pScene = PageTransitionBackward::create(0.8f, scene());
-    if (pScene)
-    {
-        CCDirector::sharedDirector()->replaceScene(pScene);
-        SimpleAudioEngine::sharedEngine()->playEffect("fanye.mp3");
-    }
 }
 
 void CardListScene::menuCallback(CCObject* pSender)

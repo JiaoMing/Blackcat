@@ -16,6 +16,7 @@
 #include "KechengListScene.h"
 #include "HomeScene.h"
 #include "WelcomeScene.h"
+#include "InstallScene.h"
 
 #include "SimpleAudioEngine.h"
 using namespace CocosDenshion;
@@ -41,18 +42,18 @@ bool AppDelegate::applicationDidFinishLaunching()
     float ratio=1.0;
     TargetPlatform target = getTargetPlatform();
     
-    
     std::vector<std::string> searchPaths;
+    searchPaths.push_back("audio");
+    searchPaths.push_back("audio/dialog");
+    searchPaths.push_back("global");
     if (target == kTargetIpad)
     {
-//        searchPaths.push_back("ipad");
-//        CCEGLView::sharedOpenGLView()->setDesignResolutionSize(1024, 768, kResolutionShowAll);
-        searchPaths.push_back("android");
-        CCEGLView::sharedOpenGLView()->setDesignResolutionSize(1280, 720, kResolutionShowAll);
+        searchPaths.push_back("ipad");
+        CCEGLView::sharedOpenGLView()->setDesignResolutionSize(1024, 768, kResolutionShowAll);
+//        searchPaths.push_back("android");
+//        CCEGLView::sharedOpenGLView()->setDesignResolutionSize(1280, 720, kResolutionShowAll);
     }else{
         searchPaths.push_back("android");
-        searchPaths.push_back("audio");
-        searchPaths.push_back("audio/dialog");
         CCEGLView::sharedOpenGLView()->setDesignResolutionSize(1280, 720, kResolutionShowAll);
     }
     CCFileUtils::sharedFileUtils()->setSearchPaths(searchPaths);
@@ -60,20 +61,30 @@ bool AppDelegate::applicationDidFinishLaunching()
     
     S_DR->setDepthTest(false);
     
-    //初始化坐标
-    S_RM->init("position",ratio);
-    if (S_UD->getBoolForKey(IS_SHOW_GONGKAIXIN,true)) {
-        S_DR->runWithScene(WelcomeScene::scene());
-    }else{
-        S_RM->addSceneRes("LoadingScene", "loading");
-        S_DR->runWithScene(LoadingScene::scene("HomeScene"));
-    }
-
     S_UD->setBoolForKey("BG_MUSIC",true);
-    S_AE->playBackgroundMusic("blackcat-musicbox.mp3",true);
+    S_AE->playBackgroundMusic("bg_musicbox.mp3",true);
     
     S_UD->setBoolForKey(NEW_OPEN, true);
     S_UD->flush();
+    
+    //初始化坐标
+    S_RM->init("position",ratio);
+//    if (S_UD->getBoolForKey(IS_SHOW_GONGKAIXIN,true)) {
+//        S_DR->runWithScene(WelcomeScene::scene());
+//    }else{
+//        S_RM->addSceneRes("LoadingScene", "loading");
+//        S_DR->runWithScene(LoadingScene::scene("HomeScene"));
+//    }
+//    S_DR->runWithScene(InstallScene::scene());
+    
+    
+    if(S_UD->getBoolForKey(IS_INSTALLED, false)){
+        S_RM->addSceneRes("LoadingScene", "loading");
+        S_DR->runWithScene(LoadingScene::scene("HomeScene"));
+    }else{
+        S_DR->runWithScene(InstallScene::scene());
+    }
+    
     return true;
 }
 

@@ -10,7 +10,7 @@
 #include "resource.h"
 #include "Utils.h"
 
-#define DB_PATH "data.sqlite"
+#define DB_FILE "data.sqlite"
 
 static DBManager * s_pDBManager = NULL;
 
@@ -24,15 +24,16 @@ DBManager * DBManager::sharedDBManager()
 
 DBManager::DBManager(){
     sqlite3_config(SQLITE_CONFIG_SERIALIZED);
-    m_dbFilePath= CCFileUtils::sharedFileUtils()->getWritablePath()+DB_PATH;
+    
+    m_dbFilePath=CCFileUtils::sharedFileUtils()->getWritablePath()+DB_FILE;
     //拷贝数据库
-//    bool isDBDeposited=S_UD->getBoolForKey("isDBDeposited",false);
-//    if (!isDBDeposited) {
-        if(FileUtils::depositResourceFile(DB_PATH)){
+    bool isDBDeposited=S_UD->getBoolForKey("isDBDeposited",false);
+    if (!isDBDeposited) {
+        if(FileUtils::depositFile(CCFileUtils::sharedFileUtils()->fullPathForFilename(DB_FILE),m_dbFilePath)){
             S_UD->setBoolForKey("isDBDeposited",true);
             S_UD->flush();
         }
-//    }
+    }
 }
 
 DBManager::~DBManager(){
@@ -76,10 +77,26 @@ bool DBManager::executeSql(const char* sql){
     return bRet;
 }
 
-BaseModel* DBManager::getById(BaseModel* model,int id){
+bool DBManager::saveOrUpdate(BaseModel* model){
     if (this->openDB()) {
         model->registTablenameAndProperty();//注册模型属性
-        CCString* sql=CCString::createWithFormat("select * from %s where id='%d';",model->tablename.c_str(),id);
+        CCString* sql=CCString::createWithFormat("select * from %s where %s='%d';",model->tablename.c_str(),model->getKeyName().c_str(),model->getKeyValue());
+        int sqliteResultCode=sqlite3_prepare(m_db, sql->getCString(), -1, &m_stmt, 0);
+        if (sqliteResultCode==SQLITE_OK) {
+            if(sqlite3_step(m_stmt)==SQLITE_ROW){
+                //等待实现
+            }
+        }
+    }
+    this->closeDB();
+    return true;
+}
+
+BaseModel* DBManager::getByKey(BaseModel* model,int key){
+    if (this->openDB()) {
+        model->registTablenameAndProperty();//注册模型属性
+        CCString* sql=CCString::createWithFormat("select * from %s where %s='%d';",model->tablename.c_str(),model->getKeyName().c_str(),key);
+        string keyname=model->getKeyName();
         int sqliteResultCode=sqlite3_prepare(m_db, sql->getCString(), -1, &m_stmt, 0);
         if (sqliteResultCode==SQLITE_OK) {
             int column_count=sqlite3_column_count(m_stmt);
@@ -95,7 +112,6 @@ BaseModel* DBManager::getById(BaseModel* model,int id){
                             (model->*handler)(column_text);
                         }
                     }
-                    
                 }
             }
         }
@@ -175,7 +191,3 @@ string DBManager::buildGroupByClause(vector<const char*> groupByClause){
     }
     return groupby;
 }
-
-
-
-

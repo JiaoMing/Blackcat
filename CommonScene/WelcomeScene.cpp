@@ -172,11 +172,11 @@ void WelcomeScene::menuCallBack(CCObject* obj){
 
 
 #if(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-#include "jni/Java_com_kidsedu_KEHelper.h"
+#include "Java_com_kidsedu_KEHelper.h"
 #endif
 void WelcomeScene::keyBackClicked(){
 #if(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-	showTipDialog("退出", "确定退出程序吗?");
+	showTipDialogJNI("退出", "确定退出程序吗?");
 #endif
 }
 

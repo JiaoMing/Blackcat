@@ -16,7 +16,7 @@ static vector<int> aniListToVector(string sAniList){
     string sOrder = sAniList;
     int begin = 0, end = 0;
     while (end != -1) {
-        end = sOrder.find("-", begin);
+        end = (int)sOrder.find("-", begin);
         string tmp = "";
         if (end == -1) {
             tmp = sOrder.substr(begin, sOrder.length() - begin);

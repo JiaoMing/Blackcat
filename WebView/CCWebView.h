@@ -18,7 +18,7 @@ class CCWebViewImpl;
 class CCWebViewDelegate{
 public:
     virtual ~CCWebViewDelegate() {};
-    virtual void webCallBack(std::string cmd)=0;
+    virtual void webCallBack(CCWebView* webview,std::string cmd)=0;
 };
 
 class CCWebView : public CCLayer{

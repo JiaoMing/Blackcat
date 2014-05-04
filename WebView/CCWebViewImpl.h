@@ -30,7 +30,7 @@ protected:
     CCWebViewDelegate* m_pWebViewDelegate;
 };
 
-// This method must be implemented at each subclass of CCEditBoxImpl.
+// This method must be implemented at each subclass of CCWebViewImpl.
 extern CCWebViewImpl* __createSystemWebView(CCWebView* pWebView);
 
 #endif

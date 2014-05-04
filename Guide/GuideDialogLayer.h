@@ -10,49 +10,34 @@
 #define Blackcat_GuideDelegate_h
 
 #include "GuideManager.h"
-#include "GuideCoverLayer.h"
-
-typedef enum{
-    kDialogCMDOk=0,
-    kDialogCMDYes,
-    kDialogCMDNo,
-    kDialogCMDBlank
-}GuideDialogCMD;
-
-typedef enum{
-    kDialogBtuOnly=0,
-    kDialogWithText
-}GuideDialogType;
+#include "DialogLayer.h"
 
 class GuideDialogDelegate;
 
-class GuideDialogLayer: public GuideCoverLayer{
+class GuideDialogLayer: public DialogLayer{
 public:
     GuideDialogLayer(){}
-    static GuideDialogLayer* create(GuideDialogType guideDialogType=kDialogBtuOnly);
+    static GuideDialogLayer* create(GuideDialogType guideDialogType=kDialogBtuOnly,GuideDialogWithTextButtonPosiztion dialogButtonPosiztion=kDialogWithTextButtonPosiztionRight);
     virtual bool init();
     
-    // register touch
-    virtual void onEnter();
-    virtual void onExit();
-    
     virtual void setDelegate(GuideDialogDelegate* guideDialogDelegate);
+//    virtual GuideDialogDelegate* getDelegate(){return m_guideDialogDelegate;}
     
-    void enableTouch();
-    
-    bool ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent);
+    //用于处理空白处点击事件
+//    virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent);
     
     void setGuideDialogData(GuideDialog* guideDialog);
-    void menuCallBack(CCObject* object);
+    virtual void menuCallback(CCObject* object);
     void sayFinished();
     
 private:
     GuideDialogDelegate* m_guideDialogDelegate;
     GuideDialog* m_guideDialog;
     GuideDialogType m_guideDialogType;
+    GuideDialogWithTextButtonPosiztion m_dialogButtonPosiztion;
 };
 
-class GuideDialogDelegate :public GuideCoverDelegate{
+class GuideDialogDelegate :public CoverLayerDelegate{
 public:
     /**
      * 对话框按钮事件回调

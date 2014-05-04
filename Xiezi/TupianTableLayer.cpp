@@ -133,7 +133,7 @@ void TupianTableLayer::initDataFromDB(){
 //                }
                 
             }
-            RELEASE_MODEL_VECTOR(TupianCategory, m_tupianCatVector);
+            DELETE_MODEL_VECTOR(TupianCategory, m_tupianCatVector);
             
         }
             break;

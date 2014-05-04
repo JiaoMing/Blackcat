@@ -10,6 +10,7 @@
 #include "resource.h"
 #include "ResManager.h"
 #include <stdint.h>
+#include "Button9.h"
 
 enum {
     kDialogText=0,
@@ -21,10 +22,11 @@ enum {
     kDialogMenuNo
 };
 
-GuideDialogLayer* GuideDialogLayer::create(GuideDialogType guideDialogType)
+GuideDialogLayer* GuideDialogLayer::create(GuideDialogType guideDialogType,GuideDialogWithTextButtonPosiztion dialogButtonPosiztion)
 {
     GuideDialogLayer *layer = new GuideDialogLayer();
     layer->m_guideDialogType=guideDialogType;
+    layer->m_dialogButtonPosiztion=dialogButtonPosiztion;
     if (layer && layer->init())
     {
         layer->autorelease();
@@ -39,69 +41,75 @@ GuideDialogLayer* GuideDialogLayer::create(GuideDialogType guideDialogType)
 
 
 void GuideDialogLayer::setDelegate(GuideDialogDelegate* guideDialogDelegate){
-    GuideCoverLayer::setDelegate(guideDialogDelegate);
+    DialogLayer::setDelegate(guideDialogDelegate);
     this->m_guideDialogDelegate=guideDialogDelegate;
 }
 
-
 bool GuideDialogLayer::init(){
-    if (!GuideCoverLayer::init()) {
+    if (!DialogLayer::init()) {
         return false;
     }
     switch (m_guideDialogType) {
         case kDialogBtuOnly:{
+            this->hideBg();
+            
             CCSprite* ok=CCSprite::createWithSpriteFrameName("dialog_ok.png");
-            CCMenuItemSprite* okItem=CCMenuItemSprite::create(ok, ok, this, menu_selector(GuideDialogLayer::menuCallBack));
+            CCMenuItemSprite* okItem=CCMenuItemSprite::create(ok, ok, this, menu_selector(GuideDialogLayer::menuCallback));
             okItem->setPosition(S_RM->getPositionWithName("dialog_ok"));
             okItem->setTag(kDialogMenuOk);
+            this->addMenuItem(okItem);
             
             CCSprite* yes=CCSprite::createWithSpriteFrameName("dialog_yes.png");
-            CCMenuItemSprite* yesItem=CCMenuItemSprite::create(yes,yes, this, menu_selector(GuideDialogLayer::menuCallBack));
+            CCMenuItemSprite* yesItem=CCMenuItemSprite::create(yes,yes, this, menu_selector(GuideDialogLayer::menuCallback));
             yesItem->setPosition(S_RM->getPositionWithName("dialog_yes"));
             yesItem->setTag(kDialogMenuYes);
+            this->addMenuItem(yesItem);
             
             CCSprite* no=CCSprite::createWithSpriteFrameName("dialog_no.png");
-            CCMenuItemSprite* noItem=CCMenuItemSprite::create(no,no, this, menu_selector(GuideDialogLayer::menuCallBack));
+            CCMenuItemSprite* noItem=CCMenuItemSprite::create(no,no, this, menu_selector(GuideDialogLayer::menuCallback));
             noItem->setPosition(S_RM->getPositionWithName("dialog_no"));
             noItem->setTag(kDialogMenuNo);
+            this->addMenuItem(noItem);
             
-            CCMenu* menu=CCMenu::create(okItem,yesItem,noItem,NULL);
-            menu->setPosition(CCPointZero);
-            menu->setTag(kDialogMenu);
-            this->addChild(menu);
         }
             break;
         case kDialogWithText:{
-            CCSprite* dialogBG=CCSprite::createWithSpriteFrameName("dialog.png");
-            dialogBG->setPosition(S_RM->getJpgBgPosition());
-            dialogBG->setPosition(S_RM->getPositionWithName("dialog"));
-            this->addChild(dialogBG);
             
-            CCLabelTTF* text=CCLabelTTF::create("", "KaiTi.ttf", 25,CCSizeMake(465, 155),kCCTextAlignmentLeft,kCCVerticalTextAlignmentCenter);
+            CCLabelTTF* text=CCLabelTTF::create("", "KaiTi.ttf", 25,CCSizeMake(560, 245),kCCTextAlignmentLeft,kCCVerticalTextAlignmentTop);
             text->setColor(ccc3(58,37,4));
             text->setTag(kDialogText);
             text->setPosition(S_RM->getPositionWithName("dialog_text"));
             this->addChild(text);
-
-            CCSprite* ok=CCSprite::createWithSpriteFrameName("dialog_ok2.png");
-            CCMenuItemSprite* okItem=CCMenuItemSprite::create(ok, ok, this, menu_selector(GuideDialogLayer::menuCallBack));
-            okItem->setPosition(S_RM->getPositionWithName("dialog_ok2"));
+            
+            Button9* ok=Button9::create("OK");
+            CCMenuItemSprite* okItem=CCMenuItemSprite::create(ok, ok, this, menu_selector(GuideDialogLayer::menuCallback));
             okItem->setTag(kDialogMenuOk);
+            this->addMenuItem(okItem);
             
-            CCSprite* yes=CCSprite::createWithSpriteFrameName("dialog_yes2.png");
-            CCMenuItemSprite* yesItem=CCMenuItemSprite::create(yes,yes, this, menu_selector(GuideDialogLayer::menuCallBack));
-            yesItem->setPosition(S_RM->getPositionWithName("dialog_yes2"));
+            Button9* yes=Button9::create("YES");
+            CCMenuItemSprite* yesItem=CCMenuItemSprite::create(yes,yes, this, menu_selector(GuideDialogLayer::menuCallback));
             yesItem->setTag(kDialogMenuYes);
+            this->addMenuItem(yesItem);
             
-            CCSprite* no=CCSprite::createWithSpriteFrameName("dialog_no2.png");
-            CCMenuItemSprite* noItem=CCMenuItemSprite::create(no,no, this, menu_selector(GuideDialogLayer::menuCallBack));
-            noItem->setPosition(S_RM->getPositionWithName("dialog_no2"));
+            Button9* no=Button9::create("NO");
+            CCMenuItemSprite* noItem=CCMenuItemSprite::create(no,no, this, menu_selector(GuideDialogLayer::menuCallback));
             noItem->setTag(kDialogMenuNo);
+            this->addMenuItem(noItem);
             
-            CCMenu* menu=CCMenu::create(okItem,yesItem,noItem,NULL);
-            menu->setPosition(CCPointZero);
-            menu->setTag(kDialogMenu);
-            this->addChild(menu);
+            switch (m_dialogButtonPosiztion) {
+                case kDialogWithTextButtonPosiztionLeft:
+                    okItem->setPosition(S_RM->getPositionWithName("dialog_text_ok_left"));
+                    yesItem->setPosition(S_RM->getPositionWithName("dialog_text_yes_left"));
+                    noItem->setPosition(S_RM->getPositionWithName("dialog_text_no_left"));
+                    break;
+                case kDialogWithTextButtonPosiztionRight:
+                    okItem->setPosition(S_RM->getPositionWithName("dialog_text_ok"));
+                    yesItem->setPosition(S_RM->getPositionWithName("dialog_text_yes"));
+                    noItem->setPosition(S_RM->getPositionWithName("dialog_text_no"));
+                    break;
+                    
+            }
+            
         }
         default:
             break;
@@ -110,34 +118,17 @@ bool GuideDialogLayer::init(){
     return true;
 }
 
-void GuideDialogLayer::onEnter()
-{
-    GuideCoverLayer::onEnter();
-    
-    scheduleOnce(schedule_selector(GuideDialogLayer::enableTouch), 0.1);
-}
-void GuideDialogLayer::onExit()
-{
-    GuideCoverLayer::onExit();
-    S_DR->getTouchDispatcher()->removeDelegate(this);
-}
-
-void GuideDialogLayer::enableTouch(){
-    CCMenu* menu=(CCMenu*) this->getChildByTag(kDialogMenu);
-    menu->setHandlerPriority(m_guideDialogDelegate->topHandlerPriority()-1);
-}
-
-bool GuideDialogLayer::ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent){
-//    m_guideDialogDelegate->dialogCallBack(kDialogCMDBlank);
-    return true;
-}
+//bool GuideDialogLayer::ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent){
+////    m_guideDialogDelegate->dialogCallBack(kDialogCMDBlank);
+//    return true;
+//}
 
 void GuideDialogLayer::setGuideDialogData(GuideDialog* guideDialog){
     m_guideDialog=guideDialog;
     CCLabelTTF* text=(CCLabelTTF*) this->getChildByTag(kDialogText);
     if(text!=NULL)text->setString(guideDialog->getText().c_str());
     
-    CCMenu* menu=(CCMenu*) this->getChildByTag(kDialogMenu);
+    CCMenu* menu=this->getMainMenu();
     CCMenuItem* ok=(CCMenuItem*)menu->getChildByTag(kDialogMenuOk);
     CCMenuItem* yes=(CCMenuItem*)menu->getChildByTag(kDialogMenuYes);
     CCMenuItem* no=(CCMenuItem*)menu->getChildByTag(kDialogMenuNo);
@@ -164,11 +155,31 @@ void GuideDialogLayer::setGuideDialogData(GuideDialog* guideDialog){
     
 }
 
-void GuideDialogLayer::menuCallBack(CCObject* object){
+void GuideDialogLayer::menuCallback(CCObject* object){
     unschedule(schedule_selector(GuideDialogLayer::sayFinished));
     S_AE->stopAllEffects();
     CCNode* node=(CCNode*)object;
-    m_guideDialogDelegate->dialogCallBack((GuideDialogCMD)node->getTag());
+    
+    GuideDialogCMD cmd;
+    if (isCloseItem((CCMenuItem*)object)) {
+        switch (m_guideDialog->getMode()) {
+            case kGuideDialogOk:{
+                cmd=kDialogCMDOk;
+            }
+                break;
+            case kGuideDialogYesOrNo:{
+                cmd=kDialogCMDNo;
+            }
+                break;
+            default:
+                break;
+        }
+    }else{
+        cmd=(GuideDialogCMD)node->getTag();
+    }
+    m_guideDialogDelegate->dialogCallBack(cmd);
+    DialogLayer::menuCallback(object);
+    this->removeFromParent();
 }
 
 void GuideDialogLayer::sayFinished(){

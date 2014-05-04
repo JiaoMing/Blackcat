@@ -27,8 +27,10 @@ public:
     //执行sql语句
     bool executeSql(const char* sql);
     
+    bool saveOrUpdate(BaseModel* model);
+    
     //根据ID获取模型
-    BaseModel* getById(BaseModel* model,int id);
+    BaseModel* getByKey(BaseModel* model,int id);
     
     //统计
     map<string, string>*  statistic(map<string, string>*  data,string table,map<string, string> expClause){

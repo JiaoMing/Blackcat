@@ -15,7 +15,7 @@ class Kecheng: public BaseModel{
 public:
     EMPTY_CONSTRUCT_DESTRUCT(Kecheng);
     
-    SYNTHESIZE_INT(id);
+    SYNTHESIZE_KEY(id);
     SYNTHESIZE_INT(star);
     
     virtual void registTablenameAndProperty(){

@@ -82,127 +82,6 @@ public:
     }
 };
 
-class FileUtils{
-public:
-    static bool depositResourceFile(string filename){
-        string srcFilePath=CCFileUtils::sharedFileUtils()->fullPathForFilename(filename.c_str());
-        string descFilePath= (CCFileUtils::sharedFileUtils()->getWritablePath()+filename).c_str();
-        // 检查不存在并复制
-        if (access(descFilePath.c_str(), 0)) {
-            unsigned long pSize=0;
-            unsigned char* srcSqliteData=CCFileUtils::sharedFileUtils()->getFileData(srcFilePath.c_str(), "rb", &pSize);
-            
-            // 拷贝文件
-            FILE *fp = fopen(descFilePath.c_str(), "wb");
-            fwrite(srcSqliteData, 1, pSize, fp);
-            fclose(fp);
-            delete [] srcSqliteData;
-            srcSqliteData=NULL;
-        }
-        
-        return true;
-    }
-    
-    static bool removeWriteableFile(string filename){
-        const char* filePath= CCFileUtils::sharedFileUtils()->getWritablePath().append(filename).c_str();
-        if (!access(filePath, 0)) {
-            return remove(filePath);
-        }else{
-            
-            return false;
-        }
-    }
-    
-    
-    static bool unzipOpenFile(string filePath,bool isAbsolutePath=false)
-    {
-        CCLog("解压:%s",filePath.c_str());
-        bool success=true;
-        string descPath=CCFileUtils::sharedFileUtils()->getWritablePath();
-        
-        if(!isAbsolutePath){
-            filePath= CCFileUtils::sharedFileUtils()->getWritablePath()+filePath;
-        }
-        unzFile _unzFile = unzOpen(filePath.c_str());
-        
-        if( _unzFile )
-        {
-            
-            unz_global_info  globalInfo = {0};
-            if( unzGetGlobalInfo(_unzFile, &globalInfo )==UNZ_OK )
-            {
-                CCLog("upzip success %s",filePath.c_str());
-            }
-            
-            int ret = unzGoToFirstFile( _unzFile );
-            unsigned char buffer[4096] = {0};
-            if( ret!=UNZ_OK )
-            {
-                CCLog("upzip error %s",filePath.c_str());
-            }
-            do{
-                
-                ret = unzOpenCurrentFile( _unzFile );
-                
-                int read;
-                unz_file_info	fileInfo ={0};
-                ret = unzGetCurrentFileInfo(_unzFile, &fileInfo, NULL, 0, NULL, 0, NULL, 0);
-                if( ret!=UNZ_OK )
-                {
-                    CCLog("Error occurs while getting file info");
-                    success = false;
-                    unzCloseCurrentFile( _unzFile );
-                    break;
-                }
-                char* filename = (char*) malloc( fileInfo.size_filename +1 );
-                unzGetCurrentFileInfo(_unzFile, &fileInfo, filename, fileInfo.size_filename + 1, NULL, 0, NULL, 0);
-                filename[fileInfo.size_filename] = '\0';
-                
-                
-                string fullname=descPath+filename;
-                free(filename);
-                
-                if (fullname.find_last_of("/")==fullname.length()-1) {
-                    //是目录
-                    mkdir(fullname.c_str(), S_IRWXU);
-                }else{
-                    FILE* fp = fopen( fullname.c_str(), "wb");
-                    while( fp)
-                    {
-                        read=unzReadCurrentFile(_unzFile, buffer, 4096);
-                        if( read > 0 )
-                        {
-                            fwrite(buffer, read, 1, fp );
-                        }
-                        else if( read<0 )
-                        {
-                            CCLog("Failed to reading zip file");
-                            break;
-                        }
-                        else
-                            break;
-                    }
-                    if( fp )
-                    {
-                        fclose( fp );
-                    }
-                }
-                
-                unzCloseCurrentFile( _unzFile );
-                ret = unzGoToNextFile( _unzFile );
-                
-            }while (ret==UNZ_OK && UNZ_OK!=UNZ_END_OF_LIST_OF_FILE );
-            
-            
-            free(_unzFile);
-            
-        }else{
-            success=false;
-        }
-        return success;
-    }
-};
-
 class StringUtils{
 public:
     static void split(const string& src, const string& separator, vector<string>& dest)
@@ -291,8 +170,172 @@ public:
         }
         return strDecode;
     }
-
+    
     
 };
+
+
+class FileUtils{
+public:
+    static bool depositFile(string srcFullPath,string descFullPath){
+        
+        // 检查不存在并复制
+        if (access(descFullPath.c_str(), 0)) {
+            unsigned long pSize=0;
+            unsigned char* srcSqliteData=CCFileUtils::sharedFileUtils()->getFileData(srcFullPath.c_str(), "rb", &pSize);
+            
+            // 拷贝文件
+            FILE *fp = fopen(descFullPath.c_str(), "wb");
+            fwrite(srcSqliteData, 1, pSize, fp);
+            fclose(fp);
+            delete [] srcSqliteData;
+            srcSqliteData=NULL;
+        }
+        
+//        char buffer[8];
+//        int len;
+//        FILE* srcFile;
+//        FILE* descFile = fopen(descFullPath.c_str(), "wb");
+//        if((srcFile = fopen(srcFullPath.c_str(), "rb"))!=NULL)
+//        {
+//            while ((len = fread(buffer,1,8,srcFile)) > 0) {
+//                fwrite(buffer,1,len,descFile);
+//            }
+//            fclose(srcFile);
+//        }else{
+//            return false;
+//        }
+//        fclose(descFile);
+        return true;
+    }
+    
+    static bool removeFile(string fileFullPath){
+        const char* filePath= fileFullPath.c_str();
+        if (!access(filePath, 0)) {
+            return remove(filePath);
+        }else{
+            
+            return false;
+        }
+    }
+    
+    static bool moveFile(string srcFullPath,string descFullPath){
+        depositFile(srcFullPath,descFullPath);
+        removeFile(srcFullPath);
+        return true;
+    }
+    
+    static string getPrefix(string filename){
+        int index=filename.find_last_of(".");
+        return filename.substr(0,index);
+    }
+    
+    static string getExtfix(string filename){
+        int index=filename.find_last_of(".");
+        return filename.substr(index,filename.length());
+    }
+    
+    static bool depositResourceFile(string filename){
+        string srcFilePath=CCFileUtils::sharedFileUtils()->fullPathForFilename(filename.c_str());
+        string descFilePath=CCFileUtils::sharedFileUtils()->getWritablePath()+filename;
+        // 检查不存在并复制
+        if (access(descFilePath.c_str(), 0)) {
+            unsigned long pSize=0;
+            unsigned char* srcSqliteData=CCFileUtils::sharedFileUtils()->getFileData(srcFilePath.c_str(), "rb", &pSize);
+            
+            // 拷贝文件
+            FILE *fp = fopen(descFilePath.c_str(), "wb");
+            fwrite(srcSqliteData, 1, pSize, fp);
+            fclose(fp);
+            delete [] srcSqliteData;
+            srcSqliteData=NULL;
+        }
+        return true;
+    }
+    
+    static bool unzipOpenFile(string fileFullPath,string descPath)
+    {
+        CCLog("解压:%s",fileFullPath.c_str());
+        bool success=true;
+        unzFile _unzFile = unzOpen(fileFullPath.c_str());
+        
+        if( _unzFile )
+        {
+            
+            unz_global_info  globalInfo = {0};
+            if( unzGetGlobalInfo(_unzFile, &globalInfo )==UNZ_OK )
+            {
+                CCLog("upzip success %s",fileFullPath.c_str());
+            }
+            
+            int ret = unzGoToFirstFile( _unzFile );
+            unsigned char buffer[4096] = {0};
+            if( ret!=UNZ_OK )
+            {
+                CCLog("upzip error %s",fileFullPath.c_str());
+            }
+            do{
+                
+                ret = unzOpenCurrentFile( _unzFile );
+                
+                int read;
+                unz_file_info	fileInfo ={0};
+                ret = unzGetCurrentFileInfo(_unzFile, &fileInfo, NULL, 0, NULL, 0, NULL, 0);
+                if( ret!=UNZ_OK )
+                {
+                    CCLog("Error occurs while getting file info");
+                    success = false;
+                    unzCloseCurrentFile( _unzFile );
+                    break;
+                }
+                char* filename = (char*) malloc( fileInfo.size_filename +1 );
+                unzGetCurrentFileInfo(_unzFile, &fileInfo, filename, fileInfo.size_filename + 1, NULL, 0, NULL, 0);
+                filename[fileInfo.size_filename] = '\0';
+                
+                
+                string fullname=descPath+filename;
+                free(filename);
+                
+                if (fullname.find_last_of("/")==fullname.length()-1) {
+                    //是目录
+                    mkdir(fullname.c_str(), S_IRWXU);
+                }else{
+                    FILE* fp = fopen( fullname.c_str(), "wb");
+                    while( fp)
+                    {
+                        read=unzReadCurrentFile(_unzFile, buffer, 4096);
+                        if( read > 0 )
+                        {
+                            fwrite(buffer, read, 1, fp );
+                        }
+                        else if( read<0 )
+                        {
+                            CCLog("Failed to reading zip file");
+                            break;
+                        }
+                        else
+                            break;
+                    }
+                    if( fp )
+                    {
+                        fclose( fp );
+                    }
+                }
+                
+                unzCloseCurrentFile( _unzFile );
+                ret = unzGoToNextFile( _unzFile );
+                
+            }while (ret==UNZ_OK && UNZ_OK!=UNZ_END_OF_LIST_OF_FILE );
+            
+            
+            free(_unzFile);
+            
+        }else{
+            success=false;
+        }
+        return success;
+    }
+};
+
 
 #endif

@@ -10,6 +10,7 @@
 #include "resource.h"
 #include "CopyRightLayer.h"
 #include "ClickableSprite.h"
+#include "HomeScene.h"
 
 #define OVER_XINGXING_TAG 10
 #define SUBSCRIPT_NUM_TAG 10
@@ -36,7 +37,9 @@ bool RankingBarLayer::init(){
         m_isLogoShow=false;
         this->addChild(m_logoMenu);
         
-        this->schedule(schedule_selector(RankingBarLayer::fresh),10.0f);
+        if (!DEBUG_OPEN) {
+            this->schedule(schedule_selector(RankingBarLayer::fresh),10.0f);
+        }
         
         return true;
     }
@@ -140,5 +143,7 @@ void RankingBarLayer::logoCallBack(CCObject* object){
 
 void RankingBarLayer::rankCallBack(CCObject* object){
     CCNode* node=(CCNode*)object;
-    this->getParent()->addChild(RankingLayer::create((Rank)node->getTag()),INT_MAX);
+    RankingLayer* ranking=RankingLayer::create((Rank)node->getTag());
+    ranking->setDelegate((HomeScene*)this->getParent());
+    this->getParent()->addChild(ranking,INT_MAX);
 }

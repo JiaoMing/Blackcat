@@ -15,7 +15,7 @@ class GiftAndFood: public BaseModel{
 public:
     EMPTY_CONSTRUCT_DESTRUCT(GiftAndFood);
     
-    SYNTHESIZE_INT(id);
+    SYNTHESIZE_KEY(id);
     SYNTHESIZE_STRING(name);
     SYNTHESIZE_INT(nums);
     SYNTHESIZE_INT(gift_value);

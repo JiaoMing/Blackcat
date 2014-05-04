@@ -16,7 +16,7 @@
 #include "Hanzi.h"
 USING_NS_CC;
 
-class HomeScene : public GuideBaseLayer
+class HomeScene :public GuideBaseLayer
 {
 public:
     HomeScene();
@@ -29,6 +29,7 @@ public:
     // register touch
     virtual void onEnter();
     virtual void onExit();
+    
     
     void willEnterForeground();
         
@@ -46,6 +47,8 @@ public:
     void xiaoqicheDriveIn();
     
     virtual int topHandlerPriority(){return kCCMenuHandlerPriority-1;}
+    
+    void download(CCObject* obj);
 
 private:
     Cartoon* m_Boy;

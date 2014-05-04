@@ -9,8 +9,6 @@
 #include "HomeScene.h"
 #include "resource.h"
 #include "LoadingScene.h"
-#include "ResManager.h"
-#include "DBManager.h"
 #include "Hanzi.h"
 #include "XieziScene.h"
 #include "PropsManager.h"
@@ -18,11 +16,15 @@
 #include "CardShelfScene.h"
 #include "Utils.h"
 #include "RankingLayer.h"
-
 #include "ActionFlowManager.h"
-
 #include "SimpleAudioEngine.h"
+#include "ParentLayer.h"
+#include "NewPetScene.h"
 using namespace CocosDenshion;
+
+#if(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+#include "Java_com_kidsedu_KEHelper.h"
+#endif
 
 enum {
     kBoy=0,
@@ -48,7 +50,6 @@ enum {
 const std::string g_propsName[kPropsXiaoqiche-kPropsHezi+1] = {
     "hezi","laoshu","wawa","fangkuang","yuankuang","sanjiaokuang","huapen","shuzuobian","choutishang","choutixia","xiaoqiche"
 };
-
 
 HomeScene::HomeScene()
 {
@@ -132,6 +133,10 @@ bool HomeScene::init(){
     m_heimao->setScale(1);
     m_heimao->setCallback(this, cartoon_selector(HomeScene::menuCallBack));
     
+    //工具条
+    ParentLayer* parentLayer=ParentLayer::create();
+    parentLayer->setDelegate(this);
+    this->addChild(parentLayer,INT_MAX-1);
     
     //打开android按键响应
     this->setKeypadEnabled(true);
@@ -142,11 +147,10 @@ bool HomeScene::init(){
 void HomeScene::onEnter()
 {
     GuideBaseLayer::onEnter();
-    CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
-    
+    S_DR->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
     
     int hid=S_UD->getIntegerForKey(LAST_HANZI_ID,34);
-    S_DM->getById(m_hanzi, hid);
+    S_DM->getByKey(m_hanzi, hid);
     CCLabelTTF* label=(CCLabelTTF*)m_hanziMenuItem->getLabel();
     label->setString(m_hanzi->getzi().c_str());
     
@@ -160,7 +164,8 @@ void HomeScene::onEnter()
     long lastTimeStamp=(long)S_UD->getFloatForKey(LAST_OPEN_TIMESTAMP);
     string first= S_UD->getStringForKey("HomeScene_First");
     if (first!="heimao_10") {
-        this->startGuide("HomeScene_First","heimao_1",true);
+//        调试关闭引导
+        if(!DEBUG_OPEN)this->startGuide("HomeScene_First","heimao_1",true);
     }else{
         Props* props=(Props*)this->getChildByTag(kPropsWawa);
         props->setIsImmediate(true);
@@ -207,13 +212,16 @@ void HomeScene::onEnter()
     S_UD->setBoolForKey(NEW_OPEN, false);
     S_UD->setFloatForKey(LAST_OPEN_TIMESTAMP, nowTimeStamp);
     S_UD->flush();
-    
+ 
+    BaiduStat::onStatEvent(kBaiduOneEventStart,"SceneRetain","HomeScene");
 }
 
 void HomeScene::onExit()
 {
-    CCLayer::onExit();
-    CCDirector::sharedDirector()->getTouchDispatcher()->removeDelegate(this);
+    BaiduStat::onStatEvent(kBaiduOneEventEnd,"SceneRetain","HomeScene");
+    
+    GuideBaseLayer::onExit();
+    S_DR->getTouchDispatcher()->removeDelegate(this);
     
     m_rankingBarLayer->removeFromParentAndCleanup(false);
 }
@@ -222,12 +230,9 @@ void HomeScene::willEnterForeground(){
     CCLog("willEnterForeground");
 }
 
-#if(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-#include "jni/Java_com_kidsedu_KEHelper.h"
-#endif
 void HomeScene::keyBackClicked(){
 #if(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-	showTipDialog("退出", "确定退出程序吗?");
+	showTipDialogJNI("退出", "确定退出程序吗?");
 #endif
 }
 
@@ -253,12 +258,28 @@ void HomeScene::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
     }else if(m_Girl->boundingBox().containsPoint(touchPoint))
     {
         int random=(int) (CCRANDOM_0_1()*4)+1;
+        random=5;
         CCString* step=CCString::createWithFormat("feidi_%d",random);
         this->startGuide("HomeScene_Normal",step->getCString());
         
     }else if(m_Panda->boundingBox().containsPoint(touchPoint))
     {
-        this->startGuide("HomeScene_Normal","xiaobo_1");
+        
+        int mode=CCRANDOM_0_1()*2;
+        S_UD->setIntegerForKey(PET_ENTER_MODE, mode);
+        S_UD->flush();
+        
+        switch (mode) {
+            case kPetEnterNormal:{
+                this->startGuide("HomeScene_Normal","xiaobo_1");
+            }
+                break;
+            case kPetEnterGame:{
+                this->startGuide("HomeScene_Normal","xiaobo_3");
+            }
+                break;
+        }
+        
 //        int count=static_getDayRenwuCount();
 //        switch (count) {
 //            case 0:
@@ -326,9 +347,9 @@ void HomeScene::dialogCallBack(GuideDialogCMD cmd){
                 S_DR->replaceScene(LoadingScene::scene("RenwuScene",false));
                 return;
             }
-        }else if (this->getStepKey()=="xiaobo_1"){
+        }else if (this->getStepKey()=="xiaobo_1"||this->getStepKey()=="xiaobo_3"){
             if (cmd==kDialogCMDYes) {
-                S_DR->replaceScene(LoadingScene::scene("NewPetScene",false,kLoadingRolePanda));
+                S_DR->replaceScene(LoadingScene::scene("NewPetScene",false,kLoadingRoleXiaobo));
                 return;
             }
         }
@@ -360,7 +381,12 @@ void HomeScene::menuCallBack(CCObject* pSender){
             }else if (heimaoCount>=2){
                 int count=static_getDayRenwuCount();
                 if (count>=2&&m_hanzi->getwriteCount()>=3) {
-                    this->startGuide("HomeScene_Normal","heimao_9");
+                    int random=(int) (CCRANDOM_0_1()*2);
+                    if (random==0) {
+                        this->startGuide("HomeScene_Normal","heimao_9");
+                    }else{
+                        this->startGuide("HomeScene_Normal","heimao_10");
+                    }
                 }else if (count<2) {
                     this->startGuide("HomeScene_Normal","heimao_1");
                 }else if(m_hanzi->getwriteCount()<3){

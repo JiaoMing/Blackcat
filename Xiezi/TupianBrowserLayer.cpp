@@ -114,13 +114,13 @@ void TupianBrowserLayer::setMainTupianSprite(){
         int count=S_DM->getCount("ciyu","isCollected>0");
         if (count>=COLLECT_LIMIT) {
             GuideDialog* guideDialog=new GuideDialog();
+            guideDialog->autorelease();
             guideDialog->setText("非常抱歉，本软件为测试版，收藏的卡片数量已经超出了测试版的限制。请关注我们的微信公众号，等待正式版本的发布，谢谢！");
             guideDialog->setMode(kGuideDialogOk);
             m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
             m_gudieDialogLayer->setDelegate(this);
             this->addChild(m_gudieDialogLayer);
             m_gudieDialogLayer->setGuideDialogData(guideDialog);
-            CC_SAFE_DELETE(guideDialog);
         }else{
             m_tupian->setIntisCollected(1);
             CCString *sql=CCString::createWithFormat("update ciyu set isCollected=1 where id=%d;",m_tupian->getid());
@@ -315,7 +315,6 @@ void TupianBrowserLayer::tupianTouchCallBack(Tupian* tupian){
 }
 
 void TupianBrowserLayer::dialogCallBack(GuideDialogCMD cmd){
-    m_gudieDialogLayer->removeFromParentAndCleanup(true);
     switch (cmd) {
         case kDialogCMDYes:{
             if (m_tupianBrowserDelegate->isPushToXieziScene()) {

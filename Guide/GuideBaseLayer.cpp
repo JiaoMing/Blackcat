@@ -65,7 +65,13 @@ void GuideBaseLayer::step(){
     if (m_lastReorderTag!=INT_MIN) {
         CCNode* node= this->getChildByTag(m_lastReorderTag);
         this->reorderChild(node, m_lastReorderOrder);
+        
+        if (m_cartoonPosition.x!=0&&m_cartoonPosition.y!=0) {
+            m_cartoon->setPosition(m_cartoonPosition);
+        }
     }
+    m_cartoonPosition=CCPointZero;
+    
     
     m_guide=S_GM->getGuideDialogWithQueueKeyAndStepKey(m_queueKey.c_str(), m_stepKey.c_str());
     if (m_guide!=NULL) {
@@ -90,6 +96,7 @@ void GuideBaseLayer::step(){
         m_cartoon=(Cartoon*)this->getChildByTag(guideDialog->getTag());
         if (m_cartoon!=NULL&&guideDialog->getActionArray()->count()>0) {
             m_cartoon->doAction(guideDialog->getActionArray());
+            
         }
         
         //这里还没有关闭掉上个event对应的tag的点击事件
@@ -100,14 +107,19 @@ void GuideBaseLayer::step(){
             m_lastReorderTag=tag;
             m_lastReorderOrder=m_cartoon->getZOrder();
             this->reorderChild(m_cartoon, INT_MAX);
+            m_cartoonPosition=m_cartoon->getPosition();
+            if(guideDialog->getDialogType()==kDialogWithText){
+                m_cartoon->setPosition(S_RM->getPositionWithName("dialog_cartoon"));
+            }
             
             GuideDialogLayer* guideDialogLayer=(GuideDialogLayer*)this->getChildByTag(GUIDE_DIALOG_LAYER);
             if (guideDialogLayer==NULL) {
-                guideDialogLayer=GuideDialogLayer::create();
+                guideDialogLayer=GuideDialogLayer::create(guideDialog->getDialogType());
                 guideDialogLayer->setDelegate(this);
                 this->addChild(guideDialogLayer,TOP_ORDER_INDEX,GUIDE_DIALOG_LAYER);
             }
-            guideDialogLayer->setVisible(false);
+            if(!DEBUG_OPEN)
+                guideDialogLayer->setVisible(false);
             guideDialogLayer->setGuideDialogData(guideDialog);
         }
         
@@ -123,6 +135,7 @@ void GuideBaseLayer::step(){
             m_lastReorderTag=tag;
             m_lastReorderOrder=props->getZOrder();
             this->reorderChild(props, INT_MAX);
+            
         }
         //移除对话框层
         CCNode* node=this->getChildByTag(GUIDE_DIALOG_LAYER);
@@ -130,7 +143,7 @@ void GuideBaseLayer::step(){
             node->removeFromParentAndCleanup(true);
         }
         
-        GuideCoverLayer* coverLayer=GuideCoverLayer::create();
+        CoverLayer* coverLayer=CoverLayer::create();
         coverLayer->setDelegate(this);
         this->addChild(coverLayer,TOP_ORDER_INDEX,GUIDE_EVENT_COVER_LAYER);
         

@@ -44,10 +44,10 @@ static void getProcess(const char* model,const char* column,int* count,int* sumC
     CC_SAFE_DELETE(data);
 }
 
-CCScene* KapianScene::scene(KapianDataMode mode)
+CCScene* KapianScene::scene(KapianDataMode mode,KapianShowMode showMode)
 {
     CCScene *scene = CCScene::create();
-    KapianScene *layer = new KapianScene(mode);
+    KapianScene *layer = new KapianScene(mode,showMode);
     
     if (layer && layer->init())
     {
@@ -62,9 +62,10 @@ CCScene* KapianScene::scene(KapianDataMode mode)
     return scene;
 }
 
-KapianScene::KapianScene(KapianDataMode mode){
+KapianScene::KapianScene(KapianDataMode mode,KapianShowMode showMode){
     S_RM->addSceneRes("KapianScene", "new_kapian");
     this->m_mode=mode;
+    this->m_showMode=showMode;
     switch (mode) {
         case kHanzi:{
             int event=S_UD->getIntegerForKey("EVENT_OPEN_KAPIAN_HANZI",kGuideEventDefault);
@@ -107,7 +108,7 @@ bool KapianScene::init()
     CCMenu* menu=CCMenu::create();
     menu->setPosition(CCPointZero);
     //返回按钮
-    CCSprite *back= CCSprite::create("fanhui.png");
+    CCSprite *back= CCSprite::createWithSpriteFrameName("fanhui.png");
     CCMenuItem* backItem=CCMenuItemSprite::create(back, back, this, menu_selector(KapianScene::goBack));
     backItem->setPosition(S_RM->getPositionWithName("global_back"));
     menu->addChild(backItem);
@@ -145,7 +146,7 @@ bool KapianScene::init()
     menu->addChild(m_allToggle);
     
     //设置模型
-    this->setMenuToggle(m_showMode=kCollect);
+    this->setMenuToggle(m_showMode);
     
     //进度
     CCSprite* pProcessBg=CCSprite::createWithSpriteFrameName("jindukuang.png");
@@ -168,10 +169,8 @@ bool KapianScene::init()
     label->setColor(ccc3(116, 61, 37));
     this->addChild(label);
     
-    
-    
     //初始化table层
-    KapianTableLayer* kapianTableLayer=KapianTableLayer::create(m_mode);
+    KapianTableLayer* kapianTableLayer=KapianTableLayer::create(m_mode,m_showMode);
     kapianTableLayer->setTag(kTableLayer);
     this->addChild(kapianTableLayer);
     
@@ -216,11 +215,11 @@ void KapianScene::processAnimate(KapianDataMode mode){
 
 void KapianScene::setMenuToggle(KapianShowMode mode){
     switch (mode) {
-        case kCollect:
+        case kKapianShowModeCollect:
             m_cltToggle->setSelectedIndex(1);
             m_allToggle->setSelectedIndex(0);
             break;
-        case kAll:
+        case kKapianShowModeAll:
             m_cltToggle->setSelectedIndex(0);
             m_allToggle->setSelectedIndex(1);
             break;
@@ -231,13 +230,13 @@ void KapianScene::setMenuToggle(KapianShowMode mode){
 
 
 void KapianScene::changeShowModeCall(CCNode* pSender){
-    KapianShowMode showMode=kAll;
+    KapianShowMode showMode=kKapianShowModeAll;
     CCMenuItemToggle* sender=(CCMenuItemToggle*)pSender;
     if (sender==m_allToggle) {
-        showMode=kAll;
+        showMode=kKapianShowModeAll;
     }else if(sender==m_cltToggle){
         
-        showMode=kCollect;
+        showMode=kKapianShowModeCollect;
     }
     this->setMenuToggle(showMode);//放在前面解决CCMenuItemToggle切换自身
     if (m_showMode==showMode) {
@@ -249,17 +248,17 @@ void KapianScene::changeShowModeCall(CCNode* pSender){
 }
 
 void KapianScene::goBack(CCNode* pSender){
-    CCDirector::sharedDirector()->replaceScene(HomeScene::scene());
+    S_DR->replaceScene(HomeScene::scene());
 }
 
-CCScene* KapianHanziScene::scene()
+CCScene* KapianHanziScene::scene(KapianShowMode showMode)
 {
-    return KapianScene::scene(kHanzi);
+    return KapianScene::scene(kHanzi,showMode);
 }
 
-CCScene* KapianTupianScene::scene()
+CCScene* KapianTupianScene::scene(KapianShowMode showMode)
 {
-    return KapianScene::scene(kTupian);
+    return KapianScene::scene(kTupian,showMode);
 }
 
 void KapianScene::keyBackClicked(){

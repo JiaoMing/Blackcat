@@ -7,15 +7,12 @@
 //
 
 #include "KechengScene.h"
-#include "DBManager.h"
 #include "resource.h"
 #include "XieziScene.h"
-#include "ResManager.h"
 #include "KechengListScene.h"
 #include "Kecheng.h"
-#include "SimpleAudioEngine.h"
 #include "Utils.h"
-
+#include "HomeScene.h"
 
 #define TAG_EXAM -2
 #define TAG_BACK -3
@@ -37,7 +34,7 @@ KechengScene::KechengScene(int kcid,KechengSceneDelegate* kechengSceneDelegate){
 }
 
 KechengScene::~KechengScene(){
-    RELEASE_MODEL_VECTOR(Hanzi, m_hanziVector);
+    DELETE_MODEL_VECTOR(Hanzi, m_hanziVector);
 }
 
 
@@ -78,7 +75,7 @@ bool KechengScene::init()
     this->addChild(pTableBg);
     
     //返回按钮
-    CCSprite* pFanhui_1=CCSprite::create("fanhui.png");
+    CCSprite* pFanhui_1=CCSprite::createWithSpriteFrameName("fanhui.png");
     CCMenuItemSprite* pbackItem=CCMenuItemSprite::create(pFanhui_1, pFanhui_1, this, menu_selector(KechengScene::menuCallback));;
     pbackItem->setPosition(S_RM->getPositionWithName("global_back"));
     pbackItem->setTag(TAG_BACK);
@@ -213,8 +210,10 @@ void KechengScene::examAllRightCallback(){
 //            badge->setPosition(ccp(96, 96));
 //            badge->setScale(0.9);
 //            kuangzi->addChild(badge);
-            kuangzi->removeChildByTag(kTagBadge);
-            
+            CCNode* node=this->getChildByTag(kTagBadge);
+            if (node!=NULL) {
+                kuangzi->removeChild(node, false);
+            }
             CCString* sql=CCString::createWithFormat("update hanzi set isReward=1,isCollected=1 where id=%d",(*it)->getid());
             S_DM->executeSql(sql->getCString());
         }
@@ -226,7 +225,7 @@ void KechengScene::examAllRightCallback(){
     //更新课程数据库
 //    Kecheng* kecheng=new Kecheng();
 //    kecheng->setIntid(0);
-//    S_DM->getById(kecheng, m_kcid);
+//    S_DM->getByKey(kecheng, m_kcid);
 //    CCString* sql;
 //    if (kecheng->getid()>0) {
 //        sql=CCString::createWithFormat("update kecheng set star=%d where id=%d;",star,m_kcid);
@@ -240,6 +239,7 @@ void KechengScene::examAllRightCallback(){
 
 void KechengScene::runRewardAnimate(){
     float delay=0.0f;
+    m_badgeCallBackCount=0;
     for (int i=0; i<6; i++) {
         CCSprite* jiangli=CCSprite::create();
         
@@ -276,6 +276,7 @@ void KechengScene::runRewardAnimate(){
         CCFiniteTimeAction* sequence=CCSequence::create(actionArray);
         jiangpai->runAction(sequence);
     }
+    
 }
 
 void KechengScene::runRewardAnimateCallBack(CCObject* obj){
@@ -287,6 +288,17 @@ void KechengScene::runRewardAnimateCallBack(CCObject* obj){
     biankuang->setVisible(true);
     biankuang->runAction(CCSpawn::create(CCFadeOut::create(0.7),CCScaleTo::create(0.7, 1),NULL));
     S_AE->playEffect("renwu_gaizhang.mp3");
+    m_badgeCallBackCount++;
+    if (m_badgeCallBackCount==6) {
+        GuideDialog* guideDialog=new GuideDialog();
+        guideDialog->autorelease();
+        guideDialog->setText("继续挑战?");
+        guideDialog->setMode(kGuideDialogYesOrNo);
+        m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
+        m_gudieDialogLayer->setDelegate(this);
+        this->addChild(m_gudieDialogLayer);
+        m_gudieDialogLayer->setGuideDialogData(guideDialog);
+    }
 }
 
 void KechengScene::keyBackClicked(){
@@ -295,4 +307,20 @@ void KechengScene::keyBackClicked(){
 
 void KechengScene::keyMenuClicked(){
     
+}
+
+void KechengScene::dialogCallBack(GuideDialogCMD cmd){
+    m_gudieDialogLayer->removeFromParentAndCleanup(true);
+    switch (cmd) {
+        case kDialogCMDYes:{
+            S_DR->popScene();
+        }
+            break;
+        case kDialogCMDNo:{
+            CCDirector::sharedDirector()->replaceScene(HomeScene::scene());
+        }
+            break;
+        default:
+            break;
+    }
 }

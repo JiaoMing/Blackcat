@@ -37,6 +37,7 @@ private:
     Guide* m_guide;
     Cartoon* m_cartoon;
     int m_lastReorderTag;
+    CCPoint m_cartoonPosition;
     int m_lastReorderOrder;
 };
 

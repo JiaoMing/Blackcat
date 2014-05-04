@@ -38,11 +38,15 @@ static void getProcess(const char* model,const char* column,int* count,int* sumC
 }
 
 
-KapianTableLayer::KapianTableLayer(KapianDataMode dataMode){
+KapianTableLayer::KapianTableLayer(KapianDataMode dataMode,KapianShowMode showMode){
     this->m_dataMode=dataMode;
     m_allVector=new vector<Kapian*>();
     m_cltVector=new vector<Kapian*>();
-    m_kapianVector=m_cltVector;
+    if (showMode==kKapianShowModeCollect) {
+        m_kapianVector=m_cltVector;
+    }else{
+        m_kapianVector=m_allVector;
+    }
     m_Offset=ccp(0, 1);//用于切换检测，offsetY应未非正数
 }
 
@@ -54,14 +58,14 @@ KapianTableLayer::~KapianTableLayer(){
 //            CCTextureCache::sharedTextureCache()->removeTextureForKey(path.c_str());
 //        }
     }
-    RELEASE_MODEL_VECTOR(Kapian, m_allVector);
+    DELETE_MODEL_VECTOR(Kapian, m_allVector);
     CC_SAFE_DELETE(m_cltVector);//由于只添加了引用，只需要删除自身
     
     m_kapianVector=NULL;
 }
 
-KapianTableLayer* KapianTableLayer::create(KapianDataMode dataMode){
-    KapianTableLayer* layer=new KapianTableLayer(dataMode);
+KapianTableLayer* KapianTableLayer::create(KapianDataMode dataMode,KapianShowMode showMode){
+    KapianTableLayer* layer=new KapianTableLayer(dataMode,showMode);
     if (layer&&layer->init()) {
         layer->autorelease();
     }else{
@@ -347,10 +351,10 @@ void KapianTableLayer::xieziCallback(int index,float progress){
 
 void KapianTableLayer::changeShowMode(KapianShowMode showMode){
     switch (showMode) {
-        case kCollect:
+        case kKapianShowModeCollect:
             m_kapianVector=m_cltVector;
             break;
-        case kAll:
+        case kKapianShowModeAll:
             m_kapianVector=m_allVector;
             break;
         default:

@@ -85,6 +85,10 @@ public:
     // 用来执行CCAction中的与fade相关的动作
     CCAction * runFadeAction(CCAction * action);
     
+    
+    //声音+动作，同时执行，从配置文件加载数据
+    float action(const char* key,bool random=true,int actionIndex=0,int audioIndex=0);
+    
     //super methods
     void onEnter();
     void onExit();

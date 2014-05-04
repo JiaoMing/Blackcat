@@ -35,9 +35,9 @@ CardManager::CardManager()
 CardManager::~CardManager()
 {
     CC_SAFE_DELETE(m_ecardset);
-    RELEASE_MODEL_VECTOR(ECardSet,m_ecardsets);//释放m_ecardsets
-    RELEASE_MODEL_VECTOR(ECardPage,m_ecardpages);//释放m_ecardpages
-    RELEASE_MODEL_VECTOR(ECard,m_ecards);//释放m_ecards
+    DELETE_MODEL_VECTOR(ECardSet,m_ecardsets);//释放m_ecardsets
+    DELETE_MODEL_VECTOR(ECardPage,m_ecardpages);//释放m_ecardpages
+    DELETE_MODEL_VECTOR(ECard,m_ecards);//释放m_ecards
 }
 
 vector<ECardSet*>* CardManager::getECardSets()
@@ -67,7 +67,7 @@ vector<ECardPage*>* CardManager::getECardPages(){
 }
 
 void CardManager::setECardPages(int sid){
-    RELEASE_MODEL_VECTOR(ECardPage,m_ecardpages);//释放m_ecardPages
+    DELETE_MODEL_VECTOR(ECardPage,m_ecardpages);//释放m_ecardPages
     m_ecardpages=new vector<ECardPage*>();//声明模型
     
     CLAUSE_INIT;//初始化Clause
@@ -90,7 +90,7 @@ vector<ECard*>* CardManager::getECards(){
 }
 
 void CardManager::setECards(int pid){
-    RELEASE_MODEL_VECTOR(ECard,m_ecards);//释放m_ecards
+    DELETE_MODEL_VECTOR(ECard,m_ecards);//释放m_ecards
     m_ecards=new vector<ECard*>();//声明模型
     
     CLAUSE_INIT;//初始化Clause

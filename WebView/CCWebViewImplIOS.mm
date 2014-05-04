@@ -11,6 +11,7 @@
 
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
 #define WEBVIEW_DELEGATE (((CCWebViewImpl*)m_ccWebview)->getDelegate())
+#define CCWEBVIEW (((CCWebViewImpl*)m_ccWebview)->getCCWebView())
 
 @implementation WebViewImplIOS
 @synthesize uiWebview = m_uiWebview;
@@ -24,10 +25,12 @@
 }
 
 -(id) initWithFrame: (CGRect) frameRect webView:(void*) webView htmlFilename: (const char*) htmlFilename{
-    
     self = [super init];
     
     if (self) {
+        //清空缓存
+//        [[NSURLCache sharedURLCache] removeAllCachedResponses];
+        
         self.uiWebview = [[[UIWebView alloc] initWithFrame:frameRect] autorelease];
         m_uiWebview.delegate=self;
 
@@ -46,15 +49,13 @@
     }
     
     return self;
-    
 }
-
 
 - (void)webViewDidFinishLoad:(UIWebView *)webView {
     [UIView animateWithDuration:0.3 animations:^{
      webView.alpha = 1.0;
     }];
-    if(WEBVIEW_DELEGATE)WEBVIEW_DELEGATE->webCallBack("0");//加载完成
+    if(WEBVIEW_DELEGATE)WEBVIEW_DELEGATE->webCallBack(CCWEBVIEW,"0");//加载完成
 }
 
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType {
@@ -62,7 +63,7 @@
     NSArray *components = [requestString componentsSeparatedByString:@":"];
     if ([components count] > 1 && [(NSString *)[components objectAtIndex:0] isEqualToString:@"callnative"]) {
         NSString* cmdStr=(NSString *)[components objectAtIndex:1];
-        if(WEBVIEW_DELEGATE)WEBVIEW_DELEGATE->webCallBack([cmdStr UTF8String]);
+        if(WEBVIEW_DELEGATE)WEBVIEW_DELEGATE->webCallBack(CCWEBVIEW,[cmdStr UTF8String]);
             return NO;
     }
     return YES;

@@ -29,6 +29,10 @@ public:
     virtual void callWebWithJs(const char* js);
     virtual void setVisible(bool var);
     virtual void scheduleCallback(float t);
+    
+    CC_SYNTHESIZE(std::string, cmd, Cmd)
+private:
+    int m_key;
 };
 
 

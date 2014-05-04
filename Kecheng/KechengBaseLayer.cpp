@@ -17,10 +17,10 @@ bool KechengBaseLayer::init()
         return false;
     }
     
-//    CCSprite* lantian = CCSprite::createWithSpriteFrameName("renwu_lantian.png");
-//    lantian->setPosition(S_RM->getJpgBgPosition());
-//    this->addChild(lantian);
-//
+    CCSprite* lantian = CCSprite::createWithSpriteFrameName("renwu_lantian.png");
+    lantian->setPosition(S_RM->getJpgBgPosition());
+    this->addChild(lantian);
+
     CCSprite* pSprite = CCSprite::createWithSpriteFrameName("renwu_bg.png");
     pSprite->setPosition(S_RM->getJpgBgPosition());
     this->addChild(pSprite);

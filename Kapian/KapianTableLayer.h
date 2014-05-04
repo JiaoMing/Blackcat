@@ -26,11 +26,11 @@ USING_NS_CC_EXT;
 class KapianTableLayer : public CCLayer, public CCTableViewDataSource,public KEGridViewDelegate,public XieziSceneDelegate,public TupianBrowserDelegate
 {
 public:
-    static KapianTableLayer* create(KapianDataMode m_mode);
+    static KapianTableLayer* create(KapianDataMode m_mode,KapianShowMode showMode);
     void changeShowMode(KapianShowMode mode);
     
 public:
-    KapianTableLayer(KapianDataMode m_mode);
+    KapianTableLayer(KapianDataMode m_mode,KapianShowMode showMode);
     ~KapianTableLayer();
     virtual bool init();
     

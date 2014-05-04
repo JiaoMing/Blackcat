@@ -14,7 +14,7 @@
 USING_NS_CC;
 
 typedef enum{
-    kLoadingRolePanda=0,
+    kLoadingRoleXiaobo=0,
     kLoadingRoleBlackcat
 }LoadingRole;
 

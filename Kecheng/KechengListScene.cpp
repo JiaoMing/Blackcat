@@ -34,7 +34,7 @@ bool KechengListScene::init()
     this->addChild(pTableBg);
     
     CCMenu* pMenu = CCMenu::create();
-    CCSprite* pFanhui_1=CCSprite::create("fanhui.png");
+    CCSprite* pFanhui_1=CCSprite::createWithSpriteFrameName("fanhui.png");
     CCMenuItemSprite* pbackItem=CCMenuItemSprite::create(pFanhui_1, pFanhui_1, this, menu_selector(KechengListScene::menuCallback));;
     pbackItem->setPosition(S_RM->getPositionWithName("global_back"));
     pMenu->addChild(pbackItem);
@@ -89,7 +89,6 @@ void KechengListScene::menuCallback(CCObject* pSender)
     if (isBgMusicRunning) {
         S_AE->resumeBackgroundMusic();
     }
-    
     CCDirector::sharedDirector()->replaceScene(HomeScene::scene());
 }
 

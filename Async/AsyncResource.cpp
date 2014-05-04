@@ -53,7 +53,7 @@ static ResourceStruct res[] = {
 	},
 	{
 		"NewPetScene",
-		"pet.plist,xiaobo_1.plist,xiaobo_2.plist,xiaobo_3.plist",
+		"pet.plist,pet2.plist,xiaobo_1.plist,xiaobo_2.plist,xiaobo_3.plist",
 		"",
         scene_selector(NewPetScene::scene)
 	},

@@ -27,13 +27,6 @@ public:
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent *pEvent);
     virtual void ccTouchCancelled(CCTouch *pTouch, CCEvent *pEvent);
     
-    void pageTurnBackwardNow();
-    void pageTurnForwardNow();
-    
-    void updatePageReadNumber(int pageNumber);
-    void nextPageTurn();
-    void prevPageTurn();
-    
 private:
     CCRect m_pageSpriteRect;
     

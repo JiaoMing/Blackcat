@@ -17,7 +17,7 @@ class ECardSet: public BaseModel{
 public:
     EMPTY_CONSTRUCT_DESTRUCT(ECardSet);
     
-    SYNTHESIZE_INT(id);
+    SYNTHESIZE_KEY(id);
     SYNTHESIZE_STRING(name);
     SYNTHESIZE_INT(show);
     

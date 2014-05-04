@@ -19,15 +19,15 @@ typedef enum{
 }KapianDataMode;
 
 typedef enum{
-    kCollect=0,
-    kAll
+    kKapianShowModeCollect=0,
+    kKapianShowModeAll
 }KapianShowMode;
 
 class Kapian: public BaseModel{
 public:
     EMPTY_CONSTRUCT_DESTRUCT(Kapian);
     
-    SYNTHESIZE_INT(id);
+    SYNTHESIZE_KEY(id);
     SYNTHESIZE_INT(isCollected);
     
     CC_SYNTHESIZE(float, progress, Progress);

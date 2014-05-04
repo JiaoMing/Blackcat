@@ -18,14 +18,14 @@ USING_NS_CC;
 class KapianScene : public CCLayer
 {
 public:
-    KapianScene(KapianDataMode mode);
+    KapianScene(KapianDataMode mode,KapianShowMode showMode);
     ~KapianScene();
     virtual bool init();
     
     virtual void keyBackClicked();
     virtual void keyMenuClicked();
     
-    static CCScene* scene(KapianDataMode mode=kHanzi);
+    static CCScene* scene(KapianDataMode mode=kHanzi,KapianShowMode showMode=kKapianShowModeCollect);
     
     void scheduleAnimate(float t);
     void processAnimate(KapianDataMode mode);
@@ -50,13 +50,13 @@ private:
 class KapianHanziScene : public KapianScene
 {
 public:
-    static CCScene* scene();
+    static CCScene* scene(KapianShowMode showMode=kKapianShowModeCollect);
 };
 
 class KapianTupianScene : public KapianScene
 {
 public:
-    static CCScene* scene();
+    static CCScene* scene(KapianShowMode showMode=kKapianShowModeCollect);
 };
 
 

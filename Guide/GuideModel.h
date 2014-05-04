@@ -31,6 +31,23 @@ typedef enum{
     kGuideDialogHidden
 }GuideDialogMode;
 
+typedef enum{
+    kDialogBtuOnly=0,
+    kDialogWithText
+}GuideDialogType;
+
+typedef enum{
+    kDialogWithTextButtonPosiztionLeft=0,
+    kDialogWithTextButtonPosiztionRight
+}GuideDialogWithTextButtonPosiztion;
+
+typedef enum{
+    kDialogCMDOk=0,
+    kDialogCMDYes,
+    kDialogCMDNo,
+    kDialogCMDBlank
+}GuideDialogCMD;
+
 class Guide : public CCObject{
 public:
     virtual ~Guide(){};
@@ -44,11 +61,14 @@ public:
 class GuideDialog :public Guide{
 public:
     GuideDialog(){
-        m_type=kGuideDialog;m_tag=0;
+        m_type=kGuideDialog;
+        m_tag=0;
         m_duration=0;
         m_text="";
         m_isAutoStep=false;
         m_mode=kGuideDialogOk;
+        m_dialogType=kDialogBtuOnly;
+        m_dialogButtonPosiztion=kDialogWithTextButtonPosiztionRight;
         m_actionArray=CCArray::create();
         m_actionArray->retain();
         m_audioArray=CCArray::create();
@@ -65,7 +85,14 @@ public:
     
     CC_SYNTHESIZE(bool, m_isAutoStep, IsAutoStep);
     
+    //对话框模式，OK，yesorno，隐藏模式
     CC_SYNTHESIZE(GuideDialogMode, m_mode, Mode);
+    
+    //对话框类型，显示对话框和按钮、仅按钮
+    CC_SYNTHESIZE(GuideDialogType, m_dialogType, DialogType);
+    
+    //文本对话框，按钮位置
+    CC_SYNTHESIZE(GuideDialogWithTextButtonPosiztion, m_dialogButtonPosiztion, DialogButtonPosiztion);
     
     CC_SYNTHESIZE(CCArray*, m_actionArray, ActionArray);
     

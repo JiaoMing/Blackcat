@@ -15,7 +15,7 @@ class TupianCategory: public BaseModel{
 public:
     EMPTY_CONSTRUCT_DESTRUCT(TupianCategory);
     
-    SYNTHESIZE_INT(cid);
+    SYNTHESIZE_KEY(cid);
     SYNTHESIZE_INT(catid);
     
     virtual void registTablenameAndProperty(){

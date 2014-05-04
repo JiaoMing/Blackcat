@@ -73,7 +73,7 @@ bool KechengExamScene::init()
     this->addChild(menu);
     
     //返回按钮
-    CCSprite* pFanhui_1=CCSprite::create("fanhui.png");
+    CCSprite* pFanhui_1=CCSprite::createWithSpriteFrameName("fanhui.png");
     CCMenuItemSprite* pbackItem=CCMenuItemSprite::create(pFanhui_1, pFanhui_1, this, menu_selector(KechengExamScene::menuCallback));;
     pbackItem->setPosition(S_RM->getPositionWithName("global_back"));
     pbackItem->setTag(TAG_BACK);
@@ -215,7 +215,7 @@ void KechengExamScene::exam(){
     //播放汉字音频
     m_hanzi=m_hanziVector->at(m_examCount);
     m_isPlayDing=true;
-    this->readHanzi(true);
+    this->readHanzi(0);
     m_isPlayDing=false;
     
     float longestDelayTime=1.0f;//最长延迟时间
@@ -251,7 +251,10 @@ void KechengExamScene::startAndCountdown(){
         CCFiniteTimeAction* sequence=CCSequence::create(actionArray);
         yanshuHanzi->runAction(sequence);
     }
-    scheduleOnce(schedule_selector(KechengExamScene::readHanzi), 5.0f);
+    /**
+     *从5秒、5秒，修改为4秒、6秒
+     */
+    scheduleOnce(schedule_selector(KechengExamScene::readHanzi), 4.0f);
 }
 
 void KechengExamScene::readHanzi(float t){
@@ -394,13 +397,13 @@ void KechengExamScene::reward(float t){
 
 void KechengExamScene::showDialog(){
     GuideDialog* guideDialog=new GuideDialog();
+    guideDialog->autorelease();
     guideDialog->setText("再来一遍？");
     guideDialog->setMode(kGuideDialogYesOrNo);
     m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
     m_gudieDialogLayer->setDelegate(this);
     this->addChild(m_gudieDialogLayer);
     m_gudieDialogLayer->setGuideDialogData(guideDialog);
-    CC_SAFE_DELETE(guideDialog);
 }
 
 void KechengExamScene::dialogCallBack(GuideDialogCMD cmd){

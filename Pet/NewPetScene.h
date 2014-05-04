@@ -9,17 +9,21 @@
 #ifndef Blackcat_NewPetScene_h
 #define Blackcat_NewPetScene_h
 
+//#include "MicRecordPlayer.h"
 #include "resource.h"
 #include "cocos2d.h"
 #include "Cartoon.h"
-//#include "MicRecordPlayer.h"
-#include "GuideDialogLayer.h"
+#include "GuideBaseLayer.h"
 #include "RankingBarLayer.h"
+#include "GameLayer.h"
 USING_NS_CC;
 
+typedef enum{
+    kPetEnterNormal=0,
+    kPetEnterGame
+}PetEnterMode;
 
-//class NewPetScene : public CCLayer,public MicRecordPlayerDelegate,public GuideDialogDelegate
-class NewPetScene : public CCLayer,public GuideDialogDelegate
+class NewPetScene : public GuideBaseLayer,public GameLayerDelegate
 {
 public:
     static CCScene* scene();
@@ -36,7 +40,9 @@ private:
     //菜单回调
     void menuCallBack(CCObject* pSender);
     //点击熊猫回调
-    void pressPandaCallBack(CCObject *object, const char *pszBoxName);
+    void pressXiaoboCallBack(CCObject *object, const char *pszBoxName);
+    
+    virtual void gameEnd(GamePlayer winner);
     
     //对话框
     virtual int topHandlerPriority(){return kCCMenuHandlerPriority-1;}
@@ -45,12 +51,15 @@ private:
 //    virtual void micCallBack(MicCallBackCMD cmd);
 //    virtual MicDelegateMode getMicDelegateMode(){return m_micDelegateMode;}
 private:
-    Cartoon* m_panda;//小熊猫
+    Cartoon* m_xiaobo;//小熊猫
     CCMenuItemToggle* m_modeToggle;
 //    MicRecordPlayer* m_micRecordPlayer;
 //    MicDelegateMode m_micDelegateMode;
     GuideDialogLayer* m_gudieDialogLayer;
     RankingBarLayer* m_rankingBarLayer;
+    
+    GameLayer* m_gameLayer;
+    CCLayer* m_playLayer;
 };
 
 #endif

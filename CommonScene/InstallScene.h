@@ -22,10 +22,11 @@ public:
     virtual void onEnter();
     CREATE_FUNC(InstallScene);
     
-    void gotoHomeScene(float t);
-    void fresh(float t);
+    void gotoHomeScene();
+    void installCallback();
 private:
     CCLabelTTF* m_labelProcess;
+    int m_installCount;
 };
 
 #endif

@@ -51,8 +51,9 @@ public:
     void setStar(bool isInit=false);
     void xingxingAnimate();
     
+    void pressHeimaoCallback();
     
-    virtual void webCallBack(std::string cmd);
+    virtual void webCallBack(CCWebView* webview,std::string cmd);
     
     virtual void tupianLoadCallBack(int count);
     virtual void tupianTouchCallBack(Tupian* tupian);
@@ -68,6 +69,7 @@ private:
     TupianTableLayer* m_tupianTabel;
     Hanzi* m_hanzi;
     CCWebView* m_webView;
+    CCWebView* m_webViewTest;
     
     Heimao* m_heimao;
     
