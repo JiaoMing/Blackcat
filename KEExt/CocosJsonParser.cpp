@@ -3,6 +3,7 @@
 //  YidiPlayerHD
 //
 //  Created by shuang on 12-7-4.
+//  Editd by haojunhua on 14-5-4
 //  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
 //
 
