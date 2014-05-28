@@ -55,7 +55,7 @@ bool TupianBrowserLayer::init(){
         return false;
     }
     
-    this->setMainTupianSprite();
+    this->setMainTupianSprite(true);
     
     CCSprite* x=CCSprite::create("cha.png");
     x->setScale(1.5);
@@ -87,7 +87,7 @@ bool TupianBrowserLayer::init(){
     
 }
 
-void TupianBrowserLayer::setMainTupianSprite(){
+void TupianBrowserLayer::setMainTupianSprite(bool isFromInit){
     
     S_AE->playEffect((CCFileUtils::sharedFileUtils()->getWritablePath()+m_tupian->getcnAudioPath()).c_str());
 
@@ -119,7 +119,7 @@ void TupianBrowserLayer::setMainTupianSprite(){
             guideDialog->setMode(kGuideDialogOk);
             m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
             m_gudieDialogLayer->setDelegate(this);
-            this->addChild(m_gudieDialogLayer);
+            this->addChild(m_gudieDialogLayer,ORDER_DIALOG);
             m_gudieDialogLayer->setGuideDialogData(guideDialog);
         }else{
             m_tupian->setIntisCollected(1);
@@ -134,6 +134,13 @@ void TupianBrowserLayer::setMainTupianSprite(){
             KapianCollectLayer* kapianCollectLayer=KapianCollectLayer::create(sprite);
             this->addChild(kapianCollectLayer);
             kapianCollectLayer->collectAnimate();
+            
+            if(isFromInit){
+                m_tupianBrowserDelegate->reloadTupianTable();
+            }
+            else{
+                m_tupianTabelLayer->reloadData();
+            }
         }
     }
     
@@ -290,15 +297,14 @@ void TupianBrowserLayer::wenziCallback(cocos2d::CCObject *pSender){
     m_hanziID=((CCNode*)pSender)->getTag();
     if (m_hanziID>0) {
         GuideDialog* guideDialog=new GuideDialog();
+        guideDialog->autorelease();
         guideDialog->setText("要跳转到相应的汉字吗？");
         guideDialog->setMode(kGuideDialogYesOrNo);
         m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
         m_gudieDialogLayer->setDelegate(this);
         this->addChild(m_gudieDialogLayer);
         m_gudieDialogLayer->setGuideDialogData(guideDialog);
-        CC_SAFE_DELETE(guideDialog);
     }
-    
 }
 
 void TupianBrowserLayer::tupianLoadCallBack(int count){
@@ -310,7 +316,7 @@ void TupianBrowserLayer::tupianLoadCallBack(int count){
 void TupianBrowserLayer::tupianTouchCallBack(Tupian* tupian){
     if (m_isTableShow) {
         this->m_tupian=tupian;
-        this->setMainTupianSprite();
+        this->setMainTupianSprite(false);
     }
 }
 

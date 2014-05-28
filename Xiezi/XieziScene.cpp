@@ -98,6 +98,10 @@ bool XieziScene::init()
     pSprite->setPosition(S_RM->getJpgBgPosition());
     this->addChild(pSprite);
     
+    UserBarLayer* userBarLayer=UserBarLayer::create();
+    userBarLayer->setPosition(S_RM->getPositionWithName("xiezi_userbar"));
+    this->addChild(userBarLayer,ORDER_USERBAR);
+    
     CCMenu* pMenu = CCMenu::create();
     
     CCSprite* pFanhui_1=CCSprite::createWithSpriteFrameName("fanhui.png");
@@ -109,12 +113,11 @@ bool XieziScene::init()
     pMenu->setPosition( CCPointZero );
     pMenu->setTag(kTagMenu);
     this->addChild(pMenu, 1);
-
-    //小背景
-    CCSprite* pXbj = CCSprite::createWithSpriteFrameName("dakuang.png");
-    pXbj->setPosition(S_RM->getPositionWithName("xiezi_xbj"));
-    pXbj->setTag(kTagXBJ);
-    this->addChild(pXbj);
+    
+    
+    m_xieziLayer=XieziLayer::create(m_hanzi,false);
+    m_xieziLayer->setDelegate(this);
+    this->addChild(m_xieziLayer);
     
     CCSprite* pSjt=CCSprite::createWithSpriteFrameName("jiantou_1.png");
     CCMenuItemSprite* pSjtItem=CCMenuItemSprite::create(pSjt, NULL, this, menu_selector(XieziScene::menuCallback));
@@ -153,17 +156,16 @@ bool XieziScene::init()
     
     m_collectedCount=0;
     if (m_hanzi->getisCollected()==0) {
-        
         m_collectedCount=S_DM->getCount("hanzi","isCollected>0");
         if (m_collectedCount>=COLLECT_LIMIT) {
             GuideDialog* guideDialog=new GuideDialog();
+            guideDialog->autorelease();
             guideDialog->setText("非常抱歉，本软件为测试版，收藏的卡片数量已经超出了测试版的限制。请关注我们的微信公众号，等待正式版本的发布，谢谢！");
             guideDialog->setMode(kGuideDialogOk);
             m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
             m_gudieDialogLayer->setDelegate(this);
-            this->addChild(m_gudieDialogLayer,INT_MAX);
+            this->addChild(m_gudieDialogLayer,ORDER_DIALOG);
             m_gudieDialogLayer->setGuideDialogData(guideDialog);
-            CC_SAFE_DELETE(guideDialog);
         }else{
             //收集到汉字
             CCString *sql=CCString::createWithFormat("update hanzi set isCollected=1 where id=%d;",m_hanzi->getid());
@@ -186,60 +188,6 @@ bool XieziScene::init()
         }
     }
     
-    
-    typedef struct _ResouceStruct
-    {
-        string position;
-        string pic;
-        int tag;
-    }XieziActionStruct;
-    
-    // 在这里配置每个场景要加载的资源
-    static XieziActionStruct action[] = {
-        {
-            "xiezi_xiangpi",
-            "xiangpi.png",
-            kTagRewrite
-        },
-        {
-            "xiezi_guangbo",
-            "guangbo.png",
-            kTagGuangbo
-        },
-        {
-            "xiezi_bi",
-            "bi.png",
-            kTagWrite
-        }
-    };
-    
-    for (int i=0; i<3; i++) {
-        CCSprite* xiangpiBg1=CCSprite::createWithSpriteFrameName("xiaokuang_1.png");
-        CCSprite* xiangpiBg2=CCSprite::createWithSpriteFrameName("xiaokuang_2.png");
-        CCMenuItemSprite* pQingchu=CCMenuItemSprite::create(xiangpiBg1, xiangpiBg2, this, menu_selector(XieziScene::callWeb));
-        pQingchu->setPosition(S_RM->getPositionWithName(action[i].position.c_str()));
-        pQingchu->setTag(action[i].tag);
-        pMenu->addChild(pQingchu);
-        CCSprite* xiangpi=CCSprite::createWithSpriteFrameName(action[i].pic.c_str());
-        xiangpi->setPosition(S_RM->getPositionWithName(action[i].position.c_str()));
-        this->addChild(xiangpi,2);
-    }
-    
-    //星星
-    this->setStar(true);
-    
-    //拼音
-    CCLabelTTF *pinyinLabel = CCLabelTTF::create(m_hanzi->getpinyinyindiao().c_str(), "KaiTi.ttf", 30.0);
-    pinyinLabel->setColor(ccc3(255, 255, 255));
-    pinyinLabel->setPosition(S_RM->getPositionWithName("xiezi_pinyin"));
-    this->addChild(pinyinLabel);
-    
-    //初始化星星效果
-    m_emitter = CCParticleSun::create();
-    m_emitter->setTexture( CCTextureCache::sharedTextureCache()->addImage("fire.png") );
-    m_emitter->setPosition(S_RM->getPositionWithName("xiezi_huoqiu"));
-    this->addChild(m_emitter, 10);
-    
     //打开android按键响应
     this->setKeypadEnabled(true);
     
@@ -248,25 +196,10 @@ bool XieziScene::init()
 
 void XieziScene::onEnter(){
     CCLayerColor::onEnter();
-    
-    CCPoint mainPoint=S_RM->getPositionWithName("xiezi_main");
-    //添加WEBVIEW
-    CCSize win_size=S_DR->getWinSize();
-    CCSize webViewSize=S_RM->getSizeWithName("xiezi_webview_size");
-    CCRect rect=CCRectMake(mainPoint.x-webViewSize.width/2,win_size.height-mainPoint.y-webViewSize.height/2, webViewSize.width, webViewSize.height);//UI坐标,从左上角计算
-    m_webView=CCWebView::create("AppStroke.html",rect);
-    m_webView->setDelegate(this);
-    this->addChild(m_webView);
-    if (m_collectedCount>COLLECT_LIMIT) {
-        m_webView->setVisible(false);
-    }else{
-        m_webView->setVisible(true);
-    }
 }
 
 void XieziScene::onExit(){
     CCLayerColor::onExit();
-    this->removeChild(m_webView, false);
 }
 
 void XieziScene::keyBackClicked(){
@@ -295,111 +228,7 @@ void XieziScene::dingShiTiXing(){
             m_heimao->action("heimao_tishi0");
             break;
     }
-    m_webView->callWebWithJs("setMode(Modes.kWrite);");
-}
-
-void XieziScene::setStar(bool isInit){
-    int writeCount=m_hanzi->getwriteCount();
-    if ((isInit&&writeCount>4)||writeCount==4) {
-        float duration=0.5f;
-        CCPoint xingxingPoint=S_RM->getPositionWithName("xiezi_xingxing");
-        if(!isInit){
-            for (int i=0; i<3; i++) {
-                //            this->removeChildByTag(kTagXingxing1+i);
-                CCSprite* sprite=(CCSprite*)this->getChildByTag(kTagXingxing1+i);
-                sprite->runAction(CCSpawn::create(CCMoveTo::create(duration, xingxingPoint),CCFadeOut::create(duration),NULL));
-            }
-        }
-        CCSprite* xingxing=CCSprite::createWithSpriteFrameName("xingxing_2.png");
-        xingxing->setPosition(xingxingPoint);
-        xingxing->setTag(kTagXingxing4);
-        xingxing->setOpacity(0);
-        this->addChild(xingxing);
-        xingxing->runAction(CCFadeIn::create(duration));
-        CCSprite* border=CCSprite::createWithSpriteFrameName("xingxing_border.png");
-        border->setPosition(ccp(xingxing->getContentSize().width/2, xingxing->getContentSize().height/2));
-        border->setVisible(false);
-        xingxing->addChild(border);
-        CCSprite* x=CCSprite::createWithSpriteFrameName("X.png");
-        x->setPosition(S_RM->getPositionWithName("xiezi_xingxing_x"));
-        x->setOpacity(0);
-        this->addChild(x);
-        x->runAction(CCFadeIn::create(duration));
-        CCString* countString=CCString::createWithFormat("%d",writeCount);
-        if (!isInit) {
-            countString=CCString::createWithFormat("%d",writeCount-1);
-        }
-        CCLabelBMFont *xingCount = CCLabelBMFont::create(countString->getCString(), "font.fnt");
-        xingCount->setPosition(S_RM->getPositionWithName("xiezi_xingxing_count"));
-        xingCount->setTag(kTagXingxingCount);
-        xingCount->setAnchorPoint(ccp(0.5, 0.5));
-        xingCount->setOpacity(0);
-        this->addChild(xingCount);
-        xingCount->runAction(CCFadeIn::create(duration));
-    }
-    if (isInit) {
-        if (writeCount<=3) {
-            for (int i=0; i<3; i++) {
-                int star=1;
-                if(i<m_hanzi->getwriteCount()){
-                    star=2;
-                }
-                
-                CCString *starName = CCString::createWithFormat("xingxing_%d.png", star);
-                CCString *posName = CCString::createWithFormat("xiezi_xingxing_%d", i+1);
-                CCPoint point=S_RM->getPositionWithName(posName->getCString());
-                
-                CCSprite* xingxing=CCSprite::createWithSpriteFrameName(starName->getCString());
-                xingxing->setPosition(point);
-                xingxing->setTag(kTagXingxing1+i);
-                this->addChild(xingxing);
-                
-                CCSprite* border=CCSprite::createWithSpriteFrameName("xingxing_border.png");
-                border->setPosition(ccp(xingxing->getContentSize().width/2, xingxing->getContentSize().height/2));
-                border->setVisible(false);
-                xingxing->addChild(border);
-            }
-        }
-        
-    }else{
-        const char* posName;
-        if (writeCount<=3) {
-            posName = CCString::createWithFormat("xiezi_xingxing_%d", writeCount)->getCString();
-        }else{
-            posName="xiezi_xingxing";
-        }
-        CCPoint point=S_RM->getPositionWithName(posName);
-        
-        ccBezierConfig bezier;
-        bezier.controlPoint_1 = S_RM->getPositionWithName("xiezi_bezier_start");
-        if (writeCount==3) {
-            bezier.controlPoint_2 = S_RM->getPositionWithName("xiezi_bezier_end_1");
-        }else{
-            bezier.controlPoint_2 = S_RM->getPositionWithName("xiezi_bezier_end_2");
-        }
-        bezier.endPosition = point;
-        CCActionInterval*  bezierTo = CCBezierTo::create(1, bezier);
-        m_emitter->runAction(CCSequence::create(bezierTo,CCCallFunc::create(this,  callfunc_selector(XieziScene::xingxingAnimate)),NULL));
-    }
-}
-
-void XieziScene::xingxingAnimate(){
-    int writeCount=m_hanzi->getwriteCount();
-    CCSprite* xingxing;
-    if (writeCount<=3) {
-        xingxing=(CCSprite*)this->getChildByTag(kTagXingxing1+writeCount-1);
-    }else{
-        xingxing=(CCSprite*)this->getChildByTag(kTagXingxing4);
-        CCLabelBMFont* xingxingCount=(CCLabelBMFont*)this->getChildByTag(kTagXingxingCount);
-        xingxingCount->setString(CCString::createWithFormat("%d",m_hanzi->getwriteCount())->getCString());
-        xingxingCount->runAction(CCSequence::createWithTwoActions(CCScaleTo::create(0.2, 1.5), CCScaleTo::create(0.2, 1)));
-    }
-    xingxing->setDisplayFrame(S_SF->spriteFrameByName("xingxing_2.png"));
-    CCSprite* border=(CCSprite*)xingxing->getChildren()->objectAtIndex(0);
-    border->setScale(1.f);
-    border->setVisible(true);
-    border->runAction(CCSpawn::create(CCScaleTo::create(0.5, 5.f),CCFadeOut::create(0.5),NULL));
-    m_emitter->setPosition(S_RM->getPositionWithName("xiezi_huoqiu"));
+    m_xieziLayer->getWebView()->callWebWithJs("setMode(Modes.kWrite);");
 }
 
 void XieziScene::menuCallback(CCObject* pSender)
@@ -411,7 +240,7 @@ void XieziScene::menuCallback(CCObject* pSender)
             if(m_xieziSceneDelegate!=NULL){
                m_xieziSceneDelegate->xieziCallback(m_indexInKapianTable, m_hanzi->getProgress());
             }
-            CCDirector::sharedDirector()->popScene();
+            S_DR->popScene();
             S_AE->stopAllEffects();
             break;
     }
@@ -421,105 +250,14 @@ void XieziScene::pressHeimaoCallback(){
     m_heimao->action("heimao_xiezi_press");
 }
 
-void XieziScene::wenziCallback(CCObject* pSender)
-{
-    int tag=((CCNode*)pSender)->getTag();
-    if (tag>0) {
-        CCDirector::sharedDirector()->replaceScene(XieziScene::scene(tag));
-    }
-}
-
-void XieziScene::callWeb(CCObject* pSender)
-{
-    CCSprite* snapshot=(CCSprite*)this->getChildByTag(kTagSnapshot);
-    if(snapshot!=NULL)snapshot->removeFromParentAndCleanup(false);
-//    m_webView->setVisible(true);
-    
-    int tag=((CCNode*)pSender)->getTag();
-    switch (tag) {
-        case kTagRewrite:
-            m_webView->callWebWithJs("reWrite();");
-            isWriteFinished=false;
-            break;
-        case kTagWrite:
-            if (m_writeCount>=WRITE_LIMIT&&m_hanzi->getwriteCount()==0&&m_gudieDialogLayer==NULL) {
-                GuideDialog* guideDialog=new GuideDialog();
-                guideDialog->setText("非常抱歉，本软件为测试版，练习书写的汉字数量已经超出了测试版的限制。请关注我们的微信公众号，等待正式版本的发布，谢谢！");
-                guideDialog->setMode(kGuideDialogOk);
-                m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
-                m_gudieDialogLayer->setDelegate(this);
-                this->addChild(m_gudieDialogLayer,INT_MAX);
-                m_gudieDialogLayer->setGuideDialogData(guideDialog);
-                CC_SAFE_DELETE(guideDialog);
-                m_webView->setVisible(false);
-            }else{
-                m_webView->callWebWithJs("setMode(Modes.kWrite);");
-                if (isWriteFinished) {
-                    m_webView->callWebWithJs("reWrite();");
-                }
-            }
-            
-            break;
-        case kTagGuangbo:
-        S_AE->playEffect((CCFileUtils::sharedFileUtils()->getWritablePath()+m_hanzi->getcnAudioPath()).c_str());
-            break;
-    }
-}
-
-void XieziScene::webCallBack(CCWebView* webview,std::string cmd){
-    vector<string> splitCmd;
-    StringUtils::split(cmd,"$",splitCmd);
-    int icmd=atoi(splitCmd[0].c_str());
-    
-    switch (icmd) {
-        case kWebCallBackLoadedFinish:{
-            //加载完成
-            CCSize webViewSize=S_RM->getSizeWithName("xiezi_webview_size");
-            float scaleX=CCEGLView::sharedOpenGLView()->getScaleX();
-            float scaleY=CCEGLView::sharedOpenGLView()->getScaleY();
-            CCString* str=CCString::createWithFormat("init('%s','%s',%f,%f,%d,Modes.kFillAll)",m_hanzi->getcontour().c_str(),m_hanzi->getlocus().c_str(),webViewSize.width*scaleX,webViewSize.height*scaleY,m_hanzi->getwriteCount());
-            webview->callWebWithJs(str->getCString());
-            this->scheduleOnce(schedule_selector(XieziScene::dingShiTiXing),3.0f);
-            
-            const char* audio=(CCFileUtils::sharedFileUtils()->getWritablePath()+m_hanzi->getcnAudioPath()).c_str();
-            S_AE->playEffect(audio);
-        }
-            
-            break;
+/**
+ * 仅处理非汉字相关，如黑猫事件回调等
+ * 其余处理在XieziLayer中
+ */
+void XieziScene::webCallBack(WebCallBackCMD cmd){
+    switch (cmd) {
         case kWebCallBackWriteHanziOk:{
-            //书写成功
             int writeCount=m_hanzi->getwriteCount();
-            m_hanzi->setIntwriteCount(++writeCount);
-            CCString *sql=CCString::createWithFormat("update hanzi set writeCount=writeCount+1 where id=%d;",m_hanzi->getid());
-            S_DM->executeSql(sql->getCString());
-            
-            //星星动画
-            this->setStar();
-            
-            //排行数据需要统一调整模型
-            static_userDefaultIncrement(COLLECT_XINGXING_COUNT,0);
-            static_userDefaultIncrement(OVER_XINGXING_COUNT,0);
-            
-            string token=S_UD->getStringForKey(UDKEY_USER_TOKEN);
-            if (token.length()>0&&splitCmd.size()>1&&splitCmd[1].length()>0) {
-                CCString* data=CCString::createWithFormat("hwd.writeData=%s&hwd.hanzi.id=%d",splitCmd[1].c_str(),m_hanzi->getid());
-                CCString* url=CCString::createWithFormat("user_uploadHanziWriteData_feedback?token=%s",token.c_str());
-                ApiStruct apiStruct;
-                apiStruct.url=url->getCString();
-                apiStruct.isBlackcat=true;
-                apiStruct.target=NULL;
-                apiStruct.data=data->getCString();
-                apiStruct.requestType=CCHttpRequest::kHttpPost;
-                CCLog("%s",url->getCString());
-                CCLog("%s",data->getCString());
-                Api* api=Api::create(apiStruct);
-                api->send();
-            }
-            
-            string effect="mario1.mp3";
-            if (writeCount<=2) {
-                effect="mario2.mp3";
-            }
             
             if (writeCount<=3) {
                 CCString* str=CCString::createWithFormat("heimao_xieziOk%d",writeCount);
@@ -527,51 +265,9 @@ void XieziScene::webCallBack(CCWebView* webview,std::string cmd){
             }else{
                 m_heimao->action("heimao_xieziOkgt3");
             }
-            S_AE->playEffect(effect.c_str());
-            
-            isWriteFinished=true;
-            
-//            if (splitCmd.size()>1&&splitCmd[1].length()>10) {
-//                CCLog("splitCmd.size()>1");
-//                m_webView->setVisible(false);
-//                string pngData=StringUtils::base64Decode(splitCmd[1].c_str(), (int)splitCmd[1].length());
-//                CCImage* img=new CCImage();
-//                img->initWithImageData(const_cast<char*>(pngData.c_str()), (int)pngData.length());
-//                CCTexture2D *texture = new CCTexture2D();
-//                texture->initWithImage(img);
-//                CCSprite* snapshot= CCSprite::createWithTexture(texture);
-//                CCPoint point=S_RM->getPositionWithName("xiezi_main");
-//                snapshot->setPosition(ccp(point.x,point.y-3));
-//                snapshot->setTag(kTagSnapshot);
-//                if(snapshot->getContentSize().width>500){
-//                    snapshot->setScale(0.5);
-//                }
-//                this->addChild(snapshot);
-//                CC_SAFE_DELETE(img);
-//            }
-            
         }
-            break;
-        case kWebCallBackCanvasData:{
-            //图片数据
-            //从base64转换未图片数据
-            
-        }
-            
             break;
         case kWebCallBackChangeToWriteMode:{
-            //切换到写字模式
-            if (m_writeCount>=WRITE_LIMIT&&m_hanzi->getwriteCount()==0&&m_gudieDialogLayer==NULL) {
-                GuideDialog* guideDialog=new GuideDialog();
-                guideDialog->setText("非常抱歉，本软件为测试版，练习书写的汉字数量已经超出了测试版的限制。请关注我们的微信公众号，等待正式版本的发布，谢谢！");
-                guideDialog->setMode(kGuideDialogOk);
-                m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
-                m_gudieDialogLayer->setDelegate(this);
-                this->addChild(m_gudieDialogLayer,INT_MAX);
-                m_gudieDialogLayer->setGuideDialogData(guideDialog);
-                CC_SAFE_DELETE(guideDialog);
-                webview->setVisible(false);
-            }
             this->unschedule(schedule_selector(XieziScene::dingShiTiXing));
         }
             break;
@@ -591,6 +287,12 @@ void XieziScene::webCallBack(CCWebView* webview,std::string cmd){
     }
 }
 
+/**
+ *注意解决需要等待星星结束后才更新等级数据的问题
+ */
+void XieziScene::xingxingAnimateEnd(){
+}
+
 void XieziScene::tupianLoadCallBack(int count){
     if (count<=TABLE_VISIBLE_COUNT) {
         CCNode* menu=this->getChildByTag(kTagMenu);
@@ -603,26 +305,30 @@ void XieziScene::tupianLoadCallBack(int count){
 void XieziScene::tupianTouchCallBack(Tupian* tupian){
     this->unschedule(schedule_selector(XieziScene::dingShiTiXing));
     
-    m_webView->setVisible(false);
+    m_xieziLayer->setVisible(false);
     //图片浏览层
     TupianBrowserLayer* m_tupianBrowser=TupianBrowserLayer::create(this,tupian);
     m_tupianBrowser->setPosition(CCPointZero);
     this->addChild(m_tupianBrowser,100);
     
-    CCSprite* xbj=(CCSprite*)this->getChildByTag(kTagXBJ);
-    xbj->setVisible(false);
-    
+    LevelDelegate* ld=S_LM->getDelegate();
+    if (ld) {
+        ld->setPosition(S_RM->getPositionWithName("xiezi_userbar_browser"));
+    }
 }
 
 void XieziScene::hideBrowserCallBack(){
-    m_webView->setVisible(true);
-    CCSprite* xbj=(CCSprite*)this->getChildByTag(kTagXBJ);
-    xbj->setVisible(true);
+    m_xieziLayer->setVisible(true);
+    
+    LevelDelegate* ld=S_LM->getDelegate();
+    if (ld) {
+        ld->setPosition(S_RM->getPositionWithName("xiezi_userbar"));
+    }
 }
 
 void XieziScene::dialogCallBack(GuideDialogCMD cmd){
     m_gudieDialogLayer->removeFromParentAndCleanup(true);
     m_gudieDialogLayer=NULL;
-    m_webView->setVisible(true);
-    m_webView->callWebWithJs("setMode(Modes.kDrawHanzi);");
+    m_xieziLayer->getWebView()->setVisible(true);
+    m_xieziLayer->getWebView()->callWebWithJs("setMode(Modes.kDrawHanzi);");
 }

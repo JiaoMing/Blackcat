@@ -24,7 +24,7 @@ public:
 
 class CoverLayer: public CCLayerColor{
 public:
-    virtual bool init();
+    virtual bool init(const ccColor4B& color=ccc4(0, 0, 0, 80));
     CREATE_FUNC(CoverLayer);
     
     // register touch

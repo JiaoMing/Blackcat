@@ -10,8 +10,8 @@
 #include "resource.h"
 
 
-bool DialogLayer::init(){
-    if (!CCLayerColor::initWithColor(ccc4(0, 0, 0, 80))) {
+bool DialogLayer::init(const ccColor4B& color){
+    if (!CoverLayer::initWithColor(color)) {
         return false;
     }
     m_bg=CCSprite::createWithSpriteFrameName("dialog_bg.png");

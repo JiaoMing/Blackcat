@@ -102,6 +102,11 @@ bool NewPetScene::init(){
         
         m_playLayer->addChild(m_rankingBarLayer);
         
+        UserBarLayer* userBarLayer=UserBarLayer::create();
+        userBarLayer->setPosition(S_RM->getPositionWithName("pet_userbar"));
+        S_LM->setDelegate(userBarLayer);
+        m_playLayer->addChild(userBarLayer,ORDER_USERBAR);
+        
         return true;
     }
     return false;

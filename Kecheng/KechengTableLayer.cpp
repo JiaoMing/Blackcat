@@ -71,8 +71,8 @@ bool KechengTableLayer::init(){
     tableView->setTag(TAG_TABLE);
     this->addChild(tableView);
     
-    
     m_kechengTableDelegate->kechengLoadCallBack();
+    
     return true;
 }
 
@@ -96,7 +96,6 @@ CCTableViewCell* KechengTableLayer::tableCellAtIndex(CCTableView *table, unsigne
 //            Kecheng* kecheng=(*m_kechengVector)[index];
             
             CCSprite* gridCell=CCSprite::create();
-            
             
             CCPoint renwuPoint=S_RM->getRelativePosition("renwu_kuang_in_cell",S_RM->getSizeWithName("renwu_table_cell_size").height);
             

@@ -40,7 +40,7 @@ public:
     virtual int topHandlerPriority(){return kCCMenuHandlerPriority-1;}
     virtual void dialogCallBack(GuideDialogCMD cmd);
     
-    void setMainTupianSprite();
+    void setMainTupianSprite(bool isFromInit);
     void enableTouch();
     void menuCallback(CCObject* pSender);
     
@@ -66,7 +66,7 @@ class TupianBrowserDelegate{
 public:
     virtual void hideBrowserCallBack(){};
     virtual bool isPushToXieziScene(){return true;}
-
+    virtual void reloadTupianTable(){};
 };
 
 

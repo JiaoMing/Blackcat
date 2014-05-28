@@ -159,6 +159,8 @@ void SettingsLayer::menuCallback(CCObject *obj){
                 node->setTag(kTagLoginin);
                 Button9* button=(Button9*)node->getChildren()->objectAtIndex(0);
                 button->setString("登  陆");
+                
+                S_LM->getDelegate()->setVisible(false);
             }
                 break;
             case kTagMenuClose:{

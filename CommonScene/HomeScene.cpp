@@ -20,6 +20,8 @@
 #include "SimpleAudioEngine.h"
 #include "ParentLayer.h"
 #include "NewPetScene.h"
+#include "UserBarLayer.h"
+#include "KechengDialogLayer.h"
 using namespace CocosDenshion;
 
 #if(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
@@ -82,6 +84,7 @@ bool HomeScene::init(){
     bg->setPosition(S_RM->getJpgBgPosition());
     this->addChild(bg);
     
+    
     for (int i=0; i<kPropsXiaoqiche-kPropsHezi+1; i++) {
         string point="home_"+g_propsName[i];
         Props* props=S_PM->getPropsWithName(g_propsName[i].c_str());
@@ -93,8 +96,14 @@ bool HomeScene::init(){
         
         if(i+kPropsHezi==kPropsXiaoqiche){
             props->setIsShowStopPosAfterARun(false);
+        }else if(i+kPropsHezi==kPropsWawa){
+            props->setIsImmediate(true);
         }
     }
+    
+    UserBarLayer* userBarLayer=UserBarLayer::create();
+    userBarLayer->setPosition(S_RM->getPositionWithName("home_userbar"));
+    this->addChild(userBarLayer,ORDER_USERBAR);
     
     CCLabelTTF* label=CCLabelTTF::create("一", "KaiTi.ttf", 120.0,CCSizeMake(120, 120),kCCTextAlignmentCenter,kCCVerticalTextAlignmentCenter);
     label->setColor(ccc3(255,255,255));
@@ -136,7 +145,7 @@ bool HomeScene::init(){
     //工具条
     ParentLayer* parentLayer=ParentLayer::create();
     parentLayer->setDelegate(this);
-    this->addChild(parentLayer,INT_MAX-1);
+    this->addChild(parentLayer,ORDER_DIALOG-1);
     
     //打开android按键响应
     this->setKeypadEnabled(true);
@@ -366,37 +375,11 @@ void HomeScene::menuCallBack(CCObject* pSender){
     CCMenuItem *menuItem = (CCMenuItem *)pSender;
     switch (menuItem->getTag()) {
         case kHeimao:{
-            int heimaoCount=S_UD->getIntegerForKey("HEIMAO_CLICK_COUNT", 0);
-            int eventHanzi=S_UD->getIntegerForKey("EVENT_OPEN_KAPIAN_HANZI",kGuideEventDefault);
-            int eventTupian=S_UD->getIntegerForKey("EVENT_OPEN_KAPIAN_TUPIAN",kGuideEventDefault);
-            if (heimaoCount==0) {
-                if (eventHanzi!=kGuideEventPass&&eventTupian!=kGuideEventPass) {
-                    this->startGuide("HomeScene_Normal","heimao_7");
-                }else{
-                    this->startGuide("HomeScene_Normal","heimao_8");
-                    heimaoCount=1;
-                }
-            }else if (heimaoCount==1){
-                this->startGuide("HomeScene_Normal","heimao_8");
-            }else if (heimaoCount>=2){
-                int count=static_getDayRenwuCount();
-                if (count>=2&&m_hanzi->getwriteCount()>=3) {
-                    int random=(int) (CCRANDOM_0_1()*2);
-                    if (random==0) {
-                        this->startGuide("HomeScene_Normal","heimao_9");
-                    }else{
-                        this->startGuide("HomeScene_Normal","heimao_10");
-                    }
-                }else if (count<2) {
-                    this->startGuide("HomeScene_Normal","heimao_1");
-                }else if(m_hanzi->getwriteCount()<3){
-                    S_ALP->play("heimao037_1.mp3:2",(CCFileUtils::sharedFileUtils()->getWritablePath().append(m_hanzi->getcnAudioPath()).append(":1.2")).c_str(),"heimao037_2.mp3:2",NULL);
-                    m_hanziMenuItem->runAction(CCSequence::create(CCDelayTime::create(2.0f),CCScaleTo::create(0.5, 1.3),CCScaleTo::create(0.5, 1),NULL));
-                }
-            }
+            DialogLayer* floatLayer=KechengDialogLayer::create();
+            floatLayer->setDelegate(this);
+            this->addChild(floatLayer,ORDER_DIALOG);
             
-            S_UD->setIntegerForKey("HEIMAO_CLICK_COUNT", heimaoCount+1);
-            S_UD->flush();
+            
         }
             break;
         case kPropsShuzuobian:{
@@ -419,6 +402,14 @@ void HomeScene::menuCallBack(CCObject* pSender){
         }
             break;
         case kPropsWawa:{
+            CCPointArray* array=CCPointArray::create(6);
+            array->addControlPoint(S_RM->getPositionWithName("renwu_dialog_zi_1"));
+            array->addControlPoint(S_RM->getPositionWithName("renwu_dialog_zi_2"));
+            array->addControlPoint(S_RM->getPositionWithName("renwu_dialog_zi_3"));
+            array->addControlPoint(S_RM->getPositionWithName("renwu_dialog_zi_4"));
+            array->addControlPoint(S_RM->getPositionWithName("renwu_dialog_zi_5"));
+            array->addControlPoint(S_RM->getPositionWithName("renwu_dialog_zi_6"));
+            S_LM->gain("WRITE",S_RM->getJpgBgPosition(),array);
             bool isBgMusicRunning=S_UD->getBoolForKey("BG_MUSIC",true);
             Props* props=(Props*)menuItem;
             if (isBgMusicRunning) {

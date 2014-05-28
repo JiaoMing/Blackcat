@@ -43,6 +43,9 @@ bool KapianCollectLayer::init(){
 
 
 void KapianCollectLayer::collectAnimate(){
+    //增加经验值
+    S_LM->gain("COLLECT",S_RM->getJpgBgPosition());
+    
     CCPoint mainPoint=S_RM->getJpgBgPosition();
     
     m_ka->runAction(CCMoveTo::create(1, ccp(50, 120)));

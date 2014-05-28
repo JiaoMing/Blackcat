@@ -9,8 +9,8 @@
 #include "CoverLayer.h"
 #include "resource.h"
 
-bool CoverLayer::init(){
-    if (!CCLayerColor::initWithColor(ccc4(0, 0, 0, 80))) {
+bool CoverLayer::init(const ccColor4B& color){
+    if (!CCLayerColor::initWithColor(color)) {
         return false;
     }
     return true;

@@ -27,6 +27,8 @@ using namespace CocosDenshion;
 #include "BaiduStat.h"
 #include "udkey.h"
 #include "Api.h"
+#include "LevelManager.h"
+#include "UserBarLayer.h"
 
 /*** 系统相关start ***/
 #define S_APP CCApplication::sharedApplication()
@@ -44,6 +46,7 @@ using namespace CocosDenshion;
 #define S_ALP AudioListPlayer::sharedAudioListPlayer()
 #define S_AFM ActionFlowManager::sharedActionFlowManager()
 #define S_TT Toast::sharedToast()
+#define S_LM LevelManager::sharedLevelManager()
 
 #define W_SIZE S_DR->getWinSize()
 #define TAGERT_PLATFORM S_APP->getTargetPlatform()
@@ -51,7 +54,9 @@ using namespace CocosDenshion;
 
 /*** 全局start ***/
 
-#define DEBUG_OPEN 1
+#define DEBUG_OPEN 1//调试开关
+#define ORDER_DIALOG INT_MAX//对话框层序(order)
+#define ORDER_USERBAR (ORDER_DIALOG-1)//用户信息bar层序(order)
 
 /*** 全局end ***/
 
@@ -62,8 +67,8 @@ using namespace CocosDenshion;
 #define HANZI_VERIFY_PASS "status=4"
 #define TUPIAN_VERIFY_PASS "status=2"
 
-#define COLLECT_LIMIT 60
-#define WRITE_LIMIT 20
+#define COLLECT_LIMIT 60000
+#define WRITE_LIMIT 20000
 
 typedef enum{
     kCallWebRewrite=0,
@@ -94,8 +99,6 @@ static int static_getDayRenwuCount(){
     }
     return count;
 }
-
-
 
 static void static_uploadRanking(){
     string token=S_UD->getStringForKey(UDKEY_USER_TOKEN);

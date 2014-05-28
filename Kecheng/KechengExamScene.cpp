@@ -37,9 +37,11 @@ m_hanziVector(hanziVector),
 m_kechengExamSceneDelegate(kechengExamSceneDelegate),
 m_daojishi(10)
 {
+    S_RM->addSceneRes("RenwuScene", "renwu");
 }
 
 KechengExamScene::~KechengExamScene(){
+    S_RM->removeSceneRes("RenwuScene");
 }
 
 CCScene* KechengExamScene::scene(KechengExamSceneDelegate* kechengExamSceneDelegate,vector<Hanzi*>* hanziVector)
@@ -318,7 +320,6 @@ void KechengExamScene::menuCallback(CCObject* object){
             case TAG_BACK:
                 SimpleAudioEngine::sharedEngine()->stopAllEffects();
                 CCDirector::sharedDirector()->popScene();
-//                CCDirector::sharedDirector()->popToRootScene();
                 break;
                 
             default:
@@ -377,9 +378,6 @@ void KechengExamScene::examEnd(){
         questionLayer->removeFromParentAndCleanup(false);
         CCLayer* xiaohonghua=(CCLayer*)this->getChildByTag(TAG_XIAOHONGHUA);
         xiaohonghua->removeAllChildrenWithCleanup(false);
-//        KechengRewardLayer *rewardlayer = KechengRewardLayer::create(m_hanziVector);
-//        this->addChild(rewardlayer);
-        
         float time=m_heimao->action("heimao_renwuGuoguan");
         this->scheduleOnce(schedule_selector(KechengExamScene::reward), time);
     }else{
@@ -391,8 +389,9 @@ void KechengExamScene::examEnd(){
 }
 
 void KechengExamScene::reward(float t){
-    m_kechengExamSceneDelegate->examAllRightCallback();
+    //需要禁止掉返回按钮
     S_DR->popScene();
+    if(m_kechengExamSceneDelegate)m_kechengExamSceneDelegate->examAllRightCallback();
 }
 
 void KechengExamScene::showDialog(){

@@ -63,6 +63,7 @@ private:
     
     int m_count;//用于引导
     long m_time;
+    
 };
 
 #endif

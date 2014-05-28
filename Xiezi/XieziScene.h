@@ -13,13 +13,13 @@
 #include "TupianTableLayer.h"
 #include "Hanzi.h"
 #include "resource.h"
-#include "CCWebView.h"
 #include "Heimao.h"
 #include "TupianBrowserLayer.h"
+#include "XieziLayer.h"
 
 class XieziSceneDelegate;
 
-class XieziScene : public cocos2d::CCLayerColor,public TupianTableDelegate,public CCWebViewDelegate,public TupianBrowserDelegate,public GuideDialogDelegate
+class XieziScene : public cocos2d::CCLayerColor,public TupianTableDelegate,public TupianBrowserDelegate,public GuideDialogDelegate,public XieziLayerDelegate
 {
 public:
     static CCScene* scene(int hid);
@@ -36,31 +36,23 @@ public:
     
     void menuCallback(CCObject* pSender);
     
-    void callWeb(CCObject* pSender);
-    
-    /**
-     * 回调需注意所有的音效必须preload，否则会死锁
-     */
-    void wenziCallback(CCObject* pSender);
-    
     /**
      定时提醒用户操作
      */
     void dingShiTiXing();
     
-    void setStar(bool isInit=false);
-    void xingxingAnimate();
+    void xingxingAnimateEnd();
     
     void pressHeimaoCallback();
     
-    virtual void webCallBack(CCWebView* webview,std::string cmd);
+    virtual void webCallBack(WebCallBackCMD cmd);
     
     virtual void tupianLoadCallBack(int count);
     virtual void tupianTouchCallBack(Tupian* tupian);
     
     virtual void hideBrowserCallBack();
     virtual bool isPushToXieziScene(){return false;}
-    
+    virtual void reloadTupianTable(){m_tupianTabel->reloadData();}
     
     virtual int topHandlerPriority(){return kCCMenuHandlerPriority-1;}
     virtual void dialogCallBack(GuideDialogCMD cmd);
@@ -69,7 +61,6 @@ private:
     TupianTableLayer* m_tupianTabel;
     Hanzi* m_hanzi;
     CCWebView* m_webView;
-    CCWebView* m_webViewTest;
     
     Heimao* m_heimao;
     
@@ -77,9 +68,6 @@ private:
     XieziSceneDelegate* m_xieziSceneDelegate;
     
     int m_indexInKapianTable;
-    
-    //闪星效果
-    CCParticleSun* m_emitter;
     
     //是否写完整个汉字标记，用于笔图标作用
     bool isWriteFinished;
@@ -89,6 +77,10 @@ private:
     
     int m_collectedCount;//已收集的汉字数量
     int m_writeCount;
+    
+    XieziLayer* m_xieziLayer;
+    int m_hid;
+    
 };
 
 class XieziSceneDelegate{

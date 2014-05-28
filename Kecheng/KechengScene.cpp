@@ -23,7 +23,6 @@ enum TAG {
     kTagCaidai,
     kTagBiankuang,
     kTagJiangpai
-    
 };
 
 KechengScene::KechengScene(int kcid,KechengSceneDelegate* kechengSceneDelegate){

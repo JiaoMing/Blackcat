@@ -125,6 +125,7 @@ bool GuideDialogLayer::init(){
 
 void GuideDialogLayer::setGuideDialogData(GuideDialog* guideDialog){
     m_guideDialog=guideDialog;
+    m_guideDialog->retain();
     CCLabelTTF* text=(CCLabelTTF*) this->getChildByTag(kDialogText);
     if(text!=NULL)text->setString(guideDialog->getText().c_str());
     

@@ -3,9 +3,10 @@
 
 #include "cocos2d.h"
 #include "cocos-ext.h"
+#include "CoverLayer.h"
 using namespace cocos2d;
 
-class CardListScene : public CCLayer
+class CardListScene : public CCLayer,public CoverLayerDelegate
 {
 public:
     CardListScene();
@@ -19,6 +20,7 @@ public:
     virtual void menuCallback(CCObject* pSender);
     CREATE_FUNC(CardListScene);
     
+    virtual int topHandlerPriority(){return kCCMenuHandlerPriority-1;};
 public:
     virtual void registerWithTouchDispatcher();
     

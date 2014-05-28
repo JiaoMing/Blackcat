@@ -14,7 +14,7 @@
 class DialogLayer: public CoverLayer{
 public:
     DialogLayer(){m_title=NULL;}
-    virtual bool init();
+    virtual bool init(const ccColor4B& color=ccc4(0, 0, 0, 80));
     CREATE_FUNC(DialogLayer);
     
     virtual void replaceDialog(DialogLayer* dialogLayer);
@@ -35,7 +35,7 @@ public:
     
     void hideBg(){m_bg->setVisible(false);m_closeItem->setVisible(false);};
     void hideClose(){m_closeItem->setVisible(false);}
-private:
+protected:
     CCSprite* m_bg;
     CCMenu* m_menu;
     CCMenuItemSprite* m_closeItem;

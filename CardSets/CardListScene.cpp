@@ -4,6 +4,7 @@
 #include "CardShelfScene.h"
 #include "XieziScene.h"
 #include "SimpleAudioEngine.h"
+#include "XieziCoverLayer.h"
 
 using namespace CocosDenshion;
 
@@ -199,7 +200,12 @@ void CardListScene::menuCallback(CCObject* pSender)
         CCDirector::sharedDirector()->replaceScene(CardShelfScene::scene());
     }else{
         SimpleAudioEngine::sharedEngine()->playEffect("E4.mp3");
-        CCDirector::sharedDirector()->pushScene(XieziScene::scene(tag));
+        
+//        CCDirector::sharedDirector()->pushScene(XieziScene::scene(tag));
+        
+        XieziCoverLayer* xieziCoverLayer=XieziCoverLayer::create(tag);
+        xieziCoverLayer->setDelegate(this);
+        this->addChild(xieziCoverLayer,INT_MAX);
     }
 }
 

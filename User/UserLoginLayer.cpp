@@ -9,6 +9,7 @@
 #include "UserLoginLayer.h"
 #include "UserRegLayer.h"
 #include "SettingsLayer.h"
+#include "ParentLayer.h"
 
 enum
 {
@@ -123,5 +124,8 @@ void UserLoginLayer::onJsonCompleted(CCDictionary* root){
     
     CCString* fd=CCString::createWithFormat("欢迎您，%s",username->getCString());
     S_TT->makeText(fd->getCString());
-    this->removeFromParent();
+    this->replaceDialog(ParentLayer::create());
+    
+    S_LM->getDelegate()->setVisible(true);
+    S_LM->getDelegate()->fresh();
 }

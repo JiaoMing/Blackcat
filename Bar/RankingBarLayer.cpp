@@ -11,6 +11,7 @@
 #include "CopyRightLayer.h"
 #include "ClickableSprite.h"
 #include "HomeScene.h"
+#include "KapianScene.h"
 
 #define OVER_XINGXING_TAG 10
 #define SUBSCRIPT_NUM_TAG 10
@@ -21,7 +22,7 @@ bool RankingBarLayer::init(){
         m_rankingDataLayer=CCLayer::create();
         
         
-        for (int i=0; i<kRankXingxing+1; i++) {
+        for (int i=0; i<kRankXunzhang+1; i++) {
             m_rankingDataLayer->addChild(this->createSpriteWithRankStruct(i));
         }
         
@@ -143,7 +144,18 @@ void RankingBarLayer::logoCallBack(CCObject* object){
 
 void RankingBarLayer::rankCallBack(CCObject* object){
     CCNode* node=(CCNode*)object;
-    RankingLayer* ranking=RankingLayer::create((Rank)node->getTag());
-    ranking->setDelegate((HomeScene*)this->getParent());
-    this->getParent()->addChild(ranking,INT_MAX);
+    switch ((Rank)node->getTag()) {
+        case kRankZi:
+            S_DR->replaceScene(KapianHanziScene::scene());
+            break;
+        case kRankKa:
+            S_DR->replaceScene(KapianTupianScene::scene());
+            break;
+            
+        default:
+            RankingLayer* ranking=RankingLayer::create((Rank)node->getTag());
+            ranking->setDelegate((HomeScene*)this->getParent());
+            this->getParent()->addChild(ranking,INT_MAX);
+            break;
+    }
 }

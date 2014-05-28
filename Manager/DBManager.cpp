@@ -84,7 +84,7 @@ bool DBManager::saveOrUpdate(BaseModel* model){
         int sqliteResultCode=sqlite3_prepare(m_db, sql->getCString(), -1, &m_stmt, 0);
         if (sqliteResultCode==SQLITE_OK) {
             if(sqlite3_step(m_stmt)==SQLITE_ROW){
-                //等待实现
+                //TODO
             }
         }
     }

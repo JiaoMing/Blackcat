@@ -17,6 +17,7 @@ class GuideDialogDelegate;
 class GuideDialogLayer: public DialogLayer{
 public:
     GuideDialogLayer(){}
+    ~GuideDialogLayer(){m_guideDialog->release();};
     static GuideDialogLayer* create(GuideDialogType guideDialogType=kDialogBtuOnly,GuideDialogWithTextButtonPosiztion dialogButtonPosiztion=kDialogWithTextButtonPosiztionRight);
     virtual bool init();
     

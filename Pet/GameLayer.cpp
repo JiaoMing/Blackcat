@@ -159,6 +159,7 @@ void GameLayer::gameEnd(GamePlayer winner){
         }
             break;
         case kGamePlayerWo:{
+            S_LM->gain("WRITE",S_RM->getJpgBgPosition());
             point=ccp(921,768-68);
         }
             break;
