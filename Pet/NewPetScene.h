@@ -37,10 +37,23 @@ private:
     virtual void onEnter();
     virtual void onExit();
     
+    
+    virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent);
+    virtual void ccTouchEnded(CCTouch *pTouch, CCEvent *pEvent);
+    
+    /**
+     *  赠送星星数量
+     *
+     *  @return
+     */
+    int xingxingCount();
+    
     //菜单回调
     void menuCallBack(CCObject* pSender);
     //点击熊猫回调
     void pressXiaoboCallBack(CCObject *object, const char *pszBoxName);
+    
+    void zouluEnd();
     
     virtual void gameEnd(GamePlayer winner);
     

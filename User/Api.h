@@ -22,11 +22,13 @@ typedef void (CCObject::*SEL_ApiResponse)(CCDictionary* root);
 typedef struct _ApiStruct
 {
     string url;
-    bool isBlackcat=true;
+    bool isBlackcat;
 	string data;
-	CCObject* target=NULL;
+	CCObject* target;
 	SEL_ApiResponse sel_response;
-    CCHttpRequest::HttpRequestType requestType=CCHttpRequest::kHttpGet;
+    CCHttpRequest::HttpRequestType requestType;
+    _ApiStruct():isBlackcat(false),target(NULL),requestType(CCHttpRequest::kHttpGet){};
+    
 }ApiStruct;
 
 class Api: public CCObject{

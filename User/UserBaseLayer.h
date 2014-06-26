@@ -22,6 +22,7 @@ USING_NS_CC_EXT;
 class UserBaseLayer : public DialogLayer, public CCEditBoxDelegate
 {
 public:
+    UserBaseLayer():isFromSetting(false){}
     virtual bool init();
     
     virtual void editBoxEditingDidBegin(cocos2d::extension::CCEditBox* editBox);
@@ -29,6 +30,8 @@ public:
     virtual void editBoxTextChanged(cocos2d::extension::CCEditBox* editBox, const std::string& text);
     virtual void editBoxReturn(cocos2d::extension::CCEditBox* editBox);
     
+protected:
+    CC_SYNTHESIZE(bool, isFromSetting, IsFromSetting);
 };
 
 #endif /* defined(__Blackcat__UserBaseLayer__) */

@@ -27,7 +27,7 @@ bool UserLoginLayer::init(){
     CCSize editBoxSize = CCSizeMake(300, 51);
     
     Button9* label1=Button9::create("手机号码");
-    label1->setPosition(300, 450);
+    label1->setPosition(S_RM->getPositionWithName("user_phoneLabel"));
     this->addChild(label1);
     
     // 手机号码
@@ -40,11 +40,11 @@ bool UserLoginLayer::init(){
     m_editPhone->setInputMode(kEditBoxInputModePhoneNumber);
     m_editPhone->setReturnType(kKeyboardReturnTypeDone);
     m_editPhone->setDelegate(this);
-    m_editPhone->cocos2d::CCNode::setPosition(550, 450);
+    m_editPhone->cocos2d::CCNode::setPosition(S_RM->getPositionWithName("user_phone"));
     this->addChild(m_editPhone);
     
     Button9* label2=Button9::create("密    码 ");
-    label2->setPosition(300, 350);
+    label2->setPosition(S_RM->getPositionWithName("user_pswdLabel"));
     this->addChild(label2);
     
     // 密码
@@ -57,18 +57,18 @@ bool UserLoginLayer::init(){
     m_editPswd->setInputFlag(kEditBoxInputFlagPassword);
     m_editPswd->setReturnType(kKeyboardReturnTypeDone);
     m_editPswd->setDelegate(this);
-    m_editPswd->cocos2d::CCNode::setPosition(550, 350);
+    m_editPswd->cocos2d::CCNode::setPosition(S_RM->getPositionWithName("user_pswd"));
     this->addChild(m_editPswd);
     
     Button9* reg=Button9::create("注  册");
     CCMenuItemSprite* regItem=CCMenuItemSprite::create(reg, reg, this, menu_selector(UserLoginLayer::menuCallback));
-    regItem->setPosition(400, 250);
+    regItem->setPosition(S_RM->getPositionWithName("user_login_regButton"));
     regItem->setTag(kTagReg);
     this->addMenuItem(regItem);
     
     Button9* login=Button9::create("登  陆");
     CCMenuItemSprite* loginItem=CCMenuItemSprite::create(login, login, this, menu_selector(UserLoginLayer::menuCallback));
-    loginItem->setPosition(600, 250);
+    loginItem->setPosition(S_RM->getPositionWithName("user_login_loginButton"));
     loginItem->setTag(kTagLogin);
     this->addMenuItem(loginItem);
     
@@ -109,7 +109,11 @@ void UserLoginLayer::menuCallback(CCObject *obj){
                 break;
         }
     }else{
-        this->replaceDialog(SettingsLayer::create());
+        if (isFromSetting) {
+            this->replaceDialog(SettingsLayer::create());
+        }else{
+            this->removeFromParent();
+        }
     }
 }
 
@@ -126,6 +130,9 @@ void UserLoginLayer::onJsonCompleted(CCDictionary* root){
     S_TT->makeText(fd->getCString());
     this->replaceDialog(ParentLayer::create());
     
-    S_LM->getDelegate()->setVisible(true);
-    S_LM->getDelegate()->fresh();
+    UserBarLayer* userBarLayer=S_LM->getDelegate();
+    if (userBarLayer!=NULL) {
+        userBarLayer->setVisible(true);
+        userBarLayer->fresh();
+    }
 }

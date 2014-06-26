@@ -16,12 +16,16 @@ public:
     EMPTY_CONSTRUCT_DESTRUCT(Kecheng);
     
     SYNTHESIZE_KEY(id);
-    SYNTHESIZE_INT(star);
+    SYNTHESIZE_INT(win);
+    SYNTHESIZE_INT(lose);
+    SYNTHESIZE_INT(lastTime);
     
     virtual void registTablenameAndProperty(){
         tablename="kecheng";
         INSERT_PROPERTYMAP(Kecheng,id);
-        INSERT_PROPERTYMAP(Kecheng,star);
+        INSERT_PROPERTYMAP(Kecheng,win);
+        INSERT_PROPERTYMAP(Kecheng,lose);
+        INSERT_PROPERTYMAP(Kecheng,lastTime);
     }
     
 public:

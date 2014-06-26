@@ -42,14 +42,17 @@ LevelManager* LevelManager::sharedLevelManager()
 }
 
 int LevelManager::setLevelByExpAndRule(){
-    int level=0;
+    int level=1;
     int exp=m_levelObject->getExp();
     for (vector<int>::iterator it=m_levelVector.begin(); it<m_levelVector.end(); it++) {
         if(exp>=*it){
             level++;
         }else{
             float upExp=*it;//升级目标经验
-            float baseExp=*(--it);//当前基础经验,使用float类型，用于计算比例
+            float baseExp=0;
+            if (level>1) {
+                baseExp=*(--it);//当前基础经验,使用float类型，用于计算比例
+            }
             m_levelObject->setProcess((exp-baseExp)/(upExp-baseExp));
             m_levelObject->setExpNextLevel(upExp);
             break;
@@ -60,6 +63,7 @@ int LevelManager::setLevelByExpAndRule(){
 }
 
 int LevelManager::gainExp(int exp){
+    S_AE->playEffect("mario2.mp3");
     m_levelObject->setExp(m_levelObject->getExp()+exp);
     S_UD->setIntegerForKey(USER_EXPERIENCE, m_levelObject->getExp());
     S_UD->flush();
@@ -70,9 +74,13 @@ void LevelManager::gain(const char* exp_action,CCPoint worldPoint,CCPointArray* 
     CCDictionary* actionDict=(CCDictionary*)m_levelRuleDict->objectForKey("exp_action");
     const CCString* exp=actionDict->valueForKey(exp_action);
     if (exp->length()>0) {
-        this->gainExp(exp->intValue());
-        if (m_delegate) {
-            m_delegate->gainExp(worldPoint,array);
-        }
+        this->gain(exp->intValue(), worldPoint,array);
+    }
+}
+
+void LevelManager::gain(int exp,CCPoint worldPoint,CCPointArray* array){
+    this->gainExp(exp);
+    if (m_delegate) {
+        m_delegate->gainExp(worldPoint,array);
     }
 }

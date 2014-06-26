@@ -16,9 +16,7 @@
 #include "SimpleAudioEngine.h"
 using namespace CocosDenshion;
 
-#define TOP_ORDER_INDEX INT_MAX-1
-#define GUIDE_DIALOG_LAYER INT_MAX
-#define GUIDE_EVENT_COVER_LAYER INT_MAX-1
+
 
 enum {
     kDialogText=0,
@@ -72,7 +70,6 @@ void GuideBaseLayer::step(){
     }
     m_cartoonPosition=CCPointZero;
     
-    
     m_guide=S_GM->getGuideDialogWithQueueKeyAndStepKey(m_queueKey.c_str(), m_stepKey.c_str());
     if (m_guide!=NULL) {
         m_guide->retain();
@@ -99,18 +96,20 @@ void GuideBaseLayer::step(){
             
         }
         
+        //reorder卡通角色
+        tag=guideDialog->getTag();
+        m_lastReorderTag=tag;
+        m_lastReorderOrder=m_cartoon->getZOrder();
+        this->reorderChild(m_cartoon, INT_MAX);
+        m_cartoonPosition=m_cartoon->getPosition();
+        if (guideDialog->getCartoonPoint().length()>0) {
+            m_cartoon->setPosition(S_RM->getPositionWithName(guideDialog->getCartoonPoint().c_str()));
+        }else if(guideDialog->getDialogType()==kDialogWithText){
+            m_cartoon->setPosition(S_RM->getPositionWithName("dialog_cartoon"));
+        }
+        
         //这里还没有关闭掉上个event对应的tag的点击事件
         if (guideDialog->getMode()!=kGuideDialogHidden) {
-            
-            //reorder卡通角色
-            tag=guideDialog->getTag();
-            m_lastReorderTag=tag;
-            m_lastReorderOrder=m_cartoon->getZOrder();
-            this->reorderChild(m_cartoon, INT_MAX);
-            m_cartoonPosition=m_cartoon->getPosition();
-            if(guideDialog->getDialogType()==kDialogWithText){
-                m_cartoon->setPosition(S_RM->getPositionWithName("dialog_cartoon"));
-            }
             
             GuideDialogLayer* guideDialogLayer=(GuideDialogLayer*)this->getChildByTag(GUIDE_DIALOG_LAYER);
             if (guideDialogLayer==NULL) {
@@ -118,9 +117,11 @@ void GuideBaseLayer::step(){
                 guideDialogLayer->setDelegate(this);
                 this->addChild(guideDialogLayer,TOP_ORDER_INDEX,GUIDE_DIALOG_LAYER);
             }
+            
             if(!DEBUG_OPEN)
                 guideDialogLayer->setVisible(false);
             guideDialogLayer->setGuideDialogData(guideDialog);
+            
         }
         
         S_ALP->play(guideDialog->getAudioArray());

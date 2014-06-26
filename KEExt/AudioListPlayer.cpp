@@ -47,7 +47,6 @@ void AudioListPlayer::play(CCArray* array){
 }
 
 void AudioListPlayer::play(const char * audio1, ...){
-    
     this->stop();
     va_list params;
 	va_start(params, audio1);

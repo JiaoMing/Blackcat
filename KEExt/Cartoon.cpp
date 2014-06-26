@@ -167,6 +167,7 @@ void Cartoon::doAction(const char * pszAction1, ...)
 
 void Cartoon::saySomething(const char *pszFileName, float duration)
 {
+    S_ALP->stop();
     SimpleAudioEngine::sharedEngine()->stopAllEffects();
     SimpleAudioEngine::sharedEngine()->playEffect(pszFileName);
     

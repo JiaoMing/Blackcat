@@ -14,6 +14,8 @@
 #include "SimpleAudioEngine.h"
 #include "KechengRewardLayer.h"
 #include "Utils.h"
+#include "Kecheng.h"
+#include "KechengController.h"
 
 using namespace CocosDenshion;
 
@@ -24,16 +26,14 @@ using namespace CocosDenshion;
 #define TAG_HANZI 100
 #define TAG_XINGLAYER 200
 #define TAG_HANZI_ZI 1
-#define TAG_HANZI_RESULT 2
 #define TAG_NUMBER_START 10
 #define TAG_QUESTION -6
 #define TAG_XIAOHONGHUA -7
 #define SELECT_COUNT 4
 
-KechengExamScene::KechengExamScene(KechengExamSceneDelegate* kechengExamSceneDelegate,vector<Hanzi*>* hanziVector):
+KechengExamScene::KechengExamScene(KechengExamSceneDelegate* kechengExamSceneDelegate):
 m_examCount(0),
 m_rightCount(0),
-m_hanziVector(hanziVector),
 m_kechengExamSceneDelegate(kechengExamSceneDelegate),
 m_daojishi(10)
 {
@@ -44,10 +44,10 @@ KechengExamScene::~KechengExamScene(){
     S_RM->removeSceneRes("RenwuScene");
 }
 
-CCScene* KechengExamScene::scene(KechengExamSceneDelegate* kechengExamSceneDelegate,vector<Hanzi*>* hanziVector)
+CCScene* KechengExamScene::scene(KechengExamSceneDelegate* kechengExamSceneDelegate)
 {
     CCScene *scene = CCScene::create();
-    KechengExamScene *layer = new KechengExamScene(kechengExamSceneDelegate,hanziVector);
+    KechengExamScene *layer = new KechengExamScene(kechengExamSceneDelegate);
     if (layer && layer->init())
     {
         layer->autorelease();
@@ -68,6 +68,7 @@ bool KechengExamScene::init()
         return false;
     }
     
+    S_KC->insertKechengIfNotExists();
     
     CCMenu* menu=CCMenu::create();
     menu->setTag(TAG_MAIN_MENU);
@@ -94,23 +95,17 @@ bool KechengExamScene::init()
     question->setPosition(S_RM->getPositionWithName("renwu_question"));
     questionLayer->addChild(question);
     
-    for (int i=0; i<6; i++) {
-        CCString* numberStr=CCString::createWithFormat("renwu_%d.png",i+1);
-        CCSprite* number=CCSprite::createWithSpriteFrameName(numberStr->getCString());
+    for (int i=0; i<S_KC->getHanziVector()->size(); i++) {
+        CCLabelTTF* number=CCLabelTTF::create("?", "KaiTi.ttf", 30);
+        number->setColor(ccc3(0, 0, 0));
         CCString* pointStr=CCString::createWithFormat("renwu_jieguo_%d",i+1);
         CCPoint point=S_RM->getPositionWithName(pointStr->getCString());
-        
         CCSize size=S_RM->getSizeWithName("renwu_question_jieguo_offset");
         number->setPosition(ccp(point.x,point.y+size.height));
         number->setTag(TAG_NUMBER_START+i);
         questionLayer->addChild(number);
     }
     
-    
-    CCSprite* result=CCSprite::create();
-    result->setPosition(S_RM->getPositionWithName("renwu_result"));
-    result->setTag(TAG_HANZI_RESULT);
-    this->addChild(result);
     
     
     //汉字和鼹鼠
@@ -155,7 +150,6 @@ bool KechengExamScene::init()
     //延时后开始测试
     scheduleOnce(schedule_selector(KechengExamScene::exam), time);
     
-    
     //打开android按键响应
     this->setKeypadEnabled(true);
     
@@ -164,13 +158,13 @@ bool KechengExamScene::init()
 
 
 void KechengExamScene::outOfOrder(){
-    size_t size=m_hanziVector->size();
+    size_t size=S_KC->getHanziVector()->size();
     int i=0,random=0;
     for (i=0; i<size; i++) {
         random=(int) (CCRANDOM_0_1()*size);
-        Hanzi* swp=(*m_hanziVector)[i];
-        (*m_hanziVector)[i]=(*m_hanziVector)[random];
-        (*m_hanziVector)[random]=swp;
+        Hanzi* swp=(*S_KC->getHanziVector())[i];
+        (*S_KC->getHanziVector())[i]=(*S_KC->getHanziVector())[random];
+        (*S_KC->getHanziVector())[random]=swp;
     }
 }
 
@@ -194,11 +188,12 @@ void KechengExamScene::reExam(){
 void KechengExamScene::exam(){
     //放大当前题号精灵
     CCLayer* questionLayer=(CCLayer*)this->getChildByTag(TAG_QUESTION);
-    CCSprite* number=(CCSprite*)questionLayer->getChildByTag(TAG_NUMBER_START+m_examCount);
-    number->runAction(CCScaleTo::create(0.2, 1.3));
+    CCLabelTTF* hanzi=(CCLabelTTF*)questionLayer->getChildByTag(TAG_NUMBER_START+m_examCount);
+    hanzi->runAction(CCScaleTo::create(0.2, 1.3));
     if (m_examCount>0) {
-        CCSprite* number=(CCSprite*)questionLayer->getChildByTag(TAG_NUMBER_START+m_examCount-1);
-        number->runAction(CCScaleTo::create(0.2, 1));
+        CCLabelTTF* hanzi=(CCLabelTTF*)questionLayer->getChildByTag(TAG_NUMBER_START+m_examCount-1);
+        hanzi->setString(m_hanzi->getzi().c_str());
+        hanzi->runAction(CCScaleTo::create(0.2, 1));
     }
     
     int random=(int) (CCRANDOM_0_1()*4);//生成当前汉字位置
@@ -208,14 +203,14 @@ void KechengExamScene::exam(){
         CCSprite* sprite=(CCSprite*)item->getChildren()->objectAtIndex(0);
         CCLabelTTF* label=(CCLabelTTF*)(sprite->getChildByTag(TAG_HANZI_ZI));
         if (i-1==random) {
-            label->setString(m_hanziVector->at(m_examCount)->getzi().c_str());
+            label->setString(S_KC->getHanziVector()->at(m_examCount)->getzi().c_str());
         }else{
-            label->setString(m_hanziVector->at((i+m_examCount)%m_hanziVector->size())->getzi().c_str());
+            label->setString(S_KC->getHanziVector()->at((i+m_examCount)%S_KC->getHanziVector()->size())->getzi().c_str());
         }
     }
     
     //播放汉字音频
-    m_hanzi=m_hanziVector->at(m_examCount);
+    m_hanzi=S_KC->getHanziVector()->at(m_examCount);
     m_isPlayDing=true;
     this->readHanzi(0);
     m_isPlayDing=false;
@@ -270,9 +265,15 @@ void KechengExamScene::readHanzi(float t){
 }
 
 void KechengExamScene::timeUp(){
+    CCSprite* wrong=CCSprite::createWithSpriteFrameName("renwu_ku.png");
+    CCString* point=CCString::createWithFormat("renwu_jieguo_%d",m_examCount);
+    wrong->setPosition(S_RM->getPositionWithName(point->getCString()));
+    wrong->setScale(0.3);
+    this->addChild(wrong);
+    
     this->answerResult(kAnswerResultWrong);
     
-    if (m_examCount<m_hanziVector->size()) {
+    if (m_examCount<S_KC->getHanziVector()->size()) {
         this->reExam();
     }else{
         this->examEnd();
@@ -295,10 +296,11 @@ void KechengExamScene::menuCallback(CCObject* object){
         CCLabelTTF* label=(CCLabelTTF*)(sprite->getChildByTag(TAG_HANZI_ZI));
         const char* zi=label->getString();
 
-        CCSprite* result=(CCSprite*)this->getChildByTag(TAG_HANZI_RESULT);
-        result->stopAllActions();
-        result->setOpacity(255);
-        result->setVisible(true);
+        
+        CCLayer* xiaohonghua=(CCLayer*)this->getChildByTag(TAG_XIAOHONGHUA);
+        
+        CCSprite* result=CCSprite::create();
+        result->setPosition(node->getPosition());
         
         if (!strcmp(zi, m_hanzi->getzi().c_str())) {
             this->answerResult(kAnswerResultRight);
@@ -307,17 +309,31 @@ void KechengExamScene::menuCallback(CCObject* object){
             this->answerResult(kAnswerResultWrong);
             result->setDisplayFrame(S_SF->spriteFrameByName("renwu_ku.png"));
         }
-        result->runAction(CCSequence::create(CCDelayTime::create(1.0f),CCFadeOut::create(1.0f),NULL));
+        xiaohonghua->addChild(result);
         
-        if (m_examCount<m_hanziVector->size()) {
+        CCString* pointStr=CCString::createWithFormat("renwu_jieguo_%d",m_examCount);
+        CCPoint point=S_RM->getPositionWithName(pointStr->getCString());
+        result->runAction(CCSpawn::create(CCMoveTo::create(0.5, point),CCScaleTo::create(0.5, 0.3),NULL));
+        
+        //显示汉字
+        CCLayer* questionLayer=(CCLayer*)this->getChildByTag(TAG_QUESTION);
+        CCLabelTTF* hanzi=(CCLabelTTF*)questionLayer->getChildByTag(TAG_NUMBER_START+m_examCount-1);
+        hanzi->setString(m_hanzi->getzi().c_str());
+        hanzi->runAction(CCScaleTo::create(0.2, 1));
+        
+        if (m_examCount<S_KC->getHanziVector()->size()) {
             scheduleOnce(schedule_selector(KechengExamScene::reExam), 1.0f);
         }else{
             this->yanshuOut(0.1);
             this->examEnd();
         }
+        
+        
+        
     }else{
         switch (tag) {
             case TAG_BACK:
+                S_ALP->stop();
                 SimpleAudioEngine::sharedEngine()->stopAllEffects();
                 CCDirector::sharedDirector()->popScene();
                 break;
@@ -326,23 +342,17 @@ void KechengExamScene::menuCallback(CCObject* object){
                 break;
         }
     }
+    
+    
 }
 
 void KechengExamScene::answerResult(AnswerResult ar){
     switch (ar) {
         case kAnswerResultRight:{
             //答对了
-//            m_hanziVector->at(m_examCount-1)->setIntlastAnswer(1);
             m_rightCount++;
             
             m_heimao->action("heimao_renwuRight");
-            
-            CCLayer* xiaohonghua=(CCLayer*)this->getChildByTag(TAG_XIAOHONGHUA);
-            CCSprite* dui=CCSprite::createWithSpriteFrameName("renwu_xiaohonghua.png");
-            CCString* point=CCString::createWithFormat("renwu_jieguo_%d",m_examCount);
-            dui->setPosition(S_RM->getPositionWithName(point->getCString()));
-            xiaohonghua->addChild(dui);
-            
             S_AE->playEffect("renwu_guzhang.mp3");
         }
             
@@ -351,13 +361,6 @@ void KechengExamScene::answerResult(AnswerResult ar){
         case kAnswerResultWrong:{
             //答错了
             m_heimao->action("heimao_renwuWrong");
-//            m_hanziVector->at(m_examCount-1)->setIntlastAnswer(0);
-            
-//            CCSprite* cuo=CCSprite::createWithSpriteFrameName("renwu_cuo.png");
-//            CCString* point=CCString::createWithFormat("renwu_%d",11+m_examCount);
-//            cuo->setPosition(S_RM->getPositionWithName(point->getCString()));
-            //            this->addChild(cuo);
-            
             S_AE->playEffect("renwu_cuo.mp3");
         }
             
@@ -368,10 +371,14 @@ void KechengExamScene::answerResult(AnswerResult ar){
 void KechengExamScene::examEnd(){
     //还原标题
     CCLayer* questionLayer=(CCLayer*)this->getChildByTag(TAG_QUESTION);
-    CCSprite* number=(CCSprite*)questionLayer->getChildByTag(TAG_NUMBER_START+m_examCount-1);
-    number->runAction(CCScaleTo::create(0.2, 1));
+    CCLabelTTF* hanzi=(CCLabelTTF*)questionLayer->getChildByTag(TAG_NUMBER_START+m_examCount-1);
+    hanzi->runAction(CCScaleTo::create(0.2, 1));
+    hanzi->setString(m_hanzi->getzi().c_str());
     
-    if (m_rightCount>=6) {
+    
+    S_KC->updateKecheng(m_rightCount>=S_KC->getHanziVector()->size());
+    
+    if (m_rightCount>=S_KC->getHanziVector()->size()) {
         //全部答完
         
         CCLayer* questionLayer=(CCLayer*)this->getChildByTag(TAG_QUESTION);
@@ -385,6 +392,7 @@ void KechengExamScene::examEnd(){
         m_heimao->action("heimao_renwuJiayou");
         this->scheduleOnce(schedule_selector(KechengExamScene::showDialog), 5);
     }
+    
     
 }
 

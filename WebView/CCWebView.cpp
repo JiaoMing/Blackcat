@@ -8,7 +8,7 @@
 
 #include "CCWebView.h"
 #include "CCWebViewImpl.h"
-
+#include "ObjectManager.h"
 
 CCWebView::CCWebView(){
     
@@ -31,6 +31,16 @@ CCWebView* CCWebView::create(const char* htmlFilename,CCRect rectOfScreen){
         pRet = NULL;
         return NULL;
     }
+}
+
+void CCWebView::onEnter(){
+    CCLayer::onEnter();
+    ObjectManager::sharedObjectManager()->setWebView(this);
+}
+
+void CCWebView::onExit(){
+    CCLayer::onExit();
+    ObjectManager::sharedObjectManager()->setWebView(NULL);
 }
 
 bool CCWebView::init(const char* htmlFilename,CCRect rectOfScreen){

@@ -47,11 +47,13 @@ Guide* GuideManager::getGuideDialogWithQueueKeyAndStepKey(const char* queueKey,c
             const CCString* mode=dialogDict->valueForKey("mode");
             const CCString* type=dialogDict->valueForKey("type");
             const CCString* action=dialogDict->valueForKey("action");
+            const CCString* cartoonPoint=dialogDict->valueForKey("cartoonPoint");
             
             GuideDialog* guideDialog=new GuideDialog();
             guideDialog->setTag(tag->intValue());
             guideDialog->setDuration(duration->floatValue());
             guideDialog->setText(text->getCString());
+            guideDialog->setCartoonPoint(cartoonPoint->getCString());
             if (autoStep->length()>0) {
                 guideDialog->setIsAutoStep(autoStep->boolValue());
             }

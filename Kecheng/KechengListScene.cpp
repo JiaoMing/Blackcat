@@ -84,16 +84,26 @@ void KechengListScene::kechengTouchCallBack(){
 void KechengListScene::menuCallback(CCObject* pSender)
 {
     S_AM->removeAsyncResource("RenwuScene");
+    S_ALP->stop();
     S_AE->stopAllEffects();
     bool isBgMusicRunning=S_UD->getBoolForKey("BG_MUSIC",true);
     if (isBgMusicRunning) {
         S_AE->resumeBackgroundMusic();
     }
-    CCDirector::sharedDirector()->replaceScene(HomeScene::scene());
+    S_DR->replaceScene(HomeScene::scene());
 }
 
 void KechengListScene::heimaoAction(){
-    CCString* key=CCString::createWithFormat("heimao_renwuWelcome%d",static_getDayRenwuCount()+1);
+    
+    
+    string time=TimeUtils::getYYYYMMDD();
+    string lastTime=S_UD->getStringForKey(LAST_RENWU_DAY);
+    int count=0;
+    if (time==lastTime) {
+        count=S_UD->getIntegerForKey(LAST_RENWU_DAY_COUNT, 0);
+    }
+    
+    CCString* key=CCString::createWithFormat("heimao_renwuWelcome%d",count+1);
     m_heimao->action(key->getCString());
 }
 

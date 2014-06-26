@@ -26,9 +26,9 @@ class KechengExamSceneDelegate;
 class KechengExamScene : public KechengBaseLayer,public GuideDialogDelegate{
     
 public:
-    static CCScene* scene(KechengExamSceneDelegate* kechengExamSceneDelegate,vector<Hanzi*>* hanziVector);
+    static CCScene* scene(KechengExamSceneDelegate* kechengExamSceneDelegate);
 public:
-    KechengExamScene(KechengExamSceneDelegate* kechengExamSceneDelegate,vector<Hanzi*>* hanziVector);
+    KechengExamScene(KechengExamSceneDelegate* kechengExamSceneDelegate);
     ~KechengExamScene();
     virtual bool init();
     virtual void keyBackClicked();
@@ -52,8 +52,6 @@ private:
     virtual int topHandlerPriority(){return kCCMenuHandlerPriority-1;}
     virtual void dialogCallBack(GuideDialogCMD cmd);
 private:
-    int m_kcid;//课程ID
-    vector<Hanzi*>* m_hanziVector;//课程汉字
     int m_examCount;//答题数量
     int m_rightCount;//答对次数
     KechengExamSceneDelegate* m_kechengExamSceneDelegate;

@@ -30,10 +30,13 @@ public:
     void rankCallBack(CCObject* object);
     
     void logoFreshCallBack(CCNode* node);
+    
+    void setDelegate(CoverLayerDelegate* delegate){m_delegate=delegate;};
 private:
     CCLayer* m_rankingDataLayer;
     CCMenu* m_logoMenu;
     bool m_isLogoShow;//用于logo和排行榜切换
+    CoverLayerDelegate* m_delegate;
 };
 
 #endif

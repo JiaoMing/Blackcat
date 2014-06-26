@@ -17,6 +17,10 @@ class CopyRightLayer : public CoverLayer
 public:
     virtual bool init();
     CREATE_FUNC(CopyRightLayer);
+    
+    // touch event
+    virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent);
+
 };
 
 #endif

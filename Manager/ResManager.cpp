@@ -173,6 +173,36 @@ CCPoint ResManager::getPositionWithName(const char *pszName)
     }
 }
 
+
+CCRect ResManager::getRectWithName(const char *pszName)
+{
+    
+    CCDictionary* pPositionDict=(CCDictionary*)m_pPositionDict->objectForKey(pszName);
+    if(pPositionDict!=NULL){
+        const CCString *x=pPositionDict->valueForKey("x");
+        const CCString *y=pPositionDict->valueForKey("y");
+        const CCString *width=pPositionDict->valueForKey("width");
+        const CCString *height=pPositionDict->valueForKey("height");
+        return CCRectMake(x->intValue()*m_fRatio,VISIBLE_SIZE.height-y->intValue()*m_fRatio-height->intValue()*m_fRatio, width->intValue()*m_fRatio, height->intValue()*m_fRatio);
+    }else {
+        return CCRectZero;
+    }
+}
+
+CCRect ResManager::getGLRectWithName(const char *pszName)
+{
+    CCDictionary* pPositionDict=(CCDictionary*)m_pPositionDict->objectForKey(pszName);
+    if(pPositionDict!=NULL){
+        const CCString *x=pPositionDict->valueForKey("x");
+        const CCString *y=pPositionDict->valueForKey("y");
+        const CCString *width=pPositionDict->valueForKey("width");
+        const CCString *height=pPositionDict->valueForKey("height");
+        return CCRectMake(x->intValue()*m_fRatio,y->intValue()*m_fRatio, width->intValue()*m_fRatio, height->intValue()*m_fRatio);
+    }else {
+        return CCRectZero;
+    }
+}
+
 float ResManager::getScaleWithName(const char *pszName)
 {
     CCDictionary* pPositionDict=(CCDictionary*)m_pPositionDict->objectForKey(pszName);

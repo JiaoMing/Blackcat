@@ -13,6 +13,7 @@
 #include "cocos-ext.h"
 USING_NS_CC;
 USING_NS_CC_EXT;
+#include "DialogLayer.h"
 
 class LevelObject :public CCObject{
 public:
@@ -57,15 +58,20 @@ public:
     virtual void setPosition(const CCPoint &position)=0;
 };
 
-class UserBarLayer :public CCLayer,public LevelDelegate{
+class UserBarLayer :public CCLayer,public LevelDelegate,public CoverLayerDelegate{
 public:
+    static UserBarLayer* create();
+    
     UserBarLayer();
     ~UserBarLayer();
     virtual bool init();
     virtual void onEnter();
     virtual void onExit();
+    virtual bool ccTouchBegan(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent);
+    virtual void ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent);
     
-    CREATE_FUNC(UserBarLayer);
+    
+    virtual int topHandlerPriority(){return kCCMenuHandlerPriority;}
     
     void fresh();
     
@@ -77,12 +83,14 @@ public:
     /**
      *刷新等级数据
      */
-    virtual void expUp();
+    virtual void xingxingCallback(CCNode* node);
     
     virtual void setPosition(const CCPoint &position){CCNode::setPosition(position);};
 private:
     void levelUp();
+    void scheduleReOrder(float t);
 private:
+    CCSprite* m_progressGuang;
     CCProgressTimer* m_progress;
     CCLabelTTF* m_username;
     CCLabelTTF* m_levelLabel;
@@ -91,6 +99,9 @@ private:
     LevelObject* m_levelObject;
     CCScale9Sprite* m_mingzi9Sprite;
     int m_zOrder;//保存历史zorder
+    int m_xingxingCount;
+    int m_xingxingCallbackCount;
+    
 };
 
 #endif /* defined(__Blackcat__UserBarLayer__) */

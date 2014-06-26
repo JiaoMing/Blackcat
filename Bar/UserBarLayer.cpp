@@ -8,27 +8,48 @@
 
 #include "UserBarLayer.h"
 #include "resource.h"
+#include "UserLoginLayer.h"
+#include "ChildLayer.h"
+#include "ObjectManager.h"
 
 #define TAG_XINGXING_FLOAT 10
 
 UserBarLayer::UserBarLayer(){
     m_levelObject=(LevelObject*)(S_LM->getLevelObject())->copy();
-    S_LM->setDelegate(this);
+    m_xingxingCallbackCount=0;
 }
 
 UserBarLayer::~UserBarLayer(){
     m_levelObject->release();
-    S_LM->setDelegate(NULL);
+}
+
+UserBarLayer* UserBarLayer::create()
+{
+    UserBarLayer* layer = new UserBarLayer;
+    if (layer && layer->init())
+    {
+        layer->autorelease();
+    }
+    else
+    {
+        delete layer;
+        layer = NULL;
+    }
+    return layer;
 }
 
 void UserBarLayer::onEnter(){
     CCLayer::onEnter();
+    S_LM->setDelegate(this);
+    this->fresh();
+    S_DR->getTouchDispatcher()->addTargetedDelegate(this, kCCMenuHandlerPriority, true);
 }
 
 void UserBarLayer::onExit(){
     CCLayer::onExit();
+    S_LM->setDelegate(NULL);
+    S_DR->getTouchDispatcher()->removeDelegate(this);
 }
-
 
 bool UserBarLayer::init(){
     if (!CCLayer::init()) {
@@ -56,17 +77,19 @@ bool UserBarLayer::init(){
         size.width=150;
     }
     m_username->setPosition(ccp(size.width/2,size.height/2));
-//    m_mingzi9Sprite->addChild(m_username);
+    m_mingzi9Sprite->addChild(m_username);
     m_mingzi9Sprite->setContentSize(size);
-    m_username->setAnchorPoint(ccp(0, 0.5));
+//    m_username->setAnchorPoint(ccp(0, 0.5));
     m_username->setPosition(S_RM->getRelativePosition("user_mingzi_left", relativeHeight));
-    this->addChild(m_username);
+//    this->addChild(m_username);
     
-    
-    
-//    this->addChild(m_mingzi9Sprite);
+    this->addChild(m_mingzi9Sprite);
     
     CCPoint jinduPoint=S_RM->getRelativePosition("user_jindu", relativeHeight);
+    m_progressGuang = CCSprite::createWithSpriteFrameName("touxiang_jindu_3.png");
+    m_progressGuang->setPosition(jinduPoint);
+    m_progressGuang->setOpacity(0);
+    this->addChild(m_progressGuang);
     CCSprite* progressBg = CCSprite::createWithSpriteFrameName("touxiang_jindu_1.png");
     progressBg->setPosition(jinduPoint);
     this->addChild(progressBg);
@@ -93,30 +116,63 @@ bool UserBarLayer::init(){
     CCString* exp=CCString::createWithFormat("%d/%d",m_levelObject->getExp(),m_levelObject->getExpNextLevel());
     m_expLabel=CCLabelTTF::create(exp->getCString(), "", 17);
     m_expLabel->setColor(ccc3(0, 0, 0));
-    m_expLabel->setPosition(S_RM->getRelativePosition("user_jindu", relativeHeight));
+    m_expLabel->setPosition(jinduPoint);
     this->addChild(m_expLabel);
     
-    m_xingDisplayPoint=xingxingPoint;
+    m_xingDisplayPoint=jinduPoint;
     
-    if (S_UD->getStringForKey(UDKEY_USER_USERNAME).length()==0) {
-        this->setVisible(false);
-    }
+//    if (S_UD->getStringForKey(UDKEY_USER_USERNAME).length()==0) {
+//        this->setVisible(false);
+//    }
     
     return true;
+}
+
+bool UserBarLayer::ccTouchBegan(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent){
+    CCPoint point=pTouch->getLocation();
+    point=this->convertToNodeSpace(point);
+    if (CCRectMake(0, 0, 220, 70).containsPoint(point)) {
+        
+#pragma message "暂时取消点击"
+//        return true;
+    }
+    return false;
+}
+
+void UserBarLayer::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent){
+    CCPoint point=pTouch->getLocation();
+    point=this->convertToNodeSpace(point);
+    if (CCRectMake(0, 0, 220, 70).containsPoint(point)) {
+        if (S_UD->getStringForKey("USER_USERNAME", "")=="") {
+            UserLoginLayer* layer=UserLoginLayer::create();
+            layer->setDelegate(this);
+            layer->setPosition(this->convertToNodeSpace(CCPointZero));
+            this->addChild(layer,INT_MAX);
+        }else{
+            ChildLayer* layer=ChildLayer::create();
+            layer->setDelegate(this);
+            layer->setPosition(this->convertToNodeSpace(CCPointZero));
+            this->addChild(layer,INT_MAX);
+        }
+    }
 }
 
 void UserBarLayer::fresh(){
     m_levelObject->release();
     m_levelObject=(LevelObject*)(S_LM->getLevelObject())->copy();
     
-    m_username->setString(S_UD->getStringForKey(UDKEY_USER_USERNAME).c_str());
+    string username=S_UD->getStringForKey(UDKEY_USER_USERNAME);
+    if (username.length()==0) {
+        username="未登陆";
+    }
+    m_username->setString(username.c_str());
     CCSize size=CCSizeMake(m_username->getContentSize().width+20, 37);
     if (size.width>150) {
         m_username->setScale(150/size.width);
         size.width=150;
     }
     m_username->setPosition(ccp(size.width/2,size.height/2));
-//    m_mingzi9Sprite->setContentSize(size);
+    m_mingzi9Sprite->setContentSize(size);
     
     
     CCString* level=CCString::createWithFormat("%d",m_levelObject->getLevel());
@@ -131,9 +187,12 @@ void UserBarLayer::gainExp(CCPoint worldPoint,CCPointArray* array){
     m_zOrder=this->getZOrder();
     this->setZOrder(INT_MAX);
     
+    m_xingxingCallbackCount=0;
+    m_xingxingCount=0;
+    
     //测试用例
     if (worldPoint.x==-1) {
-        this->expUp();
+        this->xingxingCallback(NULL);
         return;
     }
     
@@ -142,70 +201,91 @@ void UserBarLayer::gainExp(CCPoint worldPoint,CCPointArray* array){
         array->addControlPoint(worldPoint);
     }
     
-    for (int i=0; i<array->count(); i++) {
+    m_xingxingCount=array->count();
+    
+    for (int i=0; i<m_xingxingCount; i++) {
         CCPoint point=this->convertToNodeSpace(array->getControlPointAtIndex(i));
         
-        CCSprite* xingguang1=CCSprite::createWithSpriteFrameName("xingguang.png");
-        xingguang1->runAction(CCRepeatForever::create(CCRotateBy::create(5, 360)));
-        CCSprite* xingguang2=CCSprite::createWithSpriteFrameName("xingguang.png");
-        xingguang2->runAction(CCRepeatForever::create(CCRotateBy::create(5, -360)));
+        CCParticleSun* emitter = CCParticleSun::create();
+        emitter->setTexture(CCTextureCache::sharedTextureCache()->addImage("fire.png"));
+        emitter->setPosition(point);
+        this->addChild(emitter);
         
-        CCSprite* xingxing=CCSprite::createWithSpriteFrameName("xing_float.png");
-        xingxing->setTag(TAG_XINGXING_FLOAT);
-        xingxing->setPosition(point);
-        CCPoint midPoint=CCPoint(xingxing->getContentSize().width/2, xingxing->getContentSize().height/2);
-        xingguang1->setPosition(midPoint);
-        xingguang2->setPosition(midPoint);
-        xingxing->addChild(xingguang1,-1);
-        xingxing->addChild(xingguang2,-2);
-        this->addChild(xingxing);
+        CCAnimation* animation=CCAnimation::create();
+        animation->addSpriteFrame(S_SF->spriteFrameByName("xing_xuanzhuang_1.png"));
+        animation->addSpriteFrame(S_SF->spriteFrameByName("xing_xuanzhuang_2.png"));
+        animation->addSpriteFrame(S_SF->spriteFrameByName("xing_xuanzhuang_3.png"));
+        animation->addSpriteFrame(S_SF->spriteFrameByName("xing_xuanzhuang_4.png"));
+        animation->setDelayPerUnit(0.1);
+        animation->setRestoreOriginalFrame(true);
+        CCAnimate* animate=CCAnimate::create(animation);
+        CCSprite* xing=CCSprite::create();
+//        xing->setPosition(point);
+        emitter->addChild(xing);
+        xing->setScale(0.4);
+        xing->runAction(CCSequence::create(CCRepeat::create(animate, 5),NULL) );
         
         CCFiniteTimeAction* delay=CCDelayTime::create(i*(0.6/array->count()));
         
         CCFiniteTimeAction* moveTo=CCMoveTo::create(1.5, m_xingDisplayPoint);
-        CCFiniteTimeAction* scaleTo=CCScaleTo::create(1.5, 0.2);
+        CCFiniteTimeAction* scaleTo=CCScaleTo::create(1.5, 0.4);
         CCFiniteTimeAction* spawn=CCSpawn::create(moveTo,scaleTo,NULL);
         CCFiniteTimeAction* fadeOut=CCFadeOut::create(0.5);
-        CCFiniteTimeAction* callFunc=CCCallFunc::create(this, callfunc_selector(UserBarLayer::expUp));
+        CCFiniteTimeAction* callFunc=CCCallFuncN::create(this, callfuncN_selector(UserBarLayer::xingxingCallback));
         
         CCArray* actionArray=CCArray::create();
         actionArray->addObject(delay);
         actionArray->addObject(spawn);
         actionArray->addObject(fadeOut);
-        if (i==array->count()-1) {
-            actionArray->addObject(callFunc);
-        }
-        xingxing->runAction(CCSequence::create(actionArray));
-        
-        CCFiniteTimeAction* guangAction=CCSequence::create(delay,CCFadeOut::create(2),NULL);
-        xingguang1->runAction(guangAction);
-        xingguang2->runAction((CCFiniteTimeAction*)guangAction->copy());
+        actionArray->addObject(callFunc);
+        emitter->runAction(CCSequence::create(actionArray));
     }
 }
 
-void UserBarLayer::expUp(){
-    this->removeChildByTag(TAG_XINGXING_FLOAT);
-    LevelObject* levelObject=S_LM->getLevelObject();
-    CCAction* action;
-    if (m_levelObject->getLevel()==levelObject->getLevel()) {
-        action= CCProgressFromTo::create(0.5, m_levelObject->getProcess()*100, levelObject->getProcess()*100);
-    }else{
-        CCProgressFromTo* progressFromTo1 = CCProgressFromTo::create(0.5, m_levelObject->getProcess()*100, 100);
-        CCProgressFromTo* progressFromTo2 = CCProgressFromTo::create(0.5, 0, levelObject->getProcess()*100);
-        action=CCSequence::create(progressFromTo1,CCCallFunc::create(this, callfunc_selector(UserBarLayer::levelUp)),progressFromTo2,NULL);
+void UserBarLayer::xingxingCallback(CCNode* node){
+    if (node) {
+        this->removeChild(node);
+        m_xingxingCallbackCount++;
+        
     }
-    m_progress->runAction(action);
-    
-    m_levelObject->release();
-    m_levelObject=(LevelObject*)(S_LM->getLevelObject())->copy();
-    
-    CCString* expNextLevel=CCString::createWithFormat("%d/%d",m_levelObject->getExp(),m_levelObject->getExpNextLevel());
-    m_expLabel->setString(expNextLevel->getCString());
-    
-    this->setZOrder(m_zOrder);
+    if (m_xingxingCallbackCount==m_xingxingCount) {
+        float delayToReorder=0;
+        m_progressGuang->runAction(CCSequence::create(CCFadeIn::create(0.5),CCFadeOut::create(0.5),NULL));
+        
+        LevelObject* levelObject=S_LM->getLevelObject();
+        CCAction* action;
+        if (m_levelObject->getLevel()==levelObject->getLevel()) {
+            delayToReorder=0.5;
+            action= CCProgressFromTo::create(0.5, m_levelObject->getProcess()*100, levelObject->getProcess()*100);
+        }else{
+            delayToReorder=1.0;
+            CCProgressFromTo* progressFromTo1 = CCProgressFromTo::create(0.5, m_levelObject->getProcess()*100, 100);
+            CCProgressFromTo* progressFromTo2 = CCProgressFromTo::create(0.5, 0, levelObject->getProcess()*100);
+            action=CCSequence::create(progressFromTo1,CCCallFunc::create(this, callfunc_selector(UserBarLayer::levelUp)),progressFromTo2,NULL);
+        }
+        m_progress->runAction(action);
+        
+        m_levelObject->release();
+        m_levelObject=(LevelObject*)levelObject->copy();
+        
+        CCString* expNextLevel=CCString::createWithFormat("%d/%d",m_levelObject->getExp(),m_levelObject->getExpNextLevel());
+        m_expLabel->setString(expNextLevel->getCString());
+        
+        this->scheduleOnce(schedule_selector(UserBarLayer::scheduleReOrder), delayToReorder);
+    }
 }
 
 void UserBarLayer::levelUp(){
+    S_AE->playEffect("mario1.mp3");
     CCString* level=CCString::createWithFormat("%d",m_levelObject->getLevel());
     m_levelLabel->setString(level->getCString());
+}
+
+void UserBarLayer::scheduleReOrder(float t){
+    //为解决在线程过程中被修改了zorder的情况，增加了INT_MAX判断
+    if (this->getZOrder()!=INT_MAX) {
+        this->setZOrder(ORDER_USERBAR);
+    }else{
+        this->setZOrder(m_zOrder);
+    }
 }

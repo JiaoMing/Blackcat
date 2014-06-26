@@ -59,7 +59,8 @@ public:
     CC_SYNTHESIZE(bool, m_isClickable, IsClickAble);
     CC_SYNTHESIZE(string, m_name, Name);
     CC_SYNTHESIZE(CCSpriteFrame*, m_stopPos, StopPos);
-    CC_SYNTHESIZE(CCArray*, m_Animates, Animates);
+    CC_SYNTHESIZE(CCArray*, m_animates, Animates);
+    CC_SYNTHESIZE(CCRect, m_touchRect, TouchRect);
 private:
     CCPoint m_oPointBegan;
 public:

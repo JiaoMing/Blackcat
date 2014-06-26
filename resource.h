@@ -29,6 +29,7 @@ using namespace CocosDenshion;
 #include "Api.h"
 #include "LevelManager.h"
 #include "UserBarLayer.h"
+#include "AchieveManager.h"
 
 /*** 系统相关start ***/
 #define S_APP CCApplication::sharedApplication()
@@ -47,16 +48,25 @@ using namespace CocosDenshion;
 #define S_AFM ActionFlowManager::sharedActionFlowManager()
 #define S_TT Toast::sharedToast()
 #define S_LM LevelManager::sharedLevelManager()
+#define S_AEM AchieveManager::sharedAchieveManager()
 
 #define W_SIZE S_DR->getWinSize()
 #define TAGERT_PLATFORM S_APP->getTargetPlatform()
 /*** 系统相关end ***/
 
+//待处理：执行stopAllEffects必须添加S_ALP->stop()
+
 /*** 全局start ***/
 
-#define DEBUG_OPEN 1//调试开关
+#define DEBUG_OPEN 0//调试开关
 #define ORDER_DIALOG INT_MAX//对话框层序(order)
 #define ORDER_USERBAR (ORDER_DIALOG-1)//用户信息bar层序(order)
+
+
+//!!!!!有冲突需要解决
+#define GUIDE_DIALOG_LAYER INT_MAX
+#define TOP_ORDER_INDEX GUIDE_DIALOG_LAYER-1
+#define GUIDE_EVENT_COVER_LAYER GUIDE_DIALOG_LAYER-1
 
 /*** 全局end ***/
 
@@ -89,16 +99,6 @@ typedef enum{
 
 
 /*** 任务相关start ***/
-
-static int static_getDayRenwuCount(){
-    string time=TimeUtils::getYYYYMMDD();
-    string lastTime=S_UD->getStringForKey(LAST_RENWU_DAY);
-    int count=0;
-    if (time==lastTime) {
-        count=S_UD->getIntegerForKey(LAST_RENWU_DAY_COUNT, 0);
-    }
-    return count;
-}
 
 static void static_uploadRanking(){
     string token=S_UD->getStringForKey(UDKEY_USER_TOKEN);

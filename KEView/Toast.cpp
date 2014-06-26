@@ -34,9 +34,10 @@ bool Toast::init(){
 }
 
 void Toast::makeText(const char *text){
+    CCPoint point=S_RM->getPositionWithName("global_toast");
     if (m_label==NULL) {
         m_label=CCLabelTTF::create(text, "KaiTi.ttf", 20);
-        m_label->setPosition(ccp(512, 50));
+        m_label->setPosition(point);
         m_label->setColor(ccWHITE);
         this->addChild(m_label);
     }else{
@@ -44,7 +45,7 @@ void Toast::makeText(const char *text){
     }
     float width=m_label->getContentSize().width+20;
     m_bg->setContentSize(CCSizeMake(width, 40));
-    m_bg->setPosition(512-width/2, 50-40/2);
+    m_bg->setPosition(point.x-width/2, point.y-40/2);
     
     CCObject* obj;
     CCARRAY_FOREACH(this->getChildren(), obj){

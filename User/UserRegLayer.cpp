@@ -71,7 +71,7 @@ bool UserRegLayer::init(){
     CCSize editBoxSize = CCSizeMake(300, 51);
     
     Button9* label1=Button9::create(s_regStruts[m_step].inputTitle);
-    label1->setPosition(300, 450);
+    label1->setPosition(S_RM->getPositionWithName("user_reg_label"));
     this->addChild(label1);
     
     // 手机号码
@@ -84,12 +84,12 @@ bool UserRegLayer::init(){
     m_editBox->setInputMode(s_regStruts[m_step].inputMode);
     m_editBox->setReturnType(kKeyboardReturnTypeDone);
     m_editBox->setDelegate(this);
-    m_editBox->cocos2d::CCNode::setPosition(550, 450);
+    m_editBox->cocos2d::CCNode::setPosition(S_RM->getPositionWithName("user_reg_input"));
     this->addChild(m_editBox);
     
     Button9* button=Button9::create(s_regStruts[m_step].buttonTitle);
     CCMenuItemSprite* buttonItem=CCMenuItemSprite::create(button, button, this, menu_selector(UserRegLayer::menuCallback));
-    buttonItem->setPosition(600, 250);
+    buttonItem->setPosition(S_RM->getPositionWithName("user_reg_button"));
     this->addMenuItem(buttonItem);
     
     return true;

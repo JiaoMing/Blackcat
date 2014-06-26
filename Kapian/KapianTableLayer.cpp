@@ -274,7 +274,8 @@ CCTableViewCell* KapianTableLayer::tableCellAtIndex(CCTableView *table, unsigned
                 case kTupian:{
                     string path=CCFileUtils::sharedFileUtils()->getWritablePath()+kapian->getPath();
                     CCSize cellSize=S_RM->getSizeWithName("kapian_table_cell_thumb_size");
-                 
+                    
+                    CCPoint thumbPoint=S_RM->getRelativePosition("kapian_in_cell",m_gridSize.height);
                     CCSprite* tupianSprite;
                     if (kapian->getisCollected()) {
                         tupianSprite=CCSprite::create(path.c_str());
@@ -286,10 +287,16 @@ CCTableViewCell* KapianTableLayer::tableCellAtIndex(CCTableView *table, unsigned
                         CCSize size=tupianSprite->getContentSize();
                         tupianSprite->setScale(cellSize.width/size.width);//缩放
                         
-                        CCPoint thumbPoint=S_RM->getRelativePosition("kapian_in_cell",m_gridSize.height);
                         tupianSprite->setPosition(thumbPoint);
                         tupianSprite->setTag(CARD_CONTENT_TAG);
                         gridCell->addChild(tupianSprite);
+                        
+                        if (!kapian->getisCollected()) {
+                            CCSprite* huise=CCSprite::createWithSpriteFrameName("huise.png");
+                            huise->setPosition(thumbPoint);
+                            huise->setScale(cellSize.width/huise->getContentSize().width);//缩放
+                            gridCell->addChild(huise);
+                        }
                         
                         CCSprite* tupiankuangzi_1=CCSprite::createWithSpriteFrameName("tupiankuang_1.png");
                         tupiankuangzi_1->setPosition(cardPoint);
@@ -346,7 +353,9 @@ unsigned int KapianTableLayer::numberOfCellsInTableView(CCTableView *table)
 
 void KapianTableLayer::xieziCallback(int index,float progress){
     (*m_kapianVector)[index]->setProgress(progress);
+    CCPoint offset=m_pTableView->getContentOffset();
     m_pTableView->reloadData();
+    m_pTableView->setContentOffset(offset,false);
 }
 
 void KapianTableLayer::changeShowMode(KapianShowMode showMode){

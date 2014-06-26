@@ -14,7 +14,7 @@
 
 class XieziCoverLayer: public CoverLayer{
 public:
-    static XieziCoverLayer* create(int hid);
+    static XieziCoverLayer* create(int hid,Heimao* heimao);
 public:
     XieziCoverLayer(int hid);
     ~XieziCoverLayer();
@@ -27,6 +27,9 @@ public:
 private:
     XieziLayer* m_xieziLayer;
     Hanzi* m_hanzi;
+    Heimao* m_heimao;
+    
+    CCPoint m_userBarLayerPoint;//保存原userBarLayer位置，用于关闭xiezilayer时恢复
 };
 
 #endif /* defined(__Blackcat__XieziCoverLayer__) */

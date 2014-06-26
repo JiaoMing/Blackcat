@@ -11,6 +11,7 @@
 
 
 #include "Hanzi.h"
+#include "Heimao.h"
 #include "resource.h"
 #include "CCWebView.h"
 #include "GuideDialogLayer.h"
@@ -19,7 +20,7 @@ class XieziLayerDelegate;
 class XieziLayer : public CCLayer,public CCWebViewDelegate,public GuideDialogDelegate
 {
 public:
-    static XieziLayer* create(Hanzi* hanzi,bool isShowX=true);
+    static XieziLayer* create(Hanzi* hanzi,bool isShowX=true,Heimao* heimao=NULL);
 public:
     XieziLayer();
     ~XieziLayer();
@@ -28,6 +29,11 @@ public:
     virtual void onExit();
     
     void menuCallback(CCObject* pSender);
+    
+    /**
+     定时提醒用户操作
+     */
+    void dingShiTiXing();
     
     void xingxingAnimateEnd();
     
@@ -62,6 +68,8 @@ private:
     
     CCSprite* m_xingxing;
     CCLabelTTF* m_count;
+    
+    Heimao* m_heimao;//黑猫引用，不在当前layer中create
     
     int m_topHandlerPriority;
     

@@ -30,9 +30,31 @@ public:
     CCPoint getJpgBgPosition();
     //根据名称获取size
     CCSize getSizeWithName(const char *pszName);
-    //根据名称获取坐标，经过左上角到左下角的变换
+    //根据名称获取rect
+    CCRect getRectWithName(const char *pszName);
+    
+    /**
+     根据名称获取相对，数据本身是左下角坐标
+     */
+    CCRect getGLRectWithName(const char *pszName);
+    
+    /**
+     *  根据名称获取坐标，经过左上角到左下角的变换
+     *
+     *  @param pszName 对应plist中的key
+     *
+     *  @return 转换后坐标
+     */
     CCPoint getPositionWithName(const char *pszName);
-    //根据名称获取相对坐标
+    
+    /**
+     *  根据名称获取相对坐标
+     *
+     *  @param pszName       对应plist中的key
+     *  @param nHeightParent 父亲节点的高度
+     *
+     *  @return 转换后坐标
+     */
     CCPoint getRelativePosition(const char *pszName, float nHeightParent);
     //根据名称获取缩放比例
     float getScaleWithName(const char *pszName);

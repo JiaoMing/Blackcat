@@ -42,6 +42,18 @@ public:
 
 class TupianTableDelegate;
 
+
+typedef enum{
+    kScrollStateTop=0,
+    kScrollStatemiddle,
+    kScrollStateBottom
+}ScrollState;
+
+typedef enum{
+    kScrollActionDown=0,
+    kScrollActionUp
+}ScrollAction;
+
 class TupianTableLayer : public CCLayer, public CCTableViewDataSource, public CCTableViewDelegate
 {
 public:
@@ -51,7 +63,7 @@ public:
     virtual bool init();
     static TupianTableLayer* create(TupianTableDelegate* tupianTableDelegate,KapianDataMode mode,Kapian* kapian,TupianTablePosition tupianTablePosition);
     
-    virtual void scrollViewDidScroll(CCScrollView* view) {};
+    virtual void scrollViewDidScroll(CCScrollView* view);
     virtual void scrollViewDidZoom(CCScrollView* view) {};
     virtual void tableCellTouched(CCTableView* table, CCTableViewCell* cell);
     virtual CCSize cellSizeForTable(CCTableView *table);
@@ -59,6 +71,8 @@ public:
     virtual unsigned int numberOfCellsInTableView(CCTableView *table);
     
     void reloadData();
+    
+    void scroll(ScrollAction action);
     
     void setHandlerPriority(int newPriority);
     
@@ -79,6 +93,7 @@ class TupianTableDelegate{
 public:
     virtual void tupianLoadCallBack(int count)=0;
     virtual void tupianTouchCallBack(Tupian* tupian)=0;
+    virtual void tupianTableScrollCallBack(ScrollState state)=0;
 };
 
 

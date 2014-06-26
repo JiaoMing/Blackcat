@@ -11,10 +11,11 @@
 
 #include "cocos2d.h"
 USING_NS_CC;
+#include "Kapian.h"
 
 class KapianCollectLayer: public CCLayer{
 public:
-    static KapianCollectLayer* create(CCSprite* collectedSprite);
+    static KapianCollectLayer* create(CCSprite* collectedSprite,KapianDataMode mode);
     virtual bool init();
     void collectAnimate();
     void collectAnimateCallback();
@@ -23,7 +24,7 @@ private:
     CCSprite* m_collectedSprite;
     CCSprite* m_ka;
     CCSprite* m_chouti;
-    
+    KapianDataMode m_mode;
 };
 
 #endif

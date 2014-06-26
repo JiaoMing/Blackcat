@@ -33,6 +33,7 @@ public:
     
     CC_SYNTHESIZE(string, m_queueKey, QueueKey);
     CC_SYNTHESIZE(string, m_stepKey, StepKey);
+    
 private:
     Guide* m_guide;
     Cartoon* m_cartoon;

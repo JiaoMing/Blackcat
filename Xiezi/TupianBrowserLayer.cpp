@@ -100,9 +100,9 @@ void TupianBrowserLayer::setMainTupianSprite(bool isFromInit){
     sprite=CCSprite::create(path.c_str());\
     sprite->setPosition(S_RM->getPositionWithName("tupian_fangda"));\
     sprite->setTag(kTagCurrentTupianSprite);\
+    sprite->setScale(S_RM->getScaleWithName("tupian_fangda"));\
 //    CCSize mainSize=S_RM->getSizeWithName("tupian_main_size");\
-//m_scale=(mainSize.width+20)/600;\
-//    sprite->setScale(m_scale);\
+//    m_scale=(mainSize.width+20)/600;\
     
     COLLECTED_SPRITE;
     this->addChild(sprite);
@@ -131,16 +131,17 @@ void TupianBrowserLayer::setMainTupianSprite(bool isFromInit){
             CCSprite* sprite;
             COLLECTED_SPRITE;
             
-            KapianCollectLayer* kapianCollectLayer=KapianCollectLayer::create(sprite);
+            KapianCollectLayer* kapianCollectLayer=KapianCollectLayer::create(sprite,kTupian);
             this->addChild(kapianCollectLayer);
             kapianCollectLayer->collectAnimate();
             
-            if(isFromInit){
-                m_tupianBrowserDelegate->reloadTupianTable();
-            }
-            else{
-                m_tupianTabelLayer->reloadData();
-            }
+//            if(isFromInit){
+//                m_tupianBrowserDelegate->reloadTupianTable();
+//            }
+//            else{
+//                m_tupianTabelLayer->reloadData();
+//            }
+            
         }
     }
     

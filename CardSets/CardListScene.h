@@ -9,6 +9,8 @@ using namespace cocos2d;
 class CardListScene : public CCLayer,public CoverLayerDelegate
 {
 public:
+    static CCScene* scene();
+    
     CardListScene();
     ~CardListScene();
     
@@ -16,18 +18,17 @@ public:
     virtual void keyMenuClicked();
     
     virtual bool init();
-    static CCScene* scene();
+    virtual void onEnter();
+    virtual void onExit();
     virtual void menuCallback(CCObject* pSender);
     CREATE_FUNC(CardListScene);
     
     virtual int topHandlerPriority(){return kCCMenuHandlerPriority-1;};
 public:
-    virtual void registerWithTouchDispatcher();
     
     virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent);
     virtual void ccTouchMoved(CCTouch *pTouch, CCEvent *pEvent);
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent *pEvent);
-    virtual void ccTouchCancelled(CCTouch *pTouch, CCEvent *pEvent);
     
 private:
     CCRect m_pageSpriteRect;

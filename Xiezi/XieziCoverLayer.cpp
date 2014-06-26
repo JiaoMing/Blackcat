@@ -17,8 +17,9 @@ XieziCoverLayer::~XieziCoverLayer(){
     CC_SAFE_DELETE(m_hanzi);
 }
 
-XieziCoverLayer* XieziCoverLayer::create(int hid){
+XieziCoverLayer* XieziCoverLayer::create(int hid,Heimao* heimao){
     XieziCoverLayer* xieziCoverLayer=new XieziCoverLayer(hid);
+    xieziCoverLayer->m_heimao=heimao;
     xieziCoverLayer->init();
     xieziCoverLayer->autorelease();
     return xieziCoverLayer;
@@ -29,7 +30,14 @@ bool XieziCoverLayer::init(){
         return false;
     }
     
-    m_xieziLayer=XieziLayer::create(m_hanzi);
+    UserBarLayer* userBarLayer=S_LM->getDelegate();
+    if (userBarLayer!=NULL) {
+        m_userBarLayerPoint=userBarLayer->getPosition();
+        userBarLayer->setPosition(S_RM->getPositionWithName("xiezi_userbar"));
+        userBarLayer->setZOrder(INT_MAX);
+    }
+    
+    m_xieziLayer=XieziLayer::create(m_hanzi,true,m_heimao);
     this->addChild(m_xieziLayer);
     return true;
 }
@@ -47,7 +55,11 @@ void XieziCoverLayer::ccTouchEnded(CCTouch *pTouch, CCEvent *pEvent){
     if (!rect.containsPoint(touchPoint)) {
         this->removeFromParent();
         
-        UserBarLayer* userbarLayer=S_LM->getDelegate();
-        if(userbarLayer)userbarLayer->setZOrder(ORDER_USERBAR);
+        UserBarLayer* userBarLayer=S_LM->getDelegate();
+        if(userBarLayer){
+            //恢复userbarlayer位置
+            userBarLayer->setPosition(m_userBarLayerPoint);
+            userBarLayer->setZOrder(ORDER_USERBAR);
+        }
     }
 }

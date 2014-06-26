@@ -36,6 +36,7 @@ public:
     
     virtual void tupianLoadCallBack(int count);
     virtual void tupianTouchCallBack(Tupian* tupian);
+    virtual void tupianTableScrollCallBack(ScrollState state){};
     
     virtual int topHandlerPriority(){return kCCMenuHandlerPriority-1;}
     virtual void dialogCallBack(GuideDialogCMD cmd);

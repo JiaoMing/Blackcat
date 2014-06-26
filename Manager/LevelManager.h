@@ -30,6 +30,8 @@ public:
     
     void gain(const char* exp_action,CCPoint worldPoint,CCPointArray* array=NULL);
     
+    void gain(int exp,CCPoint worldPoint,CCPointArray* array=NULL);
+    
 private:
     /**
      *设置等级，通过经验和等级表

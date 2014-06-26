@@ -42,9 +42,6 @@ public:
     void setHandlerPriority(int newPriority);
     void examAllRightCallback(int kcid);
 private:
-    int m_kcCount;
-    int m_lastKechengId;
-    int m_dayRenwuCount;
     CCTableView* m_tableView;
     KechengDialogTableLayerDelegate* m_delegate;
 };

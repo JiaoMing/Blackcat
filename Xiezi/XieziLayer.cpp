@@ -12,13 +12,17 @@
 
 enum {
     kTagRewrite=0,
-    kTagWrite,
+    kTagTansuo,
     kTagGuangbo,
     kTagBack,
     kTagXBJ,
     kTagSJX,
     kTagXJT,
     kTagMenu,
+    kTagSpriteXiangpi,
+    kTagSpriteGuangbo,
+    kTagSpriteTansuo,
+    kTagXiangpi,
     kTagCollect,
     kTagCollectKa,
     kTagCollectChouti,
@@ -31,11 +35,12 @@ enum {
     kTagXingxingCount
 };
 
-XieziLayer* XieziLayer::create(Hanzi* hanzi,bool isShowX)
+XieziLayer* XieziLayer::create(Hanzi* hanzi,bool isShowX,Heimao* heimao)
 {
     XieziLayer *layer = new XieziLayer();
     layer->m_hanzi=hanzi;
     layer->m_isShowX=isShowX;
+    layer->m_heimao=heimao;
     if (layer && layer->init())
     {
         layer->autorelease();
@@ -55,6 +60,8 @@ XieziLayer::XieziLayer(){
     m_topHandlerPriority=kCCMenuHandlerPriority;
     
     m_delegate=NULL;
+    
+    m_heimao=NULL;
 }
 
 XieziLayer::~XieziLayer(){
@@ -67,8 +74,6 @@ bool XieziLayer::init()
         return false;
     }
     
-    
-    
     CCMenu* pMenu = CCMenu::create();
     pMenu->setPosition( CCPointZero );
     pMenu->setTag(kTagMenu);
@@ -80,8 +85,9 @@ bool XieziLayer::init()
     pXbj->setTag(kTagXBJ);
     this->addChild(pXbj);
     
-    if (S_LM->getDelegate()==NULL) {
-        UserBarLayer* userBarLayer=UserBarLayer::create();
+    UserBarLayer* userBarLayer=S_LM->getDelegate();
+    if (userBarLayer==NULL) {
+        userBarLayer=UserBarLayer::create();
         userBarLayer->setPosition(S_RM->getPositionWithName("xiezi_userbar"));
         this->addChild(userBarLayer,ORDER_USERBAR);
     }
@@ -93,12 +99,6 @@ bool XieziLayer::init()
         this->addChild(x);
     }
     
-    CCSprite* xingxing=CCSprite::createWithSpriteFrameName("xingxing_1.png");
-    xingxing->setPosition(ccp(700,100));
-    this->addChild(xingxing);
-    
-    
-    
     const char* str;
     const char* pic;
     if (m_hanzi->getwriteCount()>0) {
@@ -109,10 +109,10 @@ bool XieziLayer::init()
         pic="xingxing_1.png";
     }
     m_xingxing=CCSprite::createWithSpriteFrameName(pic);
-    m_xingxing->setPosition(ccp(740,700));
+    m_xingxing->setPosition(S_RM->getPositionWithName("xiezi_xingxing"));
     this->addChild(m_xingxing);
     m_count=CCLabelTTF::create(str, "", 30);
-    m_count->setPosition(ccp(740,700));
+    m_count->setPosition(S_RM->getPositionWithName("xiezi_xingxing"));
     m_count->setColor(ccc3(0, 0, 0));
     this->addChild(m_count);
     
@@ -154,7 +154,7 @@ bool XieziLayer::init()
             hanziSprite->addChild(label);
             hanziSprite->setTag(kTagCollect);
             
-            KapianCollectLayer* kapianCollectLayer=KapianCollectLayer::create(hanziSprite);
+            KapianCollectLayer* kapianCollectLayer=KapianCollectLayer::create(hanziSprite,kHanzi);
             this->addChild(kapianCollectLayer);
             kapianCollectLayer->collectAnimate();
         }
@@ -165,38 +165,44 @@ bool XieziLayer::init()
         string position;
         string pic;
         int tag;
+        int spriteTag;
     }XieziActionStruct;
     
     // 在这里配置每个场景要加载的资源
     static XieziActionStruct action[] = {
         {
+            "xiezi_tansuo",
+            "tansuo.png",
+            kTagTansuo,
+            kTagSpriteTansuo
+        },
+        {
             "xiezi_xiangpi",
             "xiangpi.png",
-            kTagRewrite
+            kTagRewrite,
+            kTagSpriteXiangpi
         },
         {
             "xiezi_guangbo",
             "guangbo.png",
-            kTagGuangbo
-        },
-        {
-            "xiezi_bi",
-            "bi.png",
-            kTagWrite
+            kTagGuangbo,
+            kTagSpriteGuangbo
         }
     };
     
     
     for (int i=0; i<3; i++) {
-        CCSprite* xiangpiBg1=CCSprite::createWithSpriteFrameName("xiaokuang_1.png");
-        CCSprite* xiangpiBg2=CCSprite::createWithSpriteFrameName("xiaokuang_2.png");
-        CCMenuItemSprite* pQingchu=CCMenuItemSprite::create(xiangpiBg1, xiangpiBg2, this, menu_selector(XieziLayer::callWeb));
-        pQingchu->setPosition(S_RM->getPositionWithName(action[i].position.c_str()));
-        pQingchu->setTag(action[i].tag);
-        pMenu->addChild(pQingchu);
-        CCSprite* xiangpi=CCSprite::createWithSpriteFrameName(action[i].pic.c_str());
-        xiangpi->setPosition(S_RM->getPositionWithName(action[i].position.c_str()));
-        this->addChild(xiangpi,2);
+        CCPoint point=S_RM->getPositionWithName(action[i].position.c_str());
+        CCSprite* kuang1=CCSprite::createWithSpriteFrameName("xiaokuang_1.png");
+        CCSprite* kuang2=CCSprite::createWithSpriteFrameName("xiaokuang_2.png");
+        CCMenuItemSprite* kuang=CCMenuItemSprite::create(kuang1, kuang2, this, menu_selector(XieziLayer::callWeb));
+        kuang->setPosition(point);
+        kuang->setTag(action[i].tag);
+        pMenu->addChild(kuang);
+        CCSprite* sprite=CCSprite::createWithSpriteFrameName(action[i].pic.c_str());
+        sprite->setPosition(ccp(point.x,point.y-3));
+        sprite->setTag(action[i].spriteTag);
+        this->addChild(sprite,2);
     }
     
     //拼音
@@ -205,8 +211,33 @@ bool XieziLayer::init()
     pinyinLabel->setPosition(S_RM->getPositionWithName("xiezi_pinyin"));
     this->addChild(pinyinLabel);
     
+    //定时3秒提醒
+    if (m_heimao!=NULL) {
+        this->scheduleOnce(schedule_selector(XieziLayer::dingShiTiXing), 3);
+    }
     
     return true;
+}
+
+void XieziLayer::dingShiTiXing(){
+    if (m_heimao!=NULL) {
+        switch (m_hanzi->getwriteCount()) {
+            case 1:
+                m_heimao->action("heimao_tishi1");
+                break;
+            case 2:
+                m_heimao->action("heimao_tishi2");
+                break;
+            case 3:
+                m_heimao->action("heimao_tishi3");
+                break;
+            case 0:
+            default:
+                m_heimao->action("heimao_tishi0");
+                break;
+        }
+    }
+    m_webView->callWebWithJs("setMode(Modes.kWrite);");
 }
 
 void XieziLayer::onEnter(){
@@ -254,23 +285,8 @@ void XieziLayer::callWeb(CCObject* pSender)
             m_webView->callWebWithJs("reWrite();");
             m_isWriteFinished=false;
             break;
-        case kTagWrite:
-            if (m_writeCount>=WRITE_LIMIT&&m_hanzi->getwriteCount()==0&&m_gudieDialogLayer==NULL) {
-                GuideDialog* guideDialog=new GuideDialog();
-                guideDialog->autorelease();
-                guideDialog->setText("非常抱歉，本软件为测试版，练习书写的汉字数量已经超出了测试版的限制。请关注我们的微信公众号，等待正式版本的发布，谢谢！");
-                guideDialog->setMode(kGuideDialogOk);
-                m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
-                m_gudieDialogLayer->setDelegate(this);
-                this->addChild(m_gudieDialogLayer,ORDER_DIALOG);
-                m_gudieDialogLayer->setGuideDialogData(guideDialog);
-                m_webView->setVisible(false);
-            }else{
-                m_webView->callWebWithJs("setMode(Modes.kWrite);");
-                if (m_isWriteFinished) {
-                    m_webView->callWebWithJs("reWrite();");
-                }
-            }
+        case kTagTansuo:
+            S_TT->makeText("开发中");
             
             break;
         case kTagGuangbo:
@@ -282,6 +298,7 @@ void XieziLayer::callWeb(CCObject* pSender)
 void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
     vector<string> splitCmd;
     StringUtils::split(cmd,"$",splitCmd);
+    
     int icmd=atoi(splitCmd[0].c_str());
     
     switch (icmd) {
@@ -295,6 +312,8 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
             
             const char* audio=(CCFileUtils::sharedFileUtils()->getWritablePath()+m_hanzi->getcnAudioPath()).c_str();
             S_AE->playEffect(audio);
+            
+            m_webView->callWebWithJs("setIsCanAutoWrite(true);");
         }
             
             break;
@@ -304,6 +323,8 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
             m_hanzi->setIntwriteCount(++writeCount);
             CCString *sql=CCString::createWithFormat("update hanzi set writeCount=writeCount+1 where id=%d;",m_hanzi->getid());
             S_DM->executeSql(sql->getCString());
+            
+            S_AEM->achieveUp(kAchieveXZDW);
             
             //排行数据需要统一调整模型
             static_userDefaultIncrement(COLLECT_XINGXING_COUNT,0);
@@ -325,19 +346,6 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
                 api->send();
             }
             
-            string effect="mario1.mp3";
-            if (writeCount<=2) {
-                effect="mario2.mp3";
-            }
-            
-//            if (writeCount<=3) {
-//                CCString* str=CCString::createWithFormat("heimao_xieziOk%d",writeCount);
-//                m_heimao->action(str->getCString());
-//            }else{
-//                m_heimao->action("heimao_xieziOkgt3");
-//            }
-            S_AE->playEffect(effect.c_str());
-            
             m_isWriteFinished=true;
             
             if (splitCmd.size()>2&&splitCmd[2].length()>10) {
@@ -349,11 +357,14 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
                 texture->initWithImage(img);
                 CCSprite* snapshot= CCSprite::createWithTexture(texture);
                 CCPoint point=S_RM->getPositionWithName("xiezi_main");
-                snapshot->setPosition(ccp(point.x,point.y-3));
+                snapshot->setPosition(ccp(point.x,point.y));
                 snapshot->setTag(kTagSnapshot);
-                if(snapshot->getContentSize().width>500){
-                    snapshot->setScale(0.5);
+                
+                CCSize webViewSize=S_RM->getSizeWithName("xiezi_webview_size");
+                if (webViewSize.width!=snapshot->getContentSize().width) {
+                    snapshot->setScale(webViewSize.width/snapshot->getContentSize().width);
                 }
+                
                 this->addChild(snapshot);
                 CC_SAFE_DELETE(img);
             }
@@ -361,10 +372,26 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
             //星星动画
             CCSprite* xingxing=CCSprite::createWithSpriteFrameName("xingxing_2.png");
             xingxing->setPosition(S_RM->getJpgBgPosition());
-            CCFiniteTimeAction* spawn=CCSpawn::create(CCMoveTo::create(1, ccp(740, 700)),CCFadeOut::create(1),NULL);
+            CCFiniteTimeAction* spawn=CCSpawn::create(CCMoveTo::create(1, S_RM->getPositionWithName("xiezi_xingxing")),CCFadeOut::create(1),NULL);
             CCAction* action=CCSequence::create(spawn,CCCallFunc::create(this,callfunc_selector(XieziLayer::xingxingAnimateEnd)),NULL);
             xingxing->runAction(action);
             this->addChild(xingxing);
+            
+            if (m_heimao) {
+                if (writeCount<=3) {
+                    CCString* str=CCString::createWithFormat("heimao_xieziOk%d",writeCount);
+                    m_heimao->action(str->getCString());
+                }else if(writeCount<6){
+                    m_heimao->action("heimao_xieziOkgt3");
+                }else if(writeCount==6){
+                    m_heimao->action("heimao_xieziOk6");
+                }else if(writeCount>6){
+                    m_heimao->action("heimao_xieziOkgt6");
+                }
+            }
+            
+            CCSprite* xiangpi=(CCSprite*)this->getChildByTag(kTagSpriteXiangpi);;
+            xiangpi->runAction(CCSequence::create(CCScaleTo::create(0.3, 1.2),CCScaleTo::create(0.3, 1),NULL));
             
         }
             break;
@@ -376,6 +403,9 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
             
             break;
         case kWebCallBackChangeToWriteMode:{
+            
+            this->unschedule(schedule_selector(XieziLayer::dingShiTiXing));
+            
             //切换到写字模式
             if (m_writeCount>=WRITE_LIMIT&&m_hanzi->getwriteCount()==0&&m_gudieDialogLayer==NULL) {
                 GuideDialog* guideDialog=new GuideDialog();
@@ -392,13 +422,13 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
             break;
         case kWebCallBackWriteStrokeOk:
             //字的各个笔画
-//            m_heimao->action("heimao_strokeOk");
+            if(m_heimao)m_heimao->action("heimao_strokeOk");
             break;
             
         case kWebCallBackWriteStrokeError:
             
             //写错时调用
-//            m_heimao->action("heimao_strokeError");
+            if(m_heimao)m_heimao->action("heimao_strokeError");
             break;
             
         default:
@@ -414,7 +444,6 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
 void XieziLayer::xingxingAnimateEnd(){
     S_LM->gain("WRITE",ccp(-1, -1));
     
-    CCLog("%d",m_hanzi->getwriteCount());
     if(m_hanzi->getwriteCount()==1)m_xingxing->setDisplayFrame(S_SF->spriteFrameByName("xingxing_2.png"));
     CCFiniteTimeAction* action2=CCSequence::create(CCScaleTo::create(0.1, 1.3),CCScaleTo::create(0.1, 1),NULL);
     m_xingxing->runAction(action2);

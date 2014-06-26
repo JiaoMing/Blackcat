@@ -10,6 +10,7 @@
 #define Blackcat_HomeScene_h
 
 #include "Cartoon.h"
+#include "Heimao.h"
 #include "cocos2d.h"
 #include "GuideBaseLayer.h"
 #include "RankingBarLayer.h"
@@ -54,7 +55,7 @@ private:
     Cartoon* m_Boy;
     Cartoon* m_Girl;
     Cartoon* m_Panda;
-    Cartoon* m_heimao;
+    Heimao* m_heimao;
     RankingBarLayer* m_rankingBarLayer;
     
     bool m_status;//缩放状态

@@ -27,6 +27,18 @@ GraySprite* GraySprite::create( const char* pszFileName ){
     }
 }
 
+GraySprite* GraySprite::createWithSpriteFrameName(const char *pszSpriteFrameName){
+    GraySprite* graySprite = new GraySprite();
+    if (graySprite && graySprite->initWithSpriteFrameName(pszSpriteFrameName)){
+        graySprite->autorelease();
+        return graySprite;
+    }else{
+        CC_SAFE_RELEASE(graySprite);
+        return NULL;
+    }
+}
+
+
 bool GraySprite::initWithTexture(CCTexture2D* pTexture, const CCRect& tRect ){
     do{
         CC_BREAK_IF(!CCSprite::initWithTexture(pTexture, tRect));

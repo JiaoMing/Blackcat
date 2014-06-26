@@ -12,14 +12,15 @@ using namespace CocosDenshion;
 
 
 Props::Props(){
-    m_Animates=CCArray::create();
-    m_Animates->retain();
+    m_animates=CCArray::create();
+    m_animates->retain();
     m_isImmediate=false;
     m_isShowStopPosAfterARun=true;
+    m_touchRect=CCRectMake(0, 0, 0, 0);
 }
 
 Props::~Props(){
-    m_Animates->release();
+    m_animates->release();
 }
 
 void Props::showStopPose(){
@@ -30,7 +31,7 @@ void Props::showStopPose(){
 }
 
 void Props::runRandomAnimate(unsigned int animateTime,bool willPlayMusic,bool willCallback){
-    int count=m_Animates->count();
+    int count=m_animates->count();
     int random=(int) (CCRANDOM_0_1()*count);
     this->runAnimate(random,animateTime,0,willCallback,willPlayMusic);
 }
@@ -40,7 +41,7 @@ void Props::runAnimate(int animateIndex,unsigned int animateTime,unsigned int an
         this->stopAllActions();
     }
     
-    AnimateAndAudio* aaa=(AnimateAndAudio*)(m_Animates->objectAtIndex(animateIndex));
+    AnimateAndAudio* aaa=(AnimateAndAudio*)(m_animates->objectAtIndex(animateIndex));
     if (animateTime==0){
         if (animateInterval==0) {
             this->runAction(CCRepeatForever::create(aaa->getAnimate()));
@@ -70,7 +71,6 @@ void Props::runAnimate(int animateIndex,unsigned int animateTime,unsigned int an
     }
     
     if (willPlayMusic) {
-        SimpleAudioEngine::sharedEngine()->stopAllEffects();
         SimpleAudioEngine::sharedEngine()->playEffect(aaa->getAudioName()->getCString());
     }
 }
@@ -86,10 +86,17 @@ void Props::runCallBack(){
 
 void Props::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
 {
-    CCPoint pt = pTouch->getLocationInView();
-    pt = CCDirector::sharedDirector()->convertToGL(pt);
+    
+    //*** 其实只需要修改父类clicksprite 的touchableRect，待修改
+    //不过需要注意坐标锚点，此处和clicksprite锚点不一致
+    
+    CCPoint pt = pTouch->getLocation();
     pt = convertToNodeSpace(pt);
-    if (!m_bIsMoved&&CCRect(0, 0, getContentSize().width, getContentSize().height).containsPoint(pt) && m_bVisible) {
+    CCRect rect=m_touchRect;
+    if (rect.equals(CCRectZero)) {
+        rect=CCRect(0, 0, getContentSize().width, getContentSize().height);
+    }
+    if (!m_bIsMoved&&rect.containsPoint(pt) && m_bVisible) {
         if (!m_isImmediate) {
             this->runAnimate();
         }else{

@@ -41,10 +41,13 @@ bool ClickableSprite::ccTouchBegan(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *p
 {
     //滑动前m_bIsMoved置为false
     m_bIsMoved=false;
-    CCPoint pt = pTouch->getLocationInView();
-    pt = CCDirector::sharedDirector()->convertToGL(pt);
-    pt = convertToNodeSpace(pt);
-    if (CCRect(0, 0, getContentSize().width, getContentSize().height).containsPoint(pt) && m_bVisible) {
+    CCPoint pt = pTouch->getLocation();
+    pt = convertToNodeSpaceAR(pt);
+    CCRect rect=m_touchableRect;
+    if (rect.equals(CCRectZero)) {
+        rect=CCRectMake(-getContentSize().width/2, -getContentSize().height/2, getContentSize().width, getContentSize().height);
+    }
+    if (rect.containsPoint(pt) && m_bVisible) {
         m_oPointBegan = pt;
         return true;
     }
@@ -53,10 +56,8 @@ bool ClickableSprite::ccTouchBegan(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *p
 
 void ClickableSprite::ccTouchMoved(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
 {
-    CCPoint touchLocation = pTouch->getLocationInView();	
-	touchLocation = CCDirector::sharedDirector()->convertToGL( touchLocation );
-	CCPoint lastLocation =pTouch->getPreviousLocationInView();
-	lastLocation = CCDirector::sharedDirector()->convertToGL( lastLocation );
+    CCPoint touchLocation = pTouch->getLocation();
+	CCPoint lastLocation =pTouch->getPreviousLocation();
 	float moveDistance = touchLocation.y - lastLocation.y;
     if(moveDistance<0)moveDistance=-moveDistance;
 	if(moveDistance>3){
@@ -66,10 +67,13 @@ void ClickableSprite::ccTouchMoved(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *p
 
 void ClickableSprite::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
 {
-    CCPoint pt = pTouch->getLocationInView();
-    pt = CCDirector::sharedDirector()->convertToGL(pt);
-    pt = convertToNodeSpace(pt);
-    if (!m_bIsMoved&&CCRect(0, 0, getContentSize().width, getContentSize().height).containsPoint(pt) && m_bVisible && m_pTarget && m_pSelector) {
+    CCPoint pt = pTouch->getLocation();
+    pt = convertToNodeSpaceAR(pt);
+    CCRect rect=m_touchableRect;
+    if (rect.equals(CCRectZero)) {
+        rect=CCRectMake(-getContentSize().width/2, -getContentSize().height/2, getContentSize().width, getContentSize().height);
+    }
+    if (!m_bIsMoved&&rect.containsPoint(pt) && m_bVisible && m_pTarget && m_pSelector) {
         (m_pTarget->*m_pSelector)(this);
     }
 }

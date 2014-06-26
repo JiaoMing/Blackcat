@@ -14,22 +14,18 @@
 #include "Button9.h"
 #include "SettingsLayer.h"
 #include "HomeScene.h"
-
+#include "CopyRightLayer.h"
 enum
 {
-    kTagShizi = 0,
-    kTagZika,
-    kTagYuedu,
-    kTagXiezi,
+    kTagZika=0,
     kTagTuka,
-    kTagTansuo,
+    kTagYuedu,
     kTagSettings,
-    kTagMenu,
-    kTagMenuClose
+    kTagAbout
 };
 
-const std::string g_menuItem[kTagTansuo+1] = {
-    "shizi.png","zika.png","yuedu.png","xiezi.png","tuka.png","tansuo.png"
+const std::string g_menuItem[kTagYuedu+1] = {
+    "zika","tuka","yuedu"
 };
 
 #define SPEED_THRESHOLD 1
@@ -39,38 +35,51 @@ bool ParentLayer::init(){
         return false;
     }
     
-    this->setTitle("家长设置");
+    this->setTitle("家长菜单");
     
     //设置背景透明度
     this->setOpacity(0);
     
 //    this->hideClose();
     
-    for (int i=0; i<kTagTansuo+1; i++) {
-        CCSprite* sprite=CCSprite::createWithSpriteFrameName(g_menuItem[i].c_str());
+    for (int i=0; i<kTagYuedu+1; i++) {
+        CCString* str=CCString::createWithFormat("%s.png",g_menuItem[i].c_str());
+        CCSprite* sprite=CCSprite::createWithSpriteFrameName(str->getCString());
         CCMenuItemSprite* item=CCMenuItemSprite::create(sprite, sprite, this, menu_selector(ParentLayer::menuCallback));
-        item->setPosition(312+i%3*200, (5-i)/3*120+335);
-        item->setTag(i+kTagShizi);
+        
+        CCString* strPoint=CCString::createWithFormat("parent_%s",g_menuItem[i].c_str());
+        item->setPosition(S_RM->getPositionWithName(strPoint->getCString()));
+        item->setTag(i+kTagZika);
+        item->setScale(1.2);
         this->addMenuItem(item);
+        
     }
     
-    Button9* button=Button9::create("设  置",CCSizeMake(80,40),20);
+    Button9* button=Button9::create("设  置",CCSizeMake(120,50),25);
     CCMenuItemSprite* item=CCMenuItemSprite::create(button, button, this, menu_selector(ParentLayer::menuCallback));
-    item->setPosition(514, 240);
+    item->setPosition(S_RM->getPositionWithName("parent_setting"));
     item->setTag(kTagSettings);
     this->addMenuItem(item);
     
+    Button9* about=Button9::create("关  于",CCSizeMake(120,50),25);
+    CCMenuItemSprite* aboutItem=CCMenuItemSprite::create(about, about, this, menu_selector(ParentLayer::menuCallback));
+    aboutItem->setPosition(S_RM->getPositionWithName("parent_about"));
+    aboutItem->setTag(kTagAbout);
+    this->addMenuItem(aboutItem);
+    
     m_toggle=CCSprite::createWithSpriteFrameName("down.png");
-    m_toggle->setPosition(ccp(512, 140));
+    m_toggle->setPosition(S_RM->getPositionWithName("parent_down"));
     this->addChild(m_toggle);
     
     m_showParent=false;
     
-    this->setPosition(0, 611);
+    this->setPosition(S_RM->getPositionWithName("parent_hide"));
     
     //检测是否从未打开
     int isNotFirstOpen=S_UD->getIntegerForKey(NEVER_OPEN_PARENT,0);
-    if (isNotFirstOpen==0) {
+    string first= S_UD->getStringForKey("HomeScene_First");
+#pragma message "注意结束heimao_11"
+    if (first=="heimao_11"&&isNotFirstOpen==0) {
         m_toggle->runAction(CCRepeatForever::create(CCSequence::create(CCFadeOut::create(0.5),CCFadeIn::create(0.5),NULL)));
     }
     
@@ -173,6 +182,10 @@ void ParentLayer::menuCallback(CCObject *obj){
         m_tag=node->getTag();
         if (m_tag==kTagSettings) {
             this->replaceDialog(SettingsLayer::create());
+        }else if(m_tag==kTagAbout){
+            CopyRightLayer* layer=CopyRightLayer::create();
+            layer->setDelegate(this);
+            this->addChild(layer,ORDER_DIALOG);
         }else{
             this->showOrHide(false);
             this->scheduleOnce(schedule_selector(ParentLayer::timingReplace), 0.6);
@@ -182,14 +195,6 @@ void ParentLayer::menuCallback(CCObject *obj){
 
 void ParentLayer::timingReplace(float t){
     switch (m_tag) {
-        case kTagShizi:{
-            S_DR->replaceScene(LoadingScene::scene("RenwuScene",false));
-        }
-            break;
-        case kTagXiezi:{
-            S_DR->replaceScene(KapianHanziScene::scene(kKapianShowModeCollect));
-        }
-            break;
         case kTagZika:
             S_DR->replaceScene(KapianHanziScene::scene(kKapianShowModeAll));
             break;
@@ -211,12 +216,12 @@ void ParentLayer::showOrHide(bool show){
         m_toggle->stopAllActions();
         m_showParent=true;
         m_toggle->runAction(CCFadeOut::create(0.6));
-        this->runAction(CCMoveTo::create(0.6, ccp(0, 0)));
+        this->runAction(CCMoveTo::create(0.6, CCPointZero));
         //            m_toggle->setDisplayFrame(S_SF->spriteFrameByName("up.png"));
     }else{
         m_showParent=false;
         m_toggle->runAction(CCFadeIn::create(0.6));
-        this->runAction(CCMoveTo::create(0.6, ccp(0, 611)));
+        this->runAction(CCMoveTo::create(0.6, S_RM->getPositionWithName("parent_hide")));
         //            m_toggle->setDisplayFrame(S_SF->spriteFrameByName("down.png"));
     }
 }

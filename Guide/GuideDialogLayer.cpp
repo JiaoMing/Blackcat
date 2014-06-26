@@ -96,19 +96,10 @@ bool GuideDialogLayer::init(){
             noItem->setTag(kDialogMenuNo);
             this->addMenuItem(noItem);
             
-            switch (m_dialogButtonPosiztion) {
-                case kDialogWithTextButtonPosiztionLeft:
-                    okItem->setPosition(S_RM->getPositionWithName("dialog_text_ok_left"));
-                    yesItem->setPosition(S_RM->getPositionWithName("dialog_text_yes_left"));
-                    noItem->setPosition(S_RM->getPositionWithName("dialog_text_no_left"));
-                    break;
-                case kDialogWithTextButtonPosiztionRight:
-                    okItem->setPosition(S_RM->getPositionWithName("dialog_text_ok"));
-                    yesItem->setPosition(S_RM->getPositionWithName("dialog_text_yes"));
-                    noItem->setPosition(S_RM->getPositionWithName("dialog_text_no"));
-                    break;
-                    
-            }
+            
+            okItem->setPosition(S_RM->getPositionWithName("dialog_text_ok"));
+            yesItem->setPosition(S_RM->getPositionWithName("dialog_text_yes"));
+            noItem->setPosition(S_RM->getPositionWithName("dialog_text_no"));
             
         }
         default:
@@ -158,6 +149,7 @@ void GuideDialogLayer::setGuideDialogData(GuideDialog* guideDialog){
 
 void GuideDialogLayer::menuCallback(CCObject* object){
     unschedule(schedule_selector(GuideDialogLayer::sayFinished));
+    S_ALP->stop();
     S_AE->stopAllEffects();
     CCNode* node=(CCNode*)object;
     
@@ -178,12 +170,14 @@ void GuideDialogLayer::menuCallback(CCObject* object){
     }else{
         cmd=(GuideDialogCMD)node->getTag();
     }
-    m_guideDialogDelegate->dialogCallBack(cmd);
-    DialogLayer::menuCallback(object);
     this->removeFromParent();
+    DialogLayer::menuCallback(object);
+    
+    m_guideDialogDelegate->dialogCallBack(cmd);
 }
 
 void GuideDialogLayer::sayFinished(){
+    CCLog("sayFinished");
     this->setVisible(true);
     unschedule(schedule_selector(GuideDialogLayer::sayFinished));
     if (m_guideDialog->getIsAutoStep()) {

@@ -20,6 +20,7 @@ public:
     GraySprite();
     virtual ~GraySprite();
     static GraySprite* create(const char* pszFileName);
+    static GraySprite* createWithSpriteFrameName(const char *pszSpriteFrameName);
     bool initWithTexture(CCTexture2D* pTexture, const CCRect& tRect);
 };
 

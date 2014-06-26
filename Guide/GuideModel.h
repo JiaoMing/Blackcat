@@ -45,7 +45,8 @@ typedef enum{
     kDialogCMDOk=0,
     kDialogCMDYes,
     kDialogCMDNo,
-    kDialogCMDBlank
+    kDialogCMDBlank,
+    kDialogCMDClose,
 }GuideDialogCMD;
 
 class Guide : public CCObject{
@@ -68,11 +69,11 @@ public:
         m_isAutoStep=false;
         m_mode=kGuideDialogOk;
         m_dialogType=kDialogBtuOnly;
-        m_dialogButtonPosiztion=kDialogWithTextButtonPosiztionRight;
         m_actionArray=CCArray::create();
         m_actionArray->retain();
         m_audioArray=CCArray::create();
         m_audioArray->retain();
+        m_cartoonPoint="";
     };
     
     ~GuideDialog(){CC_SAFE_RELEASE(m_actionArray);CC_SAFE_RELEASE(m_audioArray);}
@@ -91,8 +92,7 @@ public:
     //对话框类型，显示对话框和按钮、仅按钮
     CC_SYNTHESIZE(GuideDialogType, m_dialogType, DialogType);
     
-    //文本对话框，按钮位置
-    CC_SYNTHESIZE(GuideDialogWithTextButtonPosiztion, m_dialogButtonPosiztion, DialogButtonPosiztion);
+    CC_SYNTHESIZE(string, m_cartoonPoint, CartoonPoint);
     
     CC_SYNTHESIZE(CCArray*, m_actionArray, ActionArray);
     

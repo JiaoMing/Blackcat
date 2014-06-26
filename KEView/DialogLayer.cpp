@@ -20,10 +20,14 @@ bool DialogLayer::init(const ccColor4B& color){
     
     CCSprite* close=CCSprite::createWithSpriteFrameName("dialog_close.png");
     m_closeItem=CCMenuItemSprite::create(close, close, this, menu_selector(DialogLayer::menuCallback));
-    m_closeItem->setPosition(790, 570);
+    m_closeItem->setPosition(S_RM->getPositionWithName("dialog_close"));
     m_menu=CCMenu::create(m_closeItem,NULL);
     m_menu->setPosition(CCPointZero);
     this->addChild(m_menu);
+    
+    m_contentLayer=CCLayer::create();
+    m_contentLayer->setPosition(S_RM->getPositionWithName("dialog_content"));
+    this->addChild(m_contentLayer);
     
     return true;
 }
@@ -41,7 +45,7 @@ void DialogLayer::onExit()
 
 void DialogLayer::replaceDialog(DialogLayer *dialogLayer){
     dialogLayer->setDelegate(this->getDelegate());
-    this->getParent()->addChild(dialogLayer);
+    this->getParent()->addChild(dialogLayer,ORDER_DIALOG);
     this->removeFromParent();
 }
 
@@ -65,6 +69,12 @@ void DialogLayer::setTitle(const char *title){
 
 void DialogLayer::menuCallback(CCObject* obj){
     if (m_closeItem==obj) {
-        this->removeFromParent();
+        if (m_forwardDialogLayer==NULL) {
+            this->removeFromParent();
+            S_ALP->stop();
+        }else{
+#pragma message "m_forwardDialogLayer不能初始化问题"
+            this->replaceDialog(m_forwardDialogLayer);
+        }
     }
 }

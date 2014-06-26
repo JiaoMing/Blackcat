@@ -61,7 +61,12 @@ bool KechengTableLayer::init(){
     m_lastKechengId=S_UD->getIntegerForKey(LAST_KECHENG_ID,0);
     
     //用于table查询，避免每次查文件
-    m_dayRenwuCount=static_getDayRenwuCount();
+    string time=TimeUtils::getYYYYMMDD();
+    string lastTime=S_UD->getStringForKey(LAST_RENWU_DAY);
+    m_dayRenwuCount=0;
+    if (time==lastTime) {
+        m_dayRenwuCount=S_UD->getIntegerForKey(LAST_RENWU_DAY_COUNT, 0);
+    }
 
     KEGridView* tableView = KEGridView::create(this,S_RM->getSizeWithName("renwu_table_size"),this,S_RM->getSizeWithName("renwu_grid_cell_size"));
     tableView->setDirection(kCCScrollViewDirectionVertical);

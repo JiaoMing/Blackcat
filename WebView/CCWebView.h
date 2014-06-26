@@ -23,7 +23,11 @@ public:
 
 class CCWebView : public CCLayer{
 public:
+    
     static CCWebView* create(const char* htmlFilename,CCRect rectOfScreen);
+    
+    virtual void onEnter();
+    virtual void onExit();
     
     //回调委托
     void setDelegate(CCWebViewDelegate* pDelegate);

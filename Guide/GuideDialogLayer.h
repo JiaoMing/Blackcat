@@ -11,13 +11,14 @@
 
 #include "GuideManager.h"
 #include "DialogLayer.h"
+#include "Cartoon.h"
 
 class GuideDialogDelegate;
 
 class GuideDialogLayer: public DialogLayer{
 public:
-    GuideDialogLayer(){}
-    ~GuideDialogLayer(){m_guideDialog->release();};
+    GuideDialogLayer(){m_guideDialog=NULL;m_cartoon=NULL;}
+    ~GuideDialogLayer(){CC_SAFE_RELEASE(m_guideDialog);};
     static GuideDialogLayer* create(GuideDialogType guideDialogType=kDialogBtuOnly,GuideDialogWithTextButtonPosiztion dialogButtonPosiztion=kDialogWithTextButtonPosiztionRight);
     virtual bool init();
     
@@ -28,14 +29,21 @@ public:
 //    virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent);
     
     void setGuideDialogData(GuideDialog* guideDialog);
+    void setCartoon(Cartoon* cartoon){m_cartoon=cartoon;};
+    
     virtual void menuCallback(CCObject* object);
     void sayFinished();
     
-private:
+protected:
     GuideDialogDelegate* m_guideDialogDelegate;
     GuideDialog* m_guideDialog;
     GuideDialogType m_guideDialogType;
     GuideDialogWithTextButtonPosiztion m_dialogButtonPosiztion;
+    
+    /**
+     * 准备将cartoon处理从GuideBaseLayer中转移至GuideDialogLayer
+     */
+    Cartoon* m_cartoon;
 };
 
 class GuideDialogDelegate :public CoverLayerDelegate{

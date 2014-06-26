@@ -24,6 +24,8 @@ public:
 
 class CoverLayer: public CCLayerColor{
 public:
+    CoverLayer();
+    ~CoverLayer();
     virtual bool init(const ccColor4B& color=ccc4(0, 0, 0, 80));
     CREATE_FUNC(CoverLayer);
     
@@ -33,10 +35,8 @@ public:
     // touch event
     virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent);
     
-    virtual void setDelegate(CoverLayerDelegate* delegate);
-    virtual CoverLayerDelegate* getDelegate(){return m_coverLayerDelegate;}
 protected:
-    CoverLayerDelegate* m_coverLayerDelegate;
+    CC_SYNTHESIZE(CoverLayerDelegate*, m_coverLayerDelegate, Delegate);
 };
 
 #endif

@@ -5,6 +5,12 @@
 #include "XieziScene.h"
 #include "TupianCategory.h"
 
+enum{
+    kCellTupianSprite,
+    kCellWenhao,
+    kCellLabelLayer
+};
+
 TupianTableLayer::TupianTableLayer(){
     m_tupianVector=new vector<Tupian*>();
 }
@@ -13,8 +19,8 @@ TupianTableLayer::~TupianTableLayer(){
     for (vector<Tupian *>::iterator it = m_tupianVector->begin(); it != m_tupianVector->end(); it ++)
         if (NULL != *it)
         {
-//            string path=CCFileUtils::sharedFileUtils()->getWritablePath()+(*it)->getPath();
-//            CCTextureCache::sharedTextureCache()->removeTextureForKey(path.c_str());
+            //            string path=CCFileUtils::sharedFileUtils()->getWritablePath()+(*it)->getPath();
+            //            CCTextureCache::sharedTextureCache()->removeTextureForKey(path.c_str());
             delete *it;
             *it = NULL;
         }
@@ -72,7 +78,7 @@ bool TupianTableLayer::init()
             scrollCount=tableWidth/cellWidth;
             if (count<scrollCount) {
                 float left=(tableWidth-count*cellWidth)/2;
-//                m_pTableView->setPosition(ccp(-left, m_tupianTablePosition.getTablePoint().y));
+                //                m_pTableView->setPosition(ccp(-left, m_tupianTablePosition.getTablePoint().y));
                 m_pTableView->setViewSize(CCSizeMake(count*cellWidth, tableHeight));
                 m_pTableView->setPosition(ccp(left,m_tupianTablePosition.getTablePoint().y));
             }
@@ -123,7 +129,7 @@ void TupianTableLayer::initDataFromDB(){
                 CCString* where2=CCString::createWithFormat("id in (%s)",ids);
                 whereClause.push_back(where2->getCString());
                 S_DM->findScrollData(m_tupianVector,"*",whereClause, orderbyClause, groupByClause);
-              
+                
             }
             DELETE_MODEL_VECTOR(TupianCategory, m_tupianCatVector);
             
@@ -138,7 +144,19 @@ void TupianTableLayer::tableCellTouched(CCTableView* table, CCTableViewCell* cel
 {
     if(cell!=NULL){
         Tupian* tupian=(*m_tupianVector)[cell->getIdx()];
+        int isCollected=tupian->getisCollected();
         m_tupianTableDelegate->tupianTouchCallBack(tupian);
+        
+        if (!isCollected) {
+            CCNode* label=cell->getChildByTag(kCellLabelLayer);
+            if(label)label->setVisible(true);
+            CCNode* wenhao=cell->getChildByTag(kCellWenhao);
+            CCSprite* tupian=(CCSprite*)cell->getChildByTag(kCellTupianSprite);
+            wenhao->runAction(CCSpawn::create(CCOrbitCamera::create(0.3, 1, 0, 0, -90, 0, 0),CCFadeOut::create(0.3),NULL));
+            tupian->runAction(CCSequence::create(CCDelayTime::create(0.3),CCOrbitCamera::create(0.3, 1, 0, 90, -90, 0, 0),NULL));
+        }
+        
+        
     }
 }
 
@@ -160,49 +178,67 @@ CCTableViewCell* TupianTableLayer::tableCellAtIndex(CCTableView *table, unsigned
         
         if (tupian!=NULL) {
             CCPoint cardPoint=S_RM->getRelativePosition("xiezi_Tupiankuang_in_cell",m_tupianTablePosition.getCellSize().height);
-            if (tupian->getisCollected()>0) {
-                string path=CCFileUtils::sharedFileUtils()->getWritablePath()+tupian->getPath();
-                
-                CCSize cellSize=m_tupianTablePosition.getCellThumbSize();
-                CCSprite* tupianSprite=CCSprite::create(path.c_str());
-                CCSize size=tupianSprite->getContentSize();
-                tupianSprite->setScale(cellSize.width/size.width);
-                
-                CCPoint thumbPoint=S_RM->getRelativePosition("xiezi_Tupianthumb_in_cell",m_tupianTablePosition.getCellSize().height);
-                tupianSprite->setPosition(thumbPoint);
-                cell->addChild(tupianSprite);
-                
-                CCSprite* kuang=CCSprite::createWithSpriteFrameName("lvkuang.png");
-                kuang->setPosition(cardPoint);
-                cell->addChild(kuang);
-                
-                if (m_mode==kHanzi) {
-                    string ciyu=tupian->getci();
-                    const char* zi=ciyu.c_str();
-                    char p[ciyu.length()/3][4];
-                    for (int i = 0,j=0; i < ciyu.length(); i=i+3,j++)
-                    {
-                        char end='\0';
-                        sprintf(p[j], "%c%c%c%c",zi[i],zi[i+1],zi[i+2],end);
-                    }
-                    CCLayer* labelLayer=CCLayer::create();
-                    for (int i=0; i< ciyu.length()/3;i++) {
-                        CCLabelTTF *txtLabel = CCLabelTTF::create(p[i], "KaiTi.ttf", 30.0);
-                        txtLabel->setColor(ccc3(255,255,255));
-                        if (m_mode==kHanzi&&p[i]==m_kapian->getText()) {
-                            txtLabel->setColor(ccc3(0,255,0));
-                        }
-                        txtLabel->setPosition(ccp(i*30,0));
-                        labelLayer->addChild(txtLabel);
-                    }
-                    labelLayer->setPosition(ccp(78-(ciyu.length()/3-1)*15,36));
-                    cell->addChild(labelLayer);
+            
+            CCSprite* kuang=CCSprite::createWithSpriteFrameName("lvkuang.png");
+            kuang->setPosition(cardPoint);
+            cell->addChild(kuang,2);
+            
+            string path=CCFileUtils::sharedFileUtils()->getWritablePath()+tupian->getPath();
+            
+            CCSize cellSize=m_tupianTablePosition.getCellThumbSize();
+            CCSprite* tupianSprite=CCSprite::create(path.c_str());
+            CCSize size=tupianSprite->getContentSize();
+            tupianSprite->setScale(cellSize.width/size.width);
+            
+            CCPoint thumbPoint=S_RM->getRelativePosition("xiezi_Tupianthumb_in_cell",m_tupianTablePosition.getCellSize().height);
+            tupianSprite->setPosition(thumbPoint);
+            cell->addChild(tupianSprite,1,kCellTupianSprite);
+            
+            CCSprite* wenhao=CCSprite::createWithSpriteFrameName("lvkuang_3.png");
+            wenhao->setPosition(thumbPoint);
+            wenhao->setScale(0.95);
+            cell->addChild(wenhao,1,kCellWenhao);
+            
+            CCSprite* bg=CCSprite::createWithSpriteFrameName("lvkuang_2.png");
+            bg->setScale(0.95);
+            bg->setPosition(thumbPoint);
+            cell->addChild(bg,0);
+            
+            
+            if (m_mode==kHanzi) {
+                string ciyu=tupian->getci();
+                const char* zi=ciyu.c_str();
+                char p[ciyu.length()/3][4];
+                for (int i = 0,j=0; i < ciyu.length(); i=i+3,j++)
+                {
+                    char end='\0';
+                    sprintf(p[j], "%c%c%c%c",zi[i],zi[i+1],zi[i+2],end);
                 }
-            }else{
-                CCSprite* kuang=CCSprite::createWithSpriteFrameName("lvkuang_wenhao.png");
-                kuang->setPosition(cardPoint);
-                cell->addChild(kuang);
+                CCLayer* labelLayer=CCLayer::create();
+                for (int i=0; i< ciyu.length()/3;i++) {
+                    CCLabelTTF *txtLabel = CCLabelTTF::create(p[i], "KaiTi.ttf", 30.0);
+                    txtLabel->setColor(ccc3(255,255,255));
+                    txtLabel->enableShadow(CCSizeMake(2, -2), 2, 0.5);
+                    if (m_mode==kHanzi&&p[i]==m_kapian->getText()) {
+                        txtLabel->setColor(ccc3(0,255,0));
+                    }
+                    txtLabel->setPosition(ccp(i*30,0));
+                    labelLayer->addChild(txtLabel);
+                }
+                labelLayer->setPosition(ccp(78-(ciyu.length()/3-1)*15,36));
+                cell->addChild(labelLayer,2,kCellLabelLayer);
+                
+                if (tupian->getisCollected()<=0) {
+                    labelLayer->setVisible(false);
+                }
+                
             }
+            
+            if (tupian->getisCollected()>0) {
+                wenhao->setVisible(false);
+            }
+            
+            
         }
         
     }
@@ -227,6 +263,7 @@ void TupianTableLayer::reloadData(){
     CCPoint point=m_pTableView->getContentOffset();
     m_pTableView->reloadData();
     m_pTableView->setContentOffset(point);
+    
 }
 
 void TupianTableLayer::setHandlerPriority(int newPriority)
@@ -237,3 +274,32 @@ void TupianTableLayer::setHandlerPriority(int newPriority)
     }
 }
 
+void TupianTableLayer::scrollViewDidScroll(cocos2d::extension::CCScrollView *view){
+    float y=view->getContentOffset().y;
+    float topY=m_tupianTablePosition.getTableSize().height-m_tupianTablePosition.getCellSize().height*m_tupianVector->size();
+    ScrollState state;
+    if (y==0) {
+        state=kScrollStateBottom;
+    }else if(y==topY){
+        state=kScrollStateTop;
+    }else{
+        state=kScrollStatemiddle;
+    }
+    m_tupianTableDelegate->tupianTableScrollCallBack(state);
+}
+
+void TupianTableLayer::scroll(ScrollAction action){
+    CCPoint point=m_pTableView->getContentOffset();
+    float y=point.y-m_tupianTablePosition.getTableSize().height;
+    int number=((int)y)/((int)(m_tupianTablePosition.getCellSize().height));
+    switch (action) {
+        case kScrollActionDown:
+            if(number<0 )number+=1;
+            break;
+        case kScrollActionUp:
+            if(number>-m_tupianVector->size())number-=1;
+            break;
+    }
+    
+    m_pTableView->setContentOffset(ccp(point.x,number*m_tupianTablePosition.getCellSize().height+m_tupianTablePosition.getTableSize().height),true);
+}

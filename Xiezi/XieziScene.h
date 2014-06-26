@@ -22,8 +22,7 @@ class XieziSceneDelegate;
 class XieziScene : public cocos2d::CCLayerColor,public TupianTableDelegate,public TupianBrowserDelegate,public GuideDialogDelegate,public XieziLayerDelegate
 {
 public:
-    static CCScene* scene(int hid);
-    static CCScene* scene(int hid,XieziSceneDelegate* xieziSceneDelegate,int indexInKapianTable);
+    static CCScene* scene(int hid,XieziSceneDelegate* xieziSceneDelegate=NULL,int indexInKapianTable=0);
 public:
     XieziScene(int hid,XieziSceneDelegate* xieziSceneDelegate,int indexInKapianTable);
     ~XieziScene();
@@ -36,10 +35,7 @@ public:
     
     void menuCallback(CCObject* pSender);
     
-    /**
-     定时提醒用户操作
-     */
-    void dingShiTiXing();
+    
     
     void xingxingAnimateEnd();
     
@@ -49,6 +45,7 @@ public:
     
     virtual void tupianLoadCallBack(int count);
     virtual void tupianTouchCallBack(Tupian* tupian);
+    virtual void tupianTableScrollCallBack(ScrollState state);
     
     virtual void hideBrowserCallBack();
     virtual bool isPushToXieziScene(){return false;}

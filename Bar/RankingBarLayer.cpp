@@ -21,7 +21,6 @@ bool RankingBarLayer::init(){
         
         m_rankingDataLayer=CCLayer::create();
         
-        
         for (int i=0; i<kRankXunzhang+1; i++) {
             m_rankingDataLayer->addChild(this->createSpriteWithRankStruct(i));
         }
@@ -39,7 +38,7 @@ bool RankingBarLayer::init(){
         this->addChild(m_logoMenu);
         
         if (!DEBUG_OPEN) {
-            this->schedule(schedule_selector(RankingBarLayer::fresh),10.0f);
+//            this->schedule(schedule_selector(RankingBarLayer::fresh),10.0f);
         }
         
         return true;
@@ -125,37 +124,32 @@ void RankingBarLayer::logoFreshCallBack(CCNode* node){
 }
 
 void RankingBarLayer::subXingxing(int count){
-    int overXingxingCount=S_UD->getIntegerForKey(OVER_XINGXING_COUNT,0);
-    CCNode* xingxing=m_rankingDataLayer->getChildByTag(OVER_XINGXING_TAG);
-    CCLabelTTF* subScript=(CCLabelTTF*)xingxing->getChildByTag(SUBSCRIPT_NUM_TAG);
-    if (overXingxingCount>0) {
-        overXingxingCount-=1;
-        S_UD->setIntegerForKey(OVER_XINGXING_COUNT, overXingxingCount);
-        S_UD->flush();
-        subScript->setString(CCString::createWithFormat("%d",overXingxingCount)->getCString());
-    }else{
-        subScript->removeFromParentAndCleanup(false);
-    }
+//    int overXingxingCount=S_UD->getIntegerForKey(OVER_XINGXING_COUNT,0);
+//    CCNode* xingxing=m_rankingDataLayer->getChildByTag(OVER_XINGXING_TAG);
+//    CCLabelTTF* subScript=(CCLabelTTF*)xingxing->getChildByTag(SUBSCRIPT_NUM_TAG);
+//    if (overXingxingCount>0) {
+//        overXingxingCount-=1;
+//        S_UD->setIntegerForKey(OVER_XINGXING_COUNT, overXingxingCount);
+//        S_UD->flush();
+//        subScript->setString(CCString::createWithFormat("%d",overXingxingCount)->getCString());
+//    }else{
+//        subScript->removeFromParentAndCleanup(false);
+//    }
 }
 
 void RankingBarLayer::logoCallBack(CCObject* object){
-    if(m_isLogoShow)this->getParent()->addChild(CopyRightLayer::create(),INT_MAX);
+    if(m_isLogoShow){
+        CopyRightLayer* layer=CopyRightLayer::create();
+#pragma message "强写为HomeScene"
+        layer->setDelegate((HomeScene*)this->getParent());
+        this->getParent()->addChild(layer,ORDER_DIALOG);
+    }
 }
 
 void RankingBarLayer::rankCallBack(CCObject* object){
     CCNode* node=(CCNode*)object;
-    switch ((Rank)node->getTag()) {
-        case kRankZi:
-            S_DR->replaceScene(KapianHanziScene::scene());
-            break;
-        case kRankKa:
-            S_DR->replaceScene(KapianTupianScene::scene());
-            break;
-            
-        default:
-            RankingLayer* ranking=RankingLayer::create((Rank)node->getTag());
-            ranking->setDelegate((HomeScene*)this->getParent());
-            this->getParent()->addChild(ranking,INT_MAX);
-            break;
-    }
+    
+    RankingLayer* ranking=RankingLayer::create((Rank)node->getTag());
+    ranking->setDelegate(m_delegate);
+    this->getParent()->addChild(ranking,ORDER_DIALOG);
 }

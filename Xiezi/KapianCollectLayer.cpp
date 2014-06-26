@@ -9,10 +9,11 @@
 #include "KapianCollectLayer.h"
 #include "resource.h"
 
-KapianCollectLayer* KapianCollectLayer::create(CCSprite* collectedSprite)
+KapianCollectLayer* KapianCollectLayer::create(CCSprite* collectedSprite,KapianDataMode mode)
 {
     KapianCollectLayer* layer = new KapianCollectLayer;
     layer->m_collectedSprite=collectedSprite;
+    layer->m_mode=mode;
     if (layer && layer->init())
     {
         layer->autorelease();
@@ -45,6 +46,19 @@ bool KapianCollectLayer::init(){
 void KapianCollectLayer::collectAnimate(){
     //增加经验值
     S_LM->gain("COLLECT",S_RM->getJpgBgPosition());
+    switch (m_mode) {
+        case kHanzi:{
+            S_AEM->achieveUp(kAchieveZKSCJ);
+        }
+            
+            break;
+        case kTupian:{
+            S_AEM->achieveUp(kAchieveTKSCJ);
+        }
+            
+            break;
+    }
+    
     
     CCPoint mainPoint=S_RM->getJpgBgPosition();
     

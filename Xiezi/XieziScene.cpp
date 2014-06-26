@@ -46,11 +46,6 @@ public:
 
 #define ICON_PATH CCFileUtils::sharedFileUtils()->getWritablePath()+((Tupian*)m_kapian)->geticonPath()
 
-CCScene* XieziScene::scene(int hid)
-{
-    return XieziScene::scene(hid, NULL, 0);
-}
-
 CCScene* XieziScene::scene(int hid,XieziSceneDelegate* xieziSceneDelegate,int indexInKapianTable)
 {
     CCScene *scene = CCScene::create();
@@ -93,13 +88,14 @@ bool XieziScene::init()
         return false;
     }
     
-    
     CCSprite* pSprite = CCSprite::createWithSpriteFrameName("beijing.png");
     pSprite->setPosition(S_RM->getJpgBgPosition());
     this->addChild(pSprite);
     
     UserBarLayer* userBarLayer=UserBarLayer::create();
     userBarLayer->setPosition(S_RM->getPositionWithName("xiezi_userbar"));
+    //不可以少，防止从Kapian进入XieziScene时XieziLayer中userBarLayer为空
+    S_LM->setDelegate(userBarLayer);
     this->addChild(userBarLayer,ORDER_USERBAR);
     
     CCMenu* pMenu = CCMenu::create();
@@ -113,11 +109,6 @@ bool XieziScene::init()
     pMenu->setPosition( CCPointZero );
     pMenu->setTag(kTagMenu);
     this->addChild(pMenu, 1);
-    
-    
-    m_xieziLayer=XieziLayer::create(m_hanzi,false);
-    m_xieziLayer->setDelegate(this);
-    this->addChild(m_xieziLayer);
     
     CCSprite* pSjt=CCSprite::createWithSpriteFrameName("jiantou_1.png");
     CCMenuItemSprite* pSjtItem=CCMenuItemSprite::create(pSjt, NULL, this, menu_selector(XieziScene::menuCallback));
@@ -144,6 +135,11 @@ bool XieziScene::init()
     m_heimao->setBoxEnabled("z-shenti", true);
     m_heimao->setCallback(this, cartoon_selector(XieziScene::pressHeimaoCallback));
     this->addChild(m_heimao);
+    
+    //主写字层
+    m_xieziLayer=XieziLayer::create(m_hanzi,false,m_heimao);
+    m_xieziLayer->setDelegate(this);
+    this->addChild(m_xieziLayer);
     
     CCSize mainSize=S_RM->getSizeWithName("xiezi_webview_size");
     CCPoint mainPoint=S_RM->getPositionWithName("xiezi_main");
@@ -182,7 +178,7 @@ bool XieziScene::init()
             hanziSprite->addChild(label);
             hanziSprite->setTag(kTagCollect);
             
-            KapianCollectLayer* kapianCollectLayer=KapianCollectLayer::create(hanziSprite);
+            KapianCollectLayer* kapianCollectLayer=KapianCollectLayer::create(hanziSprite,kHanzi);
             this->addChild(kapianCollectLayer);
             kapianCollectLayer->collectAnimate();
         }
@@ -212,25 +208,6 @@ void XieziScene::keyMenuClicked(){
     
 }
 
-void XieziScene::dingShiTiXing(){
-    switch (m_hanzi->getwriteCount()) {
-        case 1:
-            m_heimao->action("heimao_tishi1");
-            break;
-        case 2:
-            m_heimao->action("heimao_tishi2");
-            break;
-        case 3:
-            m_heimao->action("heimao_tishi3");
-            break;
-        case 0:
-        default:
-            m_heimao->action("heimao_tishi0");
-            break;
-    }
-    m_xieziLayer->getWebView()->callWebWithJs("setMode(Modes.kWrite);");
-}
-
 void XieziScene::menuCallback(CCObject* pSender)
 {
     int tag=((CCNode*)pSender)->getTag();
@@ -241,7 +218,15 @@ void XieziScene::menuCallback(CCObject* pSender)
                m_xieziSceneDelegate->xieziCallback(m_indexInKapianTable, m_hanzi->getProgress());
             }
             S_DR->popScene();
+            
+            S_ALP->stop();
             S_AE->stopAllEffects();
+            break;
+        case kTagXJT:
+            m_tupianTabel->scroll(kScrollActionDown);
+            break;
+        case kTagSJX:
+            m_tupianTabel->scroll(kScrollActionUp);
             break;
     }
 }
@@ -262,13 +247,17 @@ void XieziScene::webCallBack(WebCallBackCMD cmd){
             if (writeCount<=3) {
                 CCString* str=CCString::createWithFormat("heimao_xieziOk%d",writeCount);
                 m_heimao->action(str->getCString());
-            }else{
+            }else if(writeCount<6){
                 m_heimao->action("heimao_xieziOkgt3");
+            }else if(writeCount==6){
+                m_heimao->action("heimao_xieziOk6");
+            }else if(writeCount>6){
+                m_heimao->action("heimao_xieziOkgt6");
             }
         }
             break;
         case kWebCallBackChangeToWriteMode:{
-            this->unschedule(schedule_selector(XieziScene::dingShiTiXing));
+            
         }
             break;
         case kWebCallBackWriteStrokeOk:
@@ -303,7 +292,7 @@ void XieziScene::tupianLoadCallBack(int count){
 
 
 void XieziScene::tupianTouchCallBack(Tupian* tupian){
-    this->unschedule(schedule_selector(XieziScene::dingShiTiXing));
+    m_xieziLayer->unschedule(schedule_selector(XieziLayer::dingShiTiXing));
     
     m_xieziLayer->setVisible(false);
     //图片浏览层
@@ -314,6 +303,30 @@ void XieziScene::tupianTouchCallBack(Tupian* tupian){
     LevelDelegate* ld=S_LM->getDelegate();
     if (ld) {
         ld->setPosition(S_RM->getPositionWithName("xiezi_userbar_browser"));
+    }
+}
+
+void XieziScene::tupianTableScrollCallBack(ScrollState state){
+    CCNode* menu=this->getChildByTag(kTagMenu);
+    switch (state) {
+        case kScrollStateTop:{
+            menu->getChildByTag(kTagSJX)->setVisible(false);
+        }
+            
+            break;
+        case kScrollStatemiddle:{
+            menu->getChildByTag(kTagSJX)->setVisible(true);
+            menu->getChildByTag(kTagXJT)->setVisible(true);
+        }
+            break;
+        case kScrollStateBottom:{
+            menu->getChildByTag(kTagXJT)->setVisible(false);
+        }
+            
+            break;
+            
+        default:
+            break;
     }
 }
 

@@ -53,6 +53,12 @@ Props* PropsManager::getPropsWithName(const char* name)
     const CCString* stopPosName=animateDict->valueForKey("stopPos");
     CCSpriteFrame* stopPos=S_SF->spriteFrameByName(stopPosName->getCString());
     props->initWithSpriteFrame(stopPos);
+    
+    const CCString* _touchRect=animateDict->valueForKey("touchableRect");
+    if (_touchRect) {
+//        props->setTouchableRect(S_RM->getGLRectWithName(_touchRect->getCString()));
+        props->setTouchRect(S_RM->getGLRectWithName(_touchRect->getCString()));
+    }
     //变量中以‘_’开头表示“从dict中读出的值”
     CCArray* _animates=(CCArray*)animateDict->objectForKey("animates");
     CCObject *animateObj = NULL;

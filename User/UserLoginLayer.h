@@ -14,6 +14,7 @@
 class UserLoginLayer : public UserBaseLayer
 {
 public:
+    UserLoginLayer(){};
     virtual bool init();
     CREATE_FUNC(UserLoginLayer);
     virtual void menuCallback(CCObject* obj);

@@ -188,7 +188,7 @@ void KechengScene::menuCallback(CCObject* object){
     }else{
         m_heimao->action("heimao_stand");
         if (tag==TAG_EXAM) {
-            CCDirector::sharedDirector()->pushScene(KechengExamScene::scene(this,m_hanziVector));
+            CCDirector::sharedDirector()->pushScene(KechengExamScene::scene(this));
             
         }else if(tag==TAG_BACK){
             CCDirector::sharedDirector()->popScene();
@@ -232,6 +232,7 @@ void KechengScene::examAllRightCallback(){
 //        sql=CCString::createWithFormat("insert into kecheng(star,id) values(%d,%d)",star,m_kcid);
 //    }
 //    S_DM->executeSql(sql->getCString());
+//    CC_SAFE_DELETE(kecheng);
     
     this->runRewardAnimate();
 }

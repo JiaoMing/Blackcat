@@ -46,12 +46,15 @@ bool AppDelegate::applicationDidFinishLaunching()
     searchPaths.push_back("audio");
     searchPaths.push_back("audio/dialog");
     searchPaths.push_back("global");
+    searchPaths.push_back("global/lihe");
     if (target == kTargetIpad)
     {
         searchPaths.push_back("ipad");
         CCEGLView::sharedOpenGLView()->setDesignResolutionSize(1024, 768, kResolutionShowAll);
+        
 //        searchPaths.push_back("android");
 //        CCEGLView::sharedOpenGLView()->setDesignResolutionSize(1280, 720, kResolutionShowAll);
+        
     }else{
         searchPaths.push_back("android");
         CCEGLView::sharedOpenGLView()->setDesignResolutionSize(1280, 720, kResolutionShowAll);

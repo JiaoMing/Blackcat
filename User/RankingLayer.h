@@ -79,6 +79,7 @@ public:
     virtual void enableTouch();
     virtual void onEnter();
     virtual void onExit();
+    virtual void menuCallback(CCObject *obj);
     
     virtual void scrollViewDidScroll(CCScrollView* view) {};
     virtual void scrollViewDidZoom(CCScrollView* view) {};

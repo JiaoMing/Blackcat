@@ -8,7 +8,7 @@
 
 #include "KechengDialogTableLayer.h"
 #include "resource.h"
-
+#include "KechengController.h"
 
 KechengDialogTableLayer::KechengDialogTableLayer(){
 }
@@ -32,28 +32,10 @@ bool KechengDialogTableLayer::init(){
         return false;
     }
     
-    map<string, string>* data=new map<string, string>();
-    map<string, string> expClause=map<string, string>();
-    expClause.insert(pair<string, string>("maxKcid","max(kcid)"));
-    S_DM->statistic(data, "hanzi", expClause);
-    
-    m_kcCount=0;
-    map<string, string>::iterator it;
-    it=data->find("maxKcid");
-    if(it!=data->end()){
-        m_kcCount=atoi(it->second.c_str());
-    }
-    CC_SAFE_DELETE(data);
-    
-    m_lastKechengId=S_UD->getIntegerForKey(LAST_KECHENG_ID,0);
-    
-    //用于table查询，避免每次查文件
-    m_dayRenwuCount=static_getDayRenwuCount();
-    
-    m_tableView = CCTableView::create(this,CCSizeMake(1024, 100));
+    m_tableView = CCTableView::create(this,S_RM->getSizeWithName("renwu_dialog_table_size"));
     m_tableView->setDirection(kCCScrollViewDirectionHorizontal);
 	m_tableView->setVerticalFillOrder(kCCTableViewFillTopDown);
-    m_tableView->setPosition(ccp(0, 650));
+    m_tableView->setPosition(S_RM->getPositionWithName("renwu_dialog_table"));
     m_tableView->setClippingToBounds(true);
     m_tableView->setDelegate(this);
     this->addChild(m_tableView);
@@ -78,9 +60,9 @@ CCTableViewCell* KechengDialogTableLayer::tableCellAtIndex(CCTableView *table, u
         
         CCSprite* xingxing=CCSprite::create();
         xingxing->setPosition(ccp(50, 50));
-        if (idx+1<=m_lastKechengId) {
+        if (idx+1<=S_KC->getLastKechengId()) {
             xingxing->setDisplayFrame(S_SF->spriteFrameByName("xingxing_2.png"));
-        }else if(idx==m_lastKechengId&&m_dayRenwuCount<2){
+        }else if(idx==S_KC->getLastKechengId()&&S_KC->getDayRenwuCount()<2){
             xingxing->setDisplayFrame(S_SF->spriteFrameByName("xingxing_2.png"));
         }else{
             xingxing->setDisplayFrame(S_SF->spriteFrameByName("xingxing_1.png"));
@@ -95,53 +77,39 @@ CCTableViewCell* KechengDialogTableLayer::tableCellAtIndex(CCTableView *table, u
 }
 
 void KechengDialogTableLayer::tableCellTouched(CCTableView* table, CCTableViewCell* cell){
-    if(cell!=NULL){
+    if(cell!=NULL&&this->isVisible()){
         int idx=cell->getIdx();
         
-        if (idx+1<=m_lastKechengId) {
+        if (idx+1<=S_KC->getLastKechengId()||(idx==S_KC->getLastKechengId()&&S_KC->getDayRenwuCount()<2)) {
             m_delegate->setKecheng(idx+1);
-            S_ALP->play("renwu.mp3",NULL);
+            S_AE->playEffect("renwu.mp3");
             
             this->setVisible(false);
         }else{
-            S_ALP->play("renwu_suo.mp3",NULL);
+            S_AE->playEffect("renwu_suo.mp3");
         }
         
     }
 }
 
 CCSize KechengDialogTableLayer::cellSizeForTable(CCTableView *table){
-    return CCSizeMake(100, 100);
+    return S_RM->getSizeWithName("renwu_dialog_table_cell_size");
 }
 
 unsigned int KechengDialogTableLayer::numberOfCellsInTableView(CCTableView *table){
-    return m_kcCount;
+    return S_KC->getKcCount();
 }
 
 void KechengDialogTableLayer::setHandlerPriority(int newPriority)
 {
-    if(m_kcCount>0){
+    if(S_KC->getKcCount()>0){
         CCTouchDispatcher* pDispatcher = CCDirector::sharedDirector()->getTouchDispatcher();
         pDispatcher->setPriority(newPriority, m_tableView);
     }
 }
 
 void KechengDialogTableLayer::examAllRightCallback(int kcid){
-    if (kcid==m_lastKechengId+1){
-        int count=S_UD->getIntegerForKey(LAST_RENWU_DAY_COUNT);
-        string time=TimeUtils::getYYYYMMDD();
-        string lastTime=S_UD->getStringForKey(LAST_RENWU_DAY);
-        if (time!=lastTime) {
-            count=1;
-            S_UD->setStringForKey(LAST_RENWU_DAY, time);
-            S_UD->setIntegerForKey(LAST_RENWU_DAY_COUNT, 1);
-        }else if (count<2) {
-            S_UD->setIntegerForKey(LAST_RENWU_DAY_COUNT, ++count);
-        }
-        m_dayRenwuCount=count;
-        S_UD->setIntegerForKey(LAST_KECHENG_ID, ++m_lastKechengId);
-        S_UD->flush();
-        
+    if (kcid==S_KC->getLastKechengId()+1){
         m_tableView->reloadData();
     }
 }

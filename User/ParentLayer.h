@@ -11,12 +11,11 @@
 
 #include "DialogLayer.h"
 
-class ParentLayer : public DialogLayer,public CoverLayerDelegate
+class ParentLayer : public DialogLayer
 {
 public:
     virtual bool init();
     CREATE_FUNC(ParentLayer);
-    
     
     // touch event
     virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent);
@@ -27,7 +26,6 @@ public:
     virtual void menuCallback(CCObject* obj);
     void timingReplace(float t);
     
-    virtual int topHandlerPriority(){return -129;}
     
     void showOrHide(bool show);
 private:

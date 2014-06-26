@@ -15,6 +15,8 @@ class Heimao : public Cartoon
 public:
     static Heimao* create();
     
+    void stop();
+    
     float action(const char* key,bool random=true,int actionIndex=0,int audioIndex=0);
 };
 

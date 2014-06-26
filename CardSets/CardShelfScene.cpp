@@ -29,6 +29,7 @@ CardShelfScene::CardShelfScene()
 
 CardShelfScene::~CardShelfScene()
 {
+    
 }
 
 CCScene* CardShelfScene::scene()
@@ -69,10 +70,10 @@ bool CardShelfScene::init()
     m_pTableView->setPosition(S_RM->getPositionWithName("CardShelf_position"));
     
 //    if (this->numberOfCellsInTableView(m_pTableView)<3) {
-        CCPoint tablePoint=S_RM->getPositionWithName("CardShelf_position");
-        float y=(S_RM->getSizeWithName("CardShelf_size").height-this->numberOfCellsInTableView(m_pTableView)*S_RM->getSizeWithName("CardShelf_cellSize").height)/2;
-        m_pTableView->setPosition(ccp(tablePoint.x,  -y));
-        m_pTableView->setBounceable(false);
+//        CCPoint tablePoint=S_RM->getPositionWithName("CardShelf_position");
+//        float y=(S_RM->getSizeWithName("CardShelf_size").height-this->numberOfCellsInTableView(m_pTableView)*S_RM->getSizeWithName("CardShelf_cellSize").height)/2;
+//        m_pTableView->setPosition(ccp(tablePoint.x,  -y));
+//        m_pTableView->setBounceable(false);
 //    }
     
     this->addChild(m_pTableView, 2);
@@ -91,10 +92,10 @@ void CardShelfScene::gridCellTouched(CCTableView* table, CCTableViewCell* cell,i
     if (index<S_CM->getECardSets()->size()) {
         S_CM->setCurrentECardSet(index);
         if (CURRENT_PAGECOUNT>0) {
-            CCDirector::sharedDirector()->replaceScene(CardListScene::scene());
-            SimpleAudioEngine::sharedEngine()->playEffect("renwu.mp3");
+            S_DR->replaceScene(CardListScene::scene());
+            S_AE->playEffect("renwu.mp3");
         }else{
-            SimpleAudioEngine::sharedEngine()->playEffect("default.mp3");
+            S_AE->playEffect("default.mp3");
         }
     }
 }

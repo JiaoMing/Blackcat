@@ -53,6 +53,7 @@ private:
     GamePlayer m_winner;
     CCSprite* m_guanzhong;
     bool m_isEnd;
+    bool m_isStart;
 };
 
 #endif /* defined(__Blackcat__GameLayer__) */

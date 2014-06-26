@@ -22,6 +22,8 @@
 #include "NewPetScene.h"
 #include "UserBarLayer.h"
 #include "KechengDialogLayer.h"
+#include "AchieveLayer.h"
+#include "KechengController.h"
 using namespace CocosDenshion;
 
 #if(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
@@ -39,7 +41,7 @@ enum {
     kPropsFangkuang,
     kPropsYuankuang,
     kPropsSanjiaokuang,
-    kPropsHuapen,
+    kPropsJiangbei,
     kPropsShuzuobian,
     kPropsChoutishang,
     kPropsChoutixia,
@@ -50,7 +52,7 @@ enum {
 };
 
 const std::string g_propsName[kPropsXiaoqiche-kPropsHezi+1] = {
-    "hezi","laoshu","wawa","fangkuang","yuankuang","sanjiaokuang","huapen","shuzuobian","choutishang","choutixia","xiaoqiche"
+    "hezi","laoshu","wawa","fangkuang","yuankuang","sanjiaokuang","jiangbei","shuzuobian","choutishang","choutixia","xiaoqiche"
 };
 
 HomeScene::HomeScene()
@@ -70,6 +72,7 @@ CCScene* HomeScene::scene()
     CCScene* scene = CCScene::create();
     HomeScene *layer = HomeScene::create();
     scene->addChild(layer);
+    
     return scene;
 }
 
@@ -101,10 +104,6 @@ bool HomeScene::init(){
         }
     }
     
-    UserBarLayer* userBarLayer=UserBarLayer::create();
-    userBarLayer->setPosition(S_RM->getPositionWithName("home_userbar"));
-    this->addChild(userBarLayer,ORDER_USERBAR);
-    
     CCLabelTTF* label=CCLabelTTF::create("一", "KaiTi.ttf", 120.0,CCSizeMake(120, 120),kCCTextAlignmentCenter,kCCVerticalTextAlignmentCenter);
     label->setColor(ccc3(255,255,255));
     m_hanziMenuItem=CCMenuItemLabel::create(label, this, menu_selector(HomeScene::menuCallBack));
@@ -133,7 +132,7 @@ bool HomeScene::init(){
     m_Panda->doAction("xiongmao2:0", NULL);
     m_Panda->setTag(KPanda);
     
-    m_heimao = Cartoon::cartoonWithName("heimao");
+    m_heimao = Heimao::create();
     m_heimao->setPosition(S_RM->getPositionWithName("home_jingzhang"));
     this->addChild(m_heimao);
     m_heimao->doAction("z-daijizhayan:0", NULL);
@@ -141,6 +140,12 @@ bool HomeScene::init(){
     m_heimao->setBoxEnabled("z-shenti", true);
     m_heimao->setScale(1);
     m_heimao->setCallback(this, cartoon_selector(HomeScene::menuCallBack));
+    
+    
+    //用户信息bar
+    UserBarLayer* userBarLayer=UserBarLayer::create();
+    userBarLayer->setPosition(S_RM->getPositionWithName("home_userbar"));
+    this->addChild(userBarLayer,ORDER_USERBAR);
     
     //工具条
     ParentLayer* parentLayer=ParentLayer::create();
@@ -165,6 +170,7 @@ void HomeScene::onEnter()
     
     //排行榜
     m_rankingBarLayer=RankingBarLayer::create();
+    m_rankingBarLayer->setDelegate(this);
     this->addChild(m_rankingBarLayer);
     
     //引导流程
@@ -172,46 +178,50 @@ void HomeScene::onEnter()
     long nowTimeStamp=now.tv_sec;
     long lastTimeStamp=(long)S_UD->getFloatForKey(LAST_OPEN_TIMESTAMP);
     string first= S_UD->getStringForKey("HomeScene_First");
-    if (first!="heimao_10") {
-//        调试关闭引导
-        if(!DEBUG_OPEN)this->startGuide("HomeScene_First","heimao_1",true);
-    }else{
-        Props* props=(Props*)this->getChildByTag(kPropsWawa);
-        props->setIsImmediate(true);
-        bool isBgMusicRunning=S_UD->getBoolForKey("BG_MUSIC",true);
-        if (isBgMusicRunning) {
-            props->runRandomAnimate(0,false,false);
-        }
-        
-        cc_timeval time=TimeUtils::millisecondNow();
-        struct tm* locationTime= TimeUtils::getLocaltime(time.tv_sec);
-        int month=locationTime->tm_mon+1;
-        int day=locationTime->tm_mday;
-        
-        if(S_UD->getFloatForKey(LAST_OPEN_TIMESTAMP,0)>0){
-            if (month==1&&day==1) {
-                //元旦
-                this->startGuide("HomeScene_Normal","heimao_2");
-            }else if(month==6&&day==1){
-                this->startGuide("HomeScene_Normal","heimao_3");
-            }else{
-                if (nowTimeStamp-lastTimeStamp>2*24*3600){
-                    //              if (true){
-                    int random=(int) (CCRANDOM_0_1()*2);
-                    switch (random) {
-                        case 0:
-                            this->startGuide("HomeScene_Normal","heimao_6");
-                            break;
-                        case 1:
-                            this->startGuide("HomeScene_Normal","xiaobo_2");
-                            break;
-                        default:
-                            break;
-                    }
-                }else if (static_getDayRenwuCount()==0) {
-                    bool isNewOpen=S_UD->getBoolForKey(NEW_OPEN,true);
-                    if (isNewOpen) {
-                        this->startGuide("HomeScene_Normal","heimao_5");
+    
+    if(!DEBUG_OPEN){
+#pragma message "注意结束heimao_11"
+        if (first!="heimao_11") {
+            //        调试关闭引导
+            this->startGuide("HomeScene_First","heimao_1",true);
+        }else{
+            Props* props=(Props*)this->getChildByTag(kPropsWawa);
+            props->setIsImmediate(true);
+            bool isBgMusicRunning=S_UD->getBoolForKey("BG_MUSIC",true);
+            if (isBgMusicRunning) {
+                props->runRandomAnimate(0,false,false);
+            }
+            
+            cc_timeval time=TimeUtils::millisecondNow();
+            struct tm* locationTime= TimeUtils::getLocaltime(time.tv_sec);
+            int month=locationTime->tm_mon+1;
+            int day=locationTime->tm_mday;
+            
+            if(S_UD->getFloatForKey(LAST_OPEN_TIMESTAMP,0)>0){
+                if (month==1&&day==1) {
+                    //元旦
+                    this->startGuide("HomeScene_Normal","heimao_2");
+                }else if(month==6&&day==1){
+                    this->startGuide("HomeScene_Normal","heimao_3");
+                }else{
+                    if (nowTimeStamp-lastTimeStamp>2*24*3600){
+                        //              if (true){
+                        int random=(int) (CCRANDOM_0_1()*2);
+                        switch (random) {
+                            case 0:
+                                this->startGuide("HomeScene_Normal","heimao_6");
+                                break;
+                            case 1:
+                                this->startGuide("HomeScene_Normal","xiaobo_2");
+                                break;
+                            default:
+                                break;
+                        }
+                    }else if (S_KC->getDayRenwuCount()==0) {
+                        bool isNewOpen=S_UD->getBoolForKey(NEW_OPEN,true);
+                        if (isNewOpen) {
+                            this->startGuide("HomeScene_Normal","heimao_5");
+                        }
                     }
                 }
             }
@@ -221,7 +231,7 @@ void HomeScene::onEnter()
     S_UD->setBoolForKey(NEW_OPEN, false);
     S_UD->setFloatForKey(LAST_OPEN_TIMESTAMP, nowTimeStamp);
     S_UD->flush();
- 
+    
     BaiduStat::onStatEvent(kBaiduOneEventStart,"SceneRetain","HomeScene");
 }
 
@@ -274,35 +284,27 @@ void HomeScene::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
     }else if(m_Panda->boundingBox().containsPoint(touchPoint))
     {
         
-        int mode=CCRANDOM_0_1()*2;
-        S_UD->setIntegerForKey(PET_ENTER_MODE, mode);
-        S_UD->flush();
         
-        switch (mode) {
-            case kPetEnterNormal:{
-                this->startGuide("HomeScene_Normal","xiaobo_1");
+        if (DEBUG_OPEN) {
+            S_UD->setIntegerForKey(PET_ENTER_MODE, 0);
+            S_UD->flush();
+            this->startGuide("HomeScene_Normal","xiaobo_1");
+        }else{
+            int mode=CCRANDOM_0_1()*2;
+            S_UD->setIntegerForKey(PET_ENTER_MODE, mode);
+            S_UD->flush();
+            switch (mode) {
+                case kPetEnterNormal:{
+                    this->startGuide("HomeScene_Normal","xiaobo_1");
+                }
+                    break;
+                case kPetEnterGame:{
+                    this->startGuide("HomeScene_Normal","xiaobo_3");
+                }
+                    break;
             }
-                break;
-            case kPetEnterGame:{
-                this->startGuide("HomeScene_Normal","xiaobo_3");
-            }
-                break;
         }
         
-//        int count=static_getDayRenwuCount();
-//        switch (count) {
-//            case 0:
-//                m_Panda->doAction("xiongmao3:6", "xiongmao2:0",NULL);
-//                S_ALP->play("xiaobo003_1.mp3:4","xiaobo003_2.mp3:3",NULL);
-//                break;
-//            case 1:
-//            case 2:
-//                this->startGuide("HomeScene_Normal","xiaobo_1");
-//                break;
-//                
-//            default:
-//                break;
-//        }
     }else{
         CCPoint point =pTouch->getLocationInView();
         CCRect rect=CCRectMake(0, 320, 120, 100);
@@ -329,31 +331,37 @@ void HomeScene::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
         }
         
         //点击未相应区域
-//        if(status){
-//            this->setScale(1);
-//            this->setPosition(CCPointZero);
-//        }else{
-//            this->setScale(2);
-//            CCPoint point =pTouch->getLocationInView();
-//            CCPoint midPoint=ccp(point.x*2,point.y*2);
-//            this->setPosition(CCPointZero);
-//        }
+        //        if(status){
+        //            this->setScale(1);
+        //            this->setPosition(CCPointZero);
+        //        }else{
+        //            this->setScale(2);
+        //            CCPoint point =pTouch->getLocationInView();
+        //            CCPoint midPoint=ccp(point.x*2,point.y*2);
+        //            this->setPosition(CCPointZero);
+        //        }
         m_status=!m_status;
     }
 }
 
 void HomeScene::dialogCallBack(GuideDialogCMD cmd){
     if (this->getQueueKey()=="HomeScene_First") {
-        if (this->getStepKey()=="heimao_10") {
+        if (this->getStepKey()=="heimao_11") {
             if (cmd==kDialogCMDOk) {
-                S_DR->replaceScene(LoadingScene::scene("RenwuScene",false));
+                KechengDialogLayer* floatLayer=KechengDialogLayer::create(m_heimao);
+                floatLayer->setDelegate(this);
+                this->addChild(floatLayer,ORDER_DIALOG);
+                this->startGuide("HomeScene_Normal","heimao_13");
                 return;
             }
         }
     }else if (this->getQueueKey()=="HomeScene_Normal"){
         if (this->getStepKey()=="heimao_1") {
             if (cmd==kDialogCMDYes) {
-                S_DR->replaceScene(LoadingScene::scene("RenwuScene",false));
+                KechengDialogLayer* floatLayer=KechengDialogLayer::create(m_heimao);
+                floatLayer->setDelegate(this);
+                this->addChild(floatLayer,ORDER_DIALOG);
+                this->startGuide("HomeScene_Normal","heimao_13");
                 return;
             }
         }else if (this->getStepKey()=="xiaobo_1"||this->getStepKey()=="xiaobo_3"){
@@ -365,26 +373,37 @@ void HomeScene::dialogCallBack(GuideDialogCMD cmd){
     }
     
     this->step();
+    
+    
+    //临时修改代码
+    m_heimao->setPosition(S_RM->getPositionWithName("home_jingzhang"));
 }
 
 
 void HomeScene::menuCallBack(CCObject* pSender){
+    S_ALP->stop();
     S_AE->stopAllEffects();
-//    S_AE->playEffect("click.mp3");
     
     CCMenuItem *menuItem = (CCMenuItem *)pSender;
-    switch (menuItem->getTag()) {
+    int tag=menuItem->getTag();
+    if (tag>=kPropsHezi&&tag<=kPropsXiaoqiche) {
+        int random=(int)(CCRANDOM_0_1()*10);
+        if (random==1) {
+            S_LM->gain(1, ((CCNode*)pSender)->getPosition());
+        }
+    }
+    switch (tag) {
         case kHeimao:{
-            DialogLayer* floatLayer=KechengDialogLayer::create();
+            
+            KechengDialogLayer* floatLayer=KechengDialogLayer::create(m_heimao);
             floatLayer->setDelegate(this);
             this->addChild(floatLayer,ORDER_DIALOG);
-            
             
         }
             break;
         case kPropsShuzuobian:{
             S_DR->replaceScene(CardShelfScene::scene());
-//            S_DR->replaceScene(LoadingScene::scene("CardSetsScene",false));
+            //            S_DR->replaceScene(LoadingScene::scene("CardSetsScene",false));
         }
             break;
         case kMenuHanzi:{
@@ -393,23 +412,15 @@ void HomeScene::menuCallBack(CCObject* pSender){
             break;
         case kPropsChoutishang:{
             S_DR->replaceScene(KapianHanziScene::scene());
-//            S_DR->replaceScene(LoadingScene::scene("KapianHanziScene",false));
+            //            S_DR->replaceScene(LoadingScene::scene("KapianHanziScene",false));
         }
             break;
         case kPropsChoutixia:{
             S_DR->replaceScene(KapianTupianScene::scene());
-//            S_DR->replaceScene(LoadingScene::scene("KapianTupianScene",false));
+            //            S_DR->replaceScene(LoadingScene::scene("KapianTupianScene",false));
         }
             break;
         case kPropsWawa:{
-            CCPointArray* array=CCPointArray::create(6);
-            array->addControlPoint(S_RM->getPositionWithName("renwu_dialog_zi_1"));
-            array->addControlPoint(S_RM->getPositionWithName("renwu_dialog_zi_2"));
-            array->addControlPoint(S_RM->getPositionWithName("renwu_dialog_zi_3"));
-            array->addControlPoint(S_RM->getPositionWithName("renwu_dialog_zi_4"));
-            array->addControlPoint(S_RM->getPositionWithName("renwu_dialog_zi_5"));
-            array->addControlPoint(S_RM->getPositionWithName("renwu_dialog_zi_6"));
-            S_LM->gain("WRITE",S_RM->getJpgBgPosition(),array);
             bool isBgMusicRunning=S_UD->getBoolForKey("BG_MUSIC",true);
             Props* props=(Props*)menuItem;
             if (isBgMusicRunning) {
@@ -421,6 +432,12 @@ void HomeScene::menuCallBack(CCObject* pSender){
             }
             S_UD->setBoolForKey("BG_MUSIC",!isBgMusicRunning);
             S_UD->flush();
+        }
+            break;
+        case kPropsJiangbei:{
+            AchieveLayer* achieveLayer=AchieveLayer::create();
+            achieveLayer->setDelegate(this);
+            this->addChild(achieveLayer,ORDER_DIALOG);
         }
             break;
         case kPropsXiaoqiche:{

@@ -19,13 +19,17 @@ public:
     
     SYNTHESIZE_KEY(id);
     SYNTHESIZE_STRING(name);
+    SYNTHESIZE_INT(sort);
     SYNTHESIZE_INT(show);
+    SYNTHESIZE_INT(isOpen);
     
     virtual void registTablenameAndProperty(){
         tablename="ecard_set";
         INSERT_PROPERTYMAP(ECardSet,id);
         INSERT_PROPERTYMAP(ECardSet,name);
+        INSERT_PROPERTYMAP(ECardSet,sort);
         INSERT_PROPERTYMAP(ECardSet,show);
+        INSERT_PROPERTYMAP(ECardSet,isOpen);
     }
 };
 
