@@ -121,10 +121,10 @@ void GuideBaseLayer::step(){
             if(!DEBUG_OPEN)
                 guideDialogLayer->setVisible(false);
             guideDialogLayer->setGuideDialogData(guideDialog);
-            
         }
         
-        S_ALP->play(guideDialog->getAudioArray());
+//        if(guideDialog->getIsAutoPlayAudio())
+            S_ALP->play(guideDialog->getAudioArray());
         
     }else{
         GuideEvent* guideEvent=(GuideEvent*)m_guide;

@@ -22,17 +22,17 @@ static CloudStruct clouds[] = {
     {
        "yun1.png",
        "pet_yun1",
-       0.6
+       0.2
     },
     {
         "yun2.png",
         "pet_yun2",
-        1.2
+        0.4
     },
     {
         "yun3.png",
         "pet_yun3",
-        1.8
+        0.6
     }
 };
 

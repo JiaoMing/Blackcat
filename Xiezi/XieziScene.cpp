@@ -154,8 +154,7 @@ bool XieziScene::init()
     if (m_hanzi->getisCollected()==0) {
         m_collectedCount=S_DM->getCount("hanzi","isCollected>0");
         if (m_collectedCount>=COLLECT_LIMIT) {
-            GuideDialog* guideDialog=new GuideDialog();
-            guideDialog->autorelease();
+            GuideDialog* guideDialog=GuideDialog::create();
             guideDialog->setText("非常抱歉，本软件为测试版，收藏的卡片数量已经超出了测试版的限制。请关注我们的微信公众号，等待正式版本的发布，谢谢！");
             guideDialog->setMode(kGuideDialogOk);
             m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
@@ -192,10 +191,12 @@ bool XieziScene::init()
 
 void XieziScene::onEnter(){
     CCLayerColor::onEnter();
+    BaiduStat::onStatEvent(kBaiduOneEventStart,"SceneRetain","XieziScene");
 }
 
 void XieziScene::onExit(){
     CCLayerColor::onExit();
+    BaiduStat::onStatEvent(kBaiduOneEventEnd,"SceneRetain","XieziScene");
 }
 
 void XieziScene::keyBackClicked(){
@@ -290,43 +291,60 @@ void XieziScene::tupianLoadCallBack(int count){
     }
 }
 
-
-void XieziScene::tupianTouchCallBack(Tupian* tupian){
+void XieziScene::tupianTouchCallBack(Tupian* tupian,bool isOverLimit){
     m_xieziLayer->unschedule(schedule_selector(XieziLayer::dingShiTiXing));
     
-    m_xieziLayer->setVisible(false);
-    //图片浏览层
-    TupianBrowserLayer* m_tupianBrowser=TupianBrowserLayer::create(this,tupian);
-    m_tupianBrowser->setPosition(CCPointZero);
-    this->addChild(m_tupianBrowser,100);
     
-    LevelDelegate* ld=S_LM->getDelegate();
-    if (ld) {
-        ld->setPosition(S_RM->getPositionWithName("xiezi_userbar_browser"));
+    if (isOverLimit) {
+        GuideDialog* guideDialog=new GuideDialog();
+        guideDialog->autorelease();
+        guideDialog->setText("非常抱歉，收藏的卡片数量已经超出了免费版本限制，请检查账号状态。");
+        guideDialog->setMode(kGuideDialogOk);
+        GuideDialogLayer* gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
+        gudieDialogLayer->setDelegate(this);
+        this->addChild(gudieDialogLayer,ORDER_DIALOG);
+        gudieDialogLayer->setGuideDialogData(guideDialog);
+        
+        m_xieziLayer->getWebView()->setVisible(false);
+    }else{
+        
+        m_xieziLayer->setVisible(false);
+        
+        //图片浏览层
+        TupianBrowserLayer* m_tupianBrowser=TupianBrowserLayer::create(this,tupian);
+        m_tupianBrowser->setPosition(CCPointZero);
+        this->addChild(m_tupianBrowser,100);
+        
+        LevelDelegate* ld=S_LM->getDelegate();
+        if (ld) {
+            ld->setPosition(S_RM->getPositionWithName("xiezi_userbar_browser"));
+        }
     }
 }
 
-void XieziScene::tupianTableScrollCallBack(ScrollState state){
-    CCNode* menu=this->getChildByTag(kTagMenu);
-    switch (state) {
-        case kScrollStateTop:{
-            menu->getChildByTag(kTagSJX)->setVisible(false);
+void XieziScene::tupianTableScrollCallBack(ScrollState state,int cellCount){
+    if (cellCount>TABLE_VISIBLE_COUNT) {
+        CCNode* menu=this->getChildByTag(kTagMenu);
+        switch (state) {
+            case kScrollStateTop:{
+                menu->getChildByTag(kTagSJX)->setVisible(false);
+            }
+                
+                break;
+            case kScrollStatemiddle:{
+                menu->getChildByTag(kTagSJX)->setVisible(true);
+                menu->getChildByTag(kTagXJT)->setVisible(true);
+            }
+                break;
+            case kScrollStateBottom:{
+                menu->getChildByTag(kTagXJT)->setVisible(false);
+            }
+                
+                break;
+                
+            default:
+                break;
         }
-            
-            break;
-        case kScrollStatemiddle:{
-            menu->getChildByTag(kTagSJX)->setVisible(true);
-            menu->getChildByTag(kTagXJT)->setVisible(true);
-        }
-            break;
-        case kScrollStateBottom:{
-            menu->getChildByTag(kTagXJT)->setVisible(false);
-        }
-            
-            break;
-            
-        default:
-            break;
     }
 }
 
@@ -340,8 +358,10 @@ void XieziScene::hideBrowserCallBack(){
 }
 
 void XieziScene::dialogCallBack(GuideDialogCMD cmd){
-    m_gudieDialogLayer->removeFromParentAndCleanup(true);
-    m_gudieDialogLayer=NULL;
+    if (m_gudieDialogLayer!=NULL) {
+        m_gudieDialogLayer->removeFromParentAndCleanup(true);
+        m_gudieDialogLayer=NULL;
+    }
     m_xieziLayer->getWebView()->setVisible(true);
     m_xieziLayer->getWebView()->callWebWithJs("setMode(Modes.kDrawHanzi);");
 }

@@ -64,8 +64,13 @@ CCTableViewCell* AchieveLayer::tableCellAtIndex(CCTableView *table, unsigned int
             text->setPosition(S_RM->getRelativePosition("achieve_text", barHeight));
             bar->addChild(text);
             
-            for (int i=1; i<S_AEM->achieveLevel((AchieveKey)idx)+1; i++) {
-                CCString* str=CCString::createWithFormat("%s_%d.png",achieveStruts[idx].icon.c_str(),i);
+            for (int i=1; i<6; i++) {
+                CCString* str;
+                if (i<S_AEM->achieveLevel((AchieveKey)idx)+1) {
+                    str=CCString::createWithFormat("%s_%d.png",achieveStruts[idx].icon.c_str(),i);
+                }else{
+                    str=CCString::createWithFormat("%s_yinying.png",achieveStruts[idx].icon.c_str());
+                }
                 CCSprite* item=CCSprite::createWithSpriteFrameName(str->getCString());
                 CCString* point=CCString::createWithFormat("achieve_item%d",i);
                 item->setPosition(S_RM->getRelativePosition(point->getCString(), barHeight));

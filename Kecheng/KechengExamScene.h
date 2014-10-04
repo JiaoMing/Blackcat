@@ -31,6 +31,8 @@ public:
     KechengExamScene(KechengExamSceneDelegate* kechengExamSceneDelegate);
     ~KechengExamScene();
     virtual bool init();
+    virtual void onEnter();
+    virtual void onExit();
     virtual void keyBackClicked();
     virtual void keyMenuClicked();
 private:

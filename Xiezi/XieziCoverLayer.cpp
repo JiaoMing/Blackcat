@@ -8,18 +8,23 @@
 
 #include "XieziCoverLayer.h"
 
-XieziCoverLayer::XieziCoverLayer(int hid){
+XieziCoverLayer::XieziCoverLayer(int hid,string zi){
     m_hanzi=new Hanzi();
-    S_DM->getByKey(m_hanzi, hid);
+    if(zi!=""){
+        S_DM->getByProperty(m_hanzi, "zi", zi);
+    }else{
+        S_DM->getByKey(m_hanzi, hid);
+    }
 }
 
 XieziCoverLayer::~XieziCoverLayer(){
     CC_SAFE_DELETE(m_hanzi);
 }
 
-XieziCoverLayer* XieziCoverLayer::create(int hid,Heimao* heimao){
-    XieziCoverLayer* xieziCoverLayer=new XieziCoverLayer(hid);
+XieziCoverLayer* XieziCoverLayer::create(int hid,Heimao* heimao,string zi,string pyyd){
+    XieziCoverLayer* xieziCoverLayer=new XieziCoverLayer(hid,zi);
     xieziCoverLayer->m_heimao=heimao;
+    xieziCoverLayer->m_pyyd=pyyd;
     xieziCoverLayer->init();
     xieziCoverLayer->autorelease();
     return xieziCoverLayer;
@@ -37,7 +42,7 @@ bool XieziCoverLayer::init(){
         userBarLayer->setZOrder(INT_MAX);
     }
     
-    m_xieziLayer=XieziLayer::create(m_hanzi,true,m_heimao);
+    m_xieziLayer=XieziLayer::create(m_hanzi,true,m_heimao,m_pyyd);
     this->addChild(m_xieziLayer);
     return true;
 }

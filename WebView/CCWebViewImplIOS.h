@@ -27,7 +27,7 @@
 @property(nonatomic, assign) void*  ccWebview;
 
 -(id) initWithFrame: (CGRect) frameRect webView:(void*) webView htmlFilename: (const char*) htmlFilename;
--(void)callWebWithJs:(const char*)js;
+-(const char*)callWebWithJs:(const char*)js;
 -(void)setVisible:(BOOL)var;
 @end
 
@@ -38,7 +38,7 @@ public:
     virtual ~CCWebViewImplIOS();
 public:
     virtual bool initWithRectAndHtmlFilename(const CCRect& ccRect,const char* htmlFilename);
-    virtual void callWebWithJs(const char* js);
+    virtual const char* callWebWithJs(const char* js);
     virtual void setVisible(bool var);
 protected:
     WebViewImplIOS* m_systemControl;

@@ -38,6 +38,7 @@ void Api::send(){
             break;
     }
     request->setUrl(url.c_str());
+    
     request->setRequestType(m_apiStruct.requestType);
     request->setResponseCallback(this, httpresponse_selector(Api::onHttpRequestCompleted));
     
@@ -73,8 +74,9 @@ void Api::onHttpRequestCompleted(CCHttpClient *sender, CCHttpResponse *response)
     if (feedback->intValue()!=100) {
         CCString* feedbackStr=(CCString*)m_feedbackDict->objectForKey(feedback->getCString());
         S_TT->makeText(feedbackStr->getCString());
-        if (feedback->intValue()==-102) {
+        if (feedback->intValue()==-401||feedback->intValue()==-102) {
             //未登录处理
+            if(S_LM->getDelegate())S_LM->getDelegate()->logout();
         }
     }else{
         if(m_apiStruct.target)(m_apiStruct.target->*m_apiStruct.sel_response)(root);

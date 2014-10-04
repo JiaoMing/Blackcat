@@ -23,10 +23,12 @@ public:
     virtual void enableTouch();
     
     virtual int topHandlerPriority(){return kCCMenuHandlerPriority-1;};
-    virtual void dialogCallBack(GuideDialogCMD cmd){};
+    virtual void dialogCallBack(GuideDialogCMD cmd);
     
     virtual void menuCallback(CCObject* obj);
     void volumeValueChanged(CCObject *sender, CCControlEvent controlEvent);
+private:
+    int m_tag;//用于dialog返回判断
 };
 
 #endif /* defined(__Blackcat__SettingsLayer__) */

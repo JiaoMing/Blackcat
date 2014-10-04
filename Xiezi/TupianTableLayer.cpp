@@ -144,19 +144,22 @@ void TupianTableLayer::tableCellTouched(CCTableView* table, CCTableViewCell* cel
 {
     if(cell!=NULL){
         Tupian* tupian=(*m_tupianVector)[cell->getIdx()];
-        int isCollected=tupian->getisCollected();
-        m_tupianTableDelegate->tupianTouchCallBack(tupian);
-        
-        if (!isCollected) {
-            CCNode* label=cell->getChildByTag(kCellLabelLayer);
-            if(label)label->setVisible(true);
-            CCNode* wenhao=cell->getChildByTag(kCellWenhao);
-            CCSprite* tupian=(CCSprite*)cell->getChildByTag(kCellTupianSprite);
-            wenhao->runAction(CCSpawn::create(CCOrbitCamera::create(0.3, 1, 0, 0, -90, 0, 0),CCFadeOut::create(0.3),NULL));
-            tupian->runAction(CCSequence::create(CCDelayTime::create(0.3),CCOrbitCamera::create(0.3, 1, 0, 90, -90, 0, 0),NULL));
+        bool isOverLimit=false;
+        if (!tupian->getisCollected()) {
+            int count=S_DM->getCount("ciyu","isCollected>0");
+            if (count>=COLLECT_LIMIT) {
+                isOverLimit=true;
+            }else{
+                CCNode* label=cell->getChildByTag(kCellLabelLayer);
+                if(label)label->setVisible(true);
+                CCNode* wenhao=cell->getChildByTag(kCellWenhao);
+                CCSprite* tupianSprite=(CCSprite*)cell->getChildByTag(kCellTupianSprite);
+                tupianSprite->setVisible(false);
+                wenhao->runAction(CCSequence::create(CCOrbitCamera::create(0.3, 1, 0, 0, -90, 0, 0),CCHide::create(),NULL));
+                tupianSprite->runAction(CCSequence::create(CCDelayTime::create(0.3),CCShow::create(),CCOrbitCamera::create(0.3, 1, 0, 90, -90, 0, 0),NULL));
+            }
         }
-        
-        
+        m_tupianTableDelegate->tupianTouchCallBack(tupian,isOverLimit);
     }
 }
 
@@ -285,7 +288,7 @@ void TupianTableLayer::scrollViewDidScroll(cocos2d::extension::CCScrollView *vie
     }else{
         state=kScrollStatemiddle;
     }
-    m_tupianTableDelegate->tupianTableScrollCallBack(state);
+    m_tupianTableDelegate->tupianTableScrollCallBack(state,m_tupianVector->size());
 }
 
 void TupianTableLayer::scroll(ScrollAction action){

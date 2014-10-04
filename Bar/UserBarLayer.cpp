@@ -11,6 +11,10 @@
 #include "UserLoginLayer.h"
 #include "ChildLayer.h"
 #include "ObjectManager.h"
+#include "UpgradeLayer.h"
+#include "RankingLayer.h"
+#include "PlatformAction.h"
+#include "DownloadManager.h"
 
 #define TAG_XINGXING_FLOAT 10
 
@@ -60,9 +64,15 @@ bool UserBarLayer::init(){
     float relativeHeight=touxiangBg->getContentSize().height;
     touxiangBg->setPosition(S_RM->getRelativePosition("user_touxiang", relativeHeight));
     
-    CCSprite* touxiang=CCSprite::createWithSpriteFrameName("default_avatar2.png");
-    touxiang->setPosition(S_RM->getRelativePosition("user_touxiang", relativeHeight));
-    this->addChild(touxiang);
+    string avatarPath=CCFileUtils::sharedFileUtils()->getWritablePath().append("/avatar.jpg");
+    if (access(avatarPath.c_str(), 0)) {
+        m_touxiang=CCSprite::create("default_avatar.png");
+    }else{
+        m_touxiang=CCSprite::create(avatarPath.c_str());
+        m_touxiang->setScale(60/m_touxiang->getContentSize().width);
+    }
+    m_touxiang->setPosition(S_RM->getRelativePosition("user_touxiang", relativeHeight));
+    this->addChild(m_touxiang);
     
     this->addChild(touxiangBg);
     
@@ -121,6 +131,7 @@ bool UserBarLayer::init(){
     
     m_xingDisplayPoint=jinduPoint;
     
+    
 //    if (S_UD->getStringForKey(UDKEY_USER_USERNAME).length()==0) {
 //        this->setVisible(false);
 //    }
@@ -132,9 +143,7 @@ bool UserBarLayer::ccTouchBegan(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEve
     CCPoint point=pTouch->getLocation();
     point=this->convertToNodeSpace(point);
     if (CCRectMake(0, 0, 220, 70).containsPoint(point)) {
-        
-#pragma message "暂时取消点击"
-//        return true;
+        return true;
     }
     return false;
 }
@@ -143,18 +152,38 @@ void UserBarLayer::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEve
     CCPoint point=pTouch->getLocation();
     point=this->convertToNodeSpace(point);
     if (CCRectMake(0, 0, 220, 70).containsPoint(point)) {
+        //隐藏webview等上层view
+        S_OM->hideNativeView();
+        
+        //提前判断token是否正确状态
+        
         if (S_UD->getStringForKey("USER_USERNAME", "")=="") {
             UserLoginLayer* layer=UserLoginLayer::create();
             layer->setDelegate(this);
             layer->setPosition(this->convertToNodeSpace(CCPointZero));
             this->addChild(layer,INT_MAX);
         }else{
-            ChildLayer* layer=ChildLayer::create();
-            layer->setDelegate(this);
-            layer->setPosition(this->convertToNodeSpace(CCPointZero));
-            this->addChild(layer,INT_MAX);
+//            PlatformAction::avatar();
+//            RankingLayer* layer=RankingLayer::create(kRankLevel);
+//            layer->setDelegate(this);
+//            layer->setPosition(this->convertToNodeSpace(CCPointZero));
+//            this->addChild(layer,INT_MAX);
+            
+//            CCAlbum* layer=CCAlbum::create();
+//            layer->setDelegate(this);
+//            this->addChild(layer);
         }
     }
+}
+
+void UserBarLayer::dialogCloseCallBack(){
+    S_OM->resumeNativeView();
+}
+
+void UserBarLayer::logout(){
+    S_UD->setStringForKey(UDKEY_USER_TOKEN, "");
+    S_UD->setStringForKey(UDKEY_USER_USERNAME, "");
+    this->fresh();
 }
 
 void UserBarLayer::fresh(){
@@ -279,6 +308,9 @@ void UserBarLayer::levelUp(){
     S_AE->playEffect("mario1.mp3");
     CCString* level=CCString::createWithFormat("%d",m_levelObject->getLevel());
     m_levelLabel->setString(level->getCString());
+    //奖励动画层
+    UpgradeLayer* layer=UpgradeLayer::create();
+    S_DR->getRunningScene()->addChild(layer);
 }
 
 void UserBarLayer::scheduleReOrder(float t){
@@ -289,3 +321,27 @@ void UserBarLayer::scheduleReOrder(float t){
         this->setZOrder(m_zOrder);
     }
 }
+
+void UserBarLayer::freshAvatar(){
+    CCTexture2D* texture;
+    string avatarPath=CCFileUtils::sharedFileUtils()->getWritablePath().append("/avatar.jpg");
+    if (access(avatarPath.c_str(), 0)) {
+        texture=CCTextureCache::sharedTextureCache()->textureForKey("default_avatar.png");
+        if (texture==NULL) {
+            texture=CCTextureCache::sharedTextureCache()->addImage("default_avatar.png");
+        }
+    }else{
+        CCTextureCache::sharedTextureCache()->removeTextureForKey(avatarPath.c_str());
+        texture=CCTextureCache::sharedTextureCache()->addImage(avatarPath.c_str());
+    }
+    m_touxiang->setTexture(texture);
+    m_touxiang->setScale(60/m_touxiang->getContentSize().width);
+}
+
+void UserBarLayer::downloadAvatar(cocos2d::CCObject *obj){
+    DownloadObject* dlObj=(DownloadObject*)obj;
+    if (dlObj->getIsMerged()) {
+        this->freshAvatar();
+    }
+}
+

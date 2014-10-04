@@ -16,7 +16,7 @@ USING_NS_CC;
 
 #define CLAUSE_INIT \
 vector<const char*> whereClause=vector<const char*>();\
-map<const char*, const char*> orderbyClause=map<const char*, const char*>();\
+vector<const char*> orderbyClause=vector<const char*>();\
 vector<const char*> groupByClause=vector<const char*>();
 
 class DBManager{
@@ -32,13 +32,22 @@ public:
     //根据ID获取模型
     BaseModel* getByKey(BaseModel* model,int id);
     
+    
+    //根据属性获取模型
+    BaseModel* getByProperty(BaseModel* model,string name,string value);
+    
+    
+    //根据属性获取模型
+    BaseModel* getByQuery(BaseModel* model,vector<const char*> whereClause);
+    
     //统计
-    map<string, string>*  statistic(map<string, string>*  data,string table,map<string, string> expClause){
-        CLAUSE_INIT;
+    map<string, string>*  statistic(map<string, string>*  data,string table,map<string, string> expClause,vector<const char*> whereClause){
+        vector<const char*> orderbyClause=vector<const char*>();
+        vector<const char*> groupByClause=vector<const char*>();
         return this->statistic(data,table,expClause, whereClause, orderbyClause, groupByClause);
     }
     
-    map<string, string>*  statistic(map<string, string>*  data,string table,map<string, string> expClause,vector<const char*> whereClause,map<const char*, const char*> orderbyClause,vector<const char*> groupByClause);
+    map<string, string>*  statistic(map<string, string>*  data,string table,map<string, string> expClause,vector<const char*> whereClause,vector<const char*> orderbyClause,vector<const char*> groupByClause);
     
     //根据条件获取模型数组
     template <typename T>
@@ -49,12 +58,12 @@ public:
     
     //根据条件获取模型数组
     template <typename T>
-    vector<T*>*  findScrollData(vector<T*>* modelVector,const char* column,vector<const char*> whereClause,map<const char*, const char*> orderbyClause,vector<const char*> groupByClause){
+    vector<T*>*  findScrollData(vector<T*>* modelVector,const char* column,vector<const char*> whereClause,vector<const char*> orderbyClause,vector<const char*> groupByClause){
         return this->findScrollData(modelVector, column, whereClause, orderbyClause, groupByClause, 0, INT_MAX);
     }
     
     template <typename T>
-    vector<T*>*  findScrollData(vector<T*>* modelVector,const char* column,vector<const char*> whereClause,map<const char*, const char*> orderbyClause,vector<const char*> groupByClause,int startIndex,int size){
+    vector<T*>*  findScrollData(vector<T*>* modelVector,const char* column,vector<const char*> whereClause,vector<const char*> orderbyClause,vector<const char*> groupByClause,int startIndex,int size){
         if (this->openDB()) {
             T* t=new T();
             t->registTablenameAndProperty();//注册模型属性
@@ -94,7 +103,8 @@ public:
         map<string, string>::iterator it;
         CCString* exp=CCString::createWithFormat("Sum(case when %s then 1 else 0 end)",columnExp);
         expClause.insert(pair<string, string>("count",exp->getCString()));
-        this->statistic(data, model, expClause);
+        vector<const char*> whereClause=vector<const char*>();
+        this->statistic(data, model, expClause,whereClause);
         for(it=data->begin();it!=data->end();++it){
             if(it->first=="count"){
                 return atoi(it->second.c_str());
@@ -112,7 +122,8 @@ private:
     bool openDB();
     void closeDB();
     string buildWhereClause(vector<const char*> whereClause);
-    string buildOrderByClause(map<const char*, const char*> orderbyClause);
+    string buildOrderByClause(vector<const char*> orderbyClause);
+//    string buildOrderByClause(map<const char*, const char*> orderbyClause);
     string buildGroupByClause(vector<const char*> groupByClause);
     
 private:

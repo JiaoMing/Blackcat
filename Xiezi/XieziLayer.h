@@ -15,12 +15,13 @@
 #include "resource.h"
 #include "CCWebView.h"
 #include "GuideDialogLayer.h"
+#include "Content.h"
 
 class XieziLayerDelegate;
 class XieziLayer : public CCLayer,public CCWebViewDelegate,public GuideDialogDelegate
 {
 public:
-    static XieziLayer* create(Hanzi* hanzi,bool isShowX=true,Heimao* heimao=NULL);
+    static XieziLayer* create(Hanzi* hanzi,bool isShowX=true,Heimao* heimao=NULL,string pyyd="");
 public:
     XieziLayer();
     ~XieziLayer();
@@ -31,6 +32,13 @@ public:
     void menuCallback(CCObject* pSender);
     
     /**
+     *  生成webview快照
+     */
+    CCSprite* generateSnapshot();
+    
+    void detailChangeCallback();
+
+    /**
      定时提醒用户操作
      */
     void dingShiTiXing();
@@ -40,6 +48,8 @@ public:
     void callWeb(CCObject* pSender);
     
     virtual void webCallBack(CCWebView* webview,std::string cmd);
+    
+    void apiCallBack(CCDictionary* root);
     
     void setHandlerPriority(int handlerPriority);
     void enableTouch();
@@ -54,6 +64,7 @@ public:
     CC_SYNTHESIZE(XieziLayerDelegate*, m_delegate, Delegate);
 private:
     Hanzi* m_hanzi;
+    Content* m_mContent;//主汉字音频资源
     CCWebView* m_webView;
     
     
@@ -62,7 +73,7 @@ private:
     bool m_isShowX;//是否显示关闭按钮
     
     int m_collectedCount;//已收集的汉字数量
-    int m_writeCount;
+    int m_writedHanziCount;//被写郭的汉字个数
     
     GuideDialogLayer* m_gudieDialogLayer;
     
@@ -73,6 +84,13 @@ private:
     
     int m_topHandlerPriority;
     
+    /**
+     *  是否显示详情标记
+     */
+    bool m_isShowDetail;
+    
+    int m_xieziLogId;//写字LOG生成的ID
+    int m_todayXieziCount;//今天当前汉字书写次数
 };
 
 class XieziLayerDelegate{

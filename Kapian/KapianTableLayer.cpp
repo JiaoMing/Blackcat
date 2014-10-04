@@ -25,7 +25,8 @@ static void getProcess(const char* model,const char* column,int* count,int* sumC
     expClause.insert(pair<string, string>("count",exp->getCString()));
     exp=CCString::createWithFormat("Sum(case when %s>0 then 1 else 0 end)",column);
     expClause.insert(pair<string, string>("sumCount",exp->getCString()));
-    S_DM->statistic(data, model, expClause);
+    vector<const char*> whereClause=vector<const char*>();
+    S_DM->statistic(data, model, expClause,whereClause);
     for(it=data->begin();it!=data->end();++it){
         if(strcmp(it->first.c_str(), "count")){
             *count=atoi(it->second.c_str());
@@ -115,19 +116,28 @@ void KapianTableLayer::initDataFromDB(){
     switch (m_dataMode) {
         case kHanzi:{
             whereClause.push_back(HANZI_VERIFY_PASS);
-            orderbyClause.insert(pair<const char*, const char*>("bihuashu","asc"));
+            whereClause.push_back("kcid>0");
+            orderbyClause.push_back("kcid asc");
+            orderbyClause.push_back("sort asc");
+            S_DM->findScrollData((vector<Hanzi*>*)m_allVector,"id,zi,writeCount,isCollected,lastAnswer,isReward",whereClause, orderbyClause, groupByClause);
+            whereClause.clear();
+            whereClause.push_back(HANZI_VERIFY_PASS);
+            whereClause.push_back("kcid<=0");
+            orderbyClause.clear();
+            orderbyClause.push_back("bihuashu asc");
             S_DM->findScrollData((vector<Hanzi*>*)m_allVector,"id,zi,writeCount,isCollected,lastAnswer,isReward",whereClause, orderbyClause, groupByClause);
         }
             break;
         case kTupian:{
             whereClause.push_back(TUPIAN_VERIFY_PASS);
             orderbyClause.clear();
-            orderbyClause.insert(pair<const char*, const char*>("id","desc"));
+            orderbyClause.push_back("id desc");
             S_DM->findScrollData((vector<Tupian*>*)m_allVector,"*",whereClause, orderbyClause, groupByClause);
         }
             break;
     }
     for (vector<Kapian*>::iterator it = m_allVector->begin(); it != m_allVector->end(); it ++){
+        //汉字都放出
         if ((*it)->getisCollected()>0)
         {
             m_cltVector->push_back((*it));

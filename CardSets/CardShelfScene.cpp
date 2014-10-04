@@ -12,6 +12,8 @@
 #include "LoadingScene.h"
 #include "HomeScene.h"
 #include "CardListScene.h"
+#include "GushiScene.h"
+#include "Zi800Scene.h"
 
 enum {
     kTagMenuItemShelfExit,
@@ -85,14 +87,37 @@ bool CardShelfScene::init()
     return true;
 }
 
+void CardShelfScene::onEnter(){
+    CCLayer::onEnter();
+    BaiduStat::onStatEvent(kBaiduOneEventStart,"SceneRetain","CardShelfScene");
+}
+
+void CardShelfScene::onExit(){
+    CCLayer::onExit();
+    BaiduStat::onStatEvent(kBaiduOneEventEnd,"SceneRetain","CardShelfScene");
+}
+
 void CardShelfScene::gridCellTouched(CCTableView* table, CCTableViewCell* cell,int indexInIdx)
 {
     int idx=cell->getIdx();
     int index=idx*3+indexInIdx;
     if (index<S_CM->getECardSets()->size()) {
         S_CM->setCurrentECardSet(index);
-        if (CURRENT_PAGECOUNT>0) {
-            S_DR->replaceScene(CardListScene::scene());
+        if (CURRENT_ECARDSET->getisLock()==0) {
+            switch (CURRENT_ECARDSET->gettype()) {
+                case kECardSetType0:
+                    S_DR->replaceScene(CardListScene::scene());
+                    break;
+                case kECardSetType1:
+                    S_DR->replaceScene(Zi800Scene::scene());
+                    break;
+                case kECardSetType2:
+                    S_DR->replaceScene(GushiScene::scene());
+                    break;
+                    
+                default:
+                    break;
+            }
             S_AE->playEffect("renwu.mp3");
         }else{
             S_AE->playEffect("default.mp3");

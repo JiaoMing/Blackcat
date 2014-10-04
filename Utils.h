@@ -41,6 +41,15 @@ public:
         CCString* data=CCString::createWithFormat("%04d%02d%02d",locationTime->tm_year+1900,locationTime->tm_mon+1,locationTime->tm_mday);
         return data->getCString();
     }
+    
+    static inline time_t getToday0Time(){
+        cc_timeval time=TimeUtils::millisecondNow();
+        struct tm* dayTime= TimeUtils::getLocaltime(time.tv_sec);
+        dayTime->tm_hour=0;
+        dayTime->tm_min=0;
+        dayTime->tm_sec=0;
+        return mktime(dayTime);
+    }
 };
 
 class ImageUtils{

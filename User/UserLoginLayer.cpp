@@ -10,6 +10,7 @@
 #include "UserRegLayer.h"
 #include "SettingsLayer.h"
 #include "ParentLayer.h"
+#include "DownloadManager.h"
 
 enum
 {
@@ -112,7 +113,7 @@ void UserLoginLayer::menuCallback(CCObject *obj){
         if (isFromSetting) {
             this->replaceDialog(SettingsLayer::create());
         }else{
-            this->removeFromParent();
+            UserBaseLayer::menuCallback(obj);
         }
     }
 }
@@ -122,9 +123,9 @@ void UserLoginLayer::onJsonCompleted(CCDictionary* root){
     CCDictionary* user=(CCDictionary*)loginUser->objectForKey("user");
     const CCString* username=user->valueForKey("username");
     const CCString* token=loginUser->valueForKey("token");
+    const CCString* avatarKey=user->valueForKey("avatar");
     S_UD->setStringForKey(UDKEY_USER_TOKEN, token->getCString());
     S_UD->setStringForKey(UDKEY_USER_USERNAME, username->getCString());
-    S_UD->flush();
     
     CCString* fd=CCString::createWithFormat("欢迎您，%s",username->getCString());
     S_TT->makeText(fd->getCString());
@@ -134,5 +135,19 @@ void UserLoginLayer::onJsonCompleted(CCDictionary* root){
     if (userBarLayer!=NULL) {
         userBarLayer->setVisible(true);
         userBarLayer->fresh();
+        
+        string str=S_UD->getStringForKey(UDKEY_USER_AVATAR_KEY);
+        if (str!=avatarKey->getCString()) {
+            DownloadObject* dlObj=DownloadObject::create();
+            CCString* avatar=CCString::createWithFormat("http://www.kidsedu.com/userdata/%d/avatar.jpg",user->valueForKey("uid")->intValue());
+            dlObj->setUrl(avatar->getCString());
+            dlObj->setExpectFilename("avatar.jpg");
+            dlObj->setFileTotalSize(1000000000);
+            dlObj->setTarget(userBarLayer);
+            dlObj->setSelector(callfuncO_selector(UserBarLayer::downloadAvatar));
+            DownloadManager::sharedDownloadManager()->download(dlObj);
+            S_UD->setStringForKey(UDKEY_USER_AVATAR_KEY, avatarKey->getCString());
+        }
     }
+    S_UD->flush();
 }

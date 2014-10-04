@@ -9,12 +9,17 @@
 #include "DownloadLayer.h"
 #include "DownloadManager.h"
 
+
+DownloadLayer::~DownloadLayer(){
+    CCLog("~DownloadLayer");
+}
+
 bool DownloadLayer::init(){
     if (!CCLayerColor::initWithColor(ccc4(255, 255, 255, 0))) {
         return false;
     }
     
-    DownloadObject* dlObj=new DownloadObject();
+    DownloadObject* dlObj=DownloadObject::create();
     dlObj->setUrl("http://www.kidsedu.com/blackcat/backup.zip");
     dlObj->setExpectFilename("backup.zip");
     dlObj->setFileTotalSize(60000000);
@@ -27,7 +32,7 @@ bool DownloadLayer::init(){
     ttf1->setTag(100);
     this->addChild(ttf1,1000);
     
-    DownloadObject* dlObj2=new DownloadObject();
+    DownloadObject* dlObj2=DownloadObject::create();
     dlObj2->setUrl("http://www.kidsedu.com/blackcat/blackcatDB0828.sql");
     dlObj2->setExpectFilename("blackcatDB0828.sql");
     dlObj2->setFileTotalSize(60000000);
@@ -41,6 +46,11 @@ bool DownloadLayer::init(){
     this->addChild(ttf2,1000);
     
     return true;
+}
+
+void DownloadLayer::onExit(){
+    CCLayerColor::onExit();
+    CCLog("DownloadLayer::onExit");
 }
 
 void DownloadLayer::download(cocos2d::CCObject *obj){

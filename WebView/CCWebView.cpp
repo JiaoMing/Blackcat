@@ -65,14 +65,16 @@ void CCWebView::setDelegate(CCWebViewDelegate* pDelegate)
     }
 }
 
-void CCWebView::callWebWithJs(const char* js){
+const char* CCWebView::callWebWithJs(const char* js){
     if (m_pWebViewImpl != NULL)
     {
-        m_pWebViewImpl->callWebWithJs(js);
+        return m_pWebViewImpl->callWebWithJs(js);
     }
+    return "";
 }
 
 void CCWebView::setVisible(bool var){
+    CCLayer::setVisible(var);
     if (m_pWebViewImpl != NULL)
     {
         m_pWebViewImpl->setVisible(var);

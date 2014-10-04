@@ -32,7 +32,15 @@ static void getProcess(const char* model,const char* column,int* count,int* sumC
     expClause.insert(pair<string, string>("count",exp->getCString()));
     exp=CCString::createWithFormat("Sum(case when %s>0 then 1 else 0 end)",column);
     expClause.insert(pair<string, string>("sumCount",exp->getCString()));
-    S_DM->statistic(data, model, expClause);
+    vector<const char*> whereClause=vector<const char*>();
+    
+    if (strcmp(model, "hanzi")==0) {
+        whereClause.push_back(HANZI_VERIFY_PASS);
+    }else{
+        whereClause.push_back(TUPIAN_VERIFY_PASS);
+    }
+    
+    S_DM->statistic(data, model, expClause,whereClause);
     for(it=data->begin();it!=data->end();++it){
         if(it->first=="count"){
             *count=atoi(it->second.c_str());
@@ -182,6 +190,16 @@ bool KapianScene::init()
     this->setKeypadEnabled(true);
     
     return true;
+}
+
+void KapianScene::onEnter(){
+    CCLayer::onEnter();
+    BaiduStat::onStatEvent(kBaiduOneEventStart,"SceneRetain","KapianScene");
+}
+
+void KapianScene::onExit(){
+    CCLayer::onExit();
+    BaiduStat::onStatEvent(kBaiduOneEventEnd,"SceneRetain","KapianScene");
 }
 
 void KapianScene::processAnimate(KapianDataMode mode){

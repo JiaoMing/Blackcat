@@ -52,7 +52,7 @@ void LiheLayer::onEnter(){
             if (S_KC->getDayRenwuCount()>0) {
                 S_ALP->play("xiaobo016.mp3",NULL);
             }
-            
+        
             CCAnimation* animation=CCAnimation::create();
             for (int i=0; i<50; i++) {
                 CCString* str;

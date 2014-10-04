@@ -12,9 +12,33 @@
 #include "ClickableSprite.h"
 #include "HomeScene.h"
 #include "KapianScene.h"
+#include "MessageTableLayer.h"
+#include "RecordManager.h"
 
 #define OVER_XINGXING_TAG 10
 #define SUBSCRIPT_NUM_TAG 10
+
+enum{
+    kTagMessage=100,
+    kTagMessageShu,
+    kTagMessageLabel
+};
+
+RankingBarLayer* RankingBarLayer::create(bool isFromHome){
+    RankingBarLayer *pRet = new RankingBarLayer();
+    pRet->m_isFromHome=isFromHome;
+    if (pRet && pRet->init())
+    {
+        pRet->autorelease();
+        return pRet;
+    }
+    else
+    {
+        delete pRet;
+        pRet = NULL;
+        return NULL;
+    }
+}
 
 bool RankingBarLayer::init(){
     if (CCLayer::init()) {
@@ -32,10 +56,31 @@ bool RankingBarLayer::init(){
         logoItem->setPosition(S_RM->getPositionWithName("global_logo"));
         logoItem->setVisible(false);
         logoItem->setOpacity(0);
-        m_logoMenu=CCMenu::create(logoItem,NULL);
-        m_logoMenu->setPosition(CCPointZero);
-        m_isLogoShow=false;
-        this->addChild(m_logoMenu);
+        
+        CCSprite* message=CCSprite::createWithSpriteFrameName("youjian.png");
+        CCMenuItemSprite* messageItem=CCMenuItemSprite::create(message, message, this, menu_selector(RankingBarLayer::messageCallBack));
+        messageItem->setPosition(S_RM->getPositionWithName("home_message"));
+        messageItem->setTag(kTagMessage);
+        
+        
+        CCSprite* messageShu=CCSprite::createWithSpriteFrameName("youjian_shu.png");
+        messageShu->setPosition(ccp(62, 51));
+        messageShu->setTag(kTagMessageShu);
+        messageItem->addChild(messageShu);
+        
+        
+        CCLabelTTF* label=CCLabelTTF::create("", "KaiTi.ttf", 15);
+        label->setPosition(ccp(16, 15));
+        label->setColor(ccc3(0, 0, 0));
+        label->setTag(kTagMessageLabel);
+        messageShu->addChild(label);
+        
+        if (m_isFromHome) {
+            m_logoMenu=CCMenu::create(logoItem,messageItem,NULL);
+            m_logoMenu->setPosition(CCPointZero);
+            m_isLogoShow=false;
+            this->addChild(m_logoMenu);
+        }
         
         if (!DEBUG_OPEN) {
 //            this->schedule(schedule_selector(RankingBarLayer::fresh),10.0f);
@@ -44,6 +89,17 @@ bool RankingBarLayer::init(){
         return true;
     }
     return false;
+}
+
+void RankingBarLayer::onEnter(){
+    CCLayer::onEnter();
+    S_RDM->setDelegate(this);
+    freshRecord();
+}
+
+void RankingBarLayer::onExit(){
+    CCLayer::onExit();
+    S_RDM->setDelegate(NULL);
 }
 
 CCSprite* RankingBarLayer::createSpriteWithRankStruct(int index){
@@ -140,10 +196,18 @@ void RankingBarLayer::subXingxing(int count){
 void RankingBarLayer::logoCallBack(CCObject* object){
     if(m_isLogoShow){
         CopyRightLayer* layer=CopyRightLayer::create();
-#pragma message "强写为HomeScene"
-        layer->setDelegate((HomeScene*)this->getParent());
+        layer->setDelegate(m_delegate);
         this->getParent()->addChild(layer,ORDER_DIALOG);
     }
+}
+
+void RankingBarLayer::messageCallBack(CCObject* object){
+    MessageTableLayer* layer=MessageTableLayer::create();
+    layer->setDelegate(m_delegate);
+    this->getParent()->addChild(layer,ORDER_DIALOG);
+    
+    
+    
 }
 
 void RankingBarLayer::rankCallBack(CCObject* object){
@@ -152,4 +216,43 @@ void RankingBarLayer::rankCallBack(CCObject* object){
     RankingLayer* ranking=RankingLayer::create((Rank)node->getTag());
     ranking->setDelegate(m_delegate);
     this->getParent()->addChild(ranking,ORDER_DIALOG);
+}
+
+int RankingBarLayer::getMessageCount(){
+    map<string, string>* data=new map<string, string>();
+    map<string, string> expClause=map<string, string>();
+    expClause.insert(pair<string, string>("newMessage","count(*)"));
+    vector<const char*> whereClause=vector<const char*>();
+    whereClause.push_back("isReaded=0");
+    S_DM->statistic(data, "message", expClause,whereClause);
+    
+    int count=0;
+    map<string, string>::iterator it;
+    it=data->find("newMessage");
+    if(it!=data->end()){
+        count=atoi(it->second.c_str());
+    }
+    CC_SAFE_DELETE(data);
+    
+    return count;
+}
+
+void RankingBarLayer::freshRecord(){
+    if(m_logoMenu!=NULL){
+        CCNode* message=m_logoMenu->getChildByTag(kTagMessage);
+        CCNode* messageShu=message->getChildByTag(kTagMessageShu);
+        CCLabelTTF* messageLabel=(CCLabelTTF*)messageShu->getChildByTag(kTagMessageLabel);
+        
+        int count=getMessageCount();
+        if (count==0) {
+            messageShu->setVisible(false);
+        }else{
+            if (count>99) {
+                count=99;
+            }
+            messageShu->setVisible(true);
+            CCString* str=CCString::createWithFormat("%d",count);
+            messageLabel->setString(str->getCString());
+        }
+    }
 }

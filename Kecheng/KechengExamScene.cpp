@@ -9,10 +9,8 @@
 #include "KechengExamScene.h"
 #include "DBManager.h"
 #include "resource.h"
-#include "KechengScene.h"
 #include "ResManager.h"
 #include "SimpleAudioEngine.h"
-#include "KechengRewardLayer.h"
 #include "Utils.h"
 #include "Kecheng.h"
 #include "KechengController.h"
@@ -156,6 +154,15 @@ bool KechengExamScene::init()
     return true;
 }
 
+void KechengExamScene::onEnter(){
+    KechengBaseLayer::onEnter();
+    BaiduStat::onStatEvent(kBaiduOneEventStart,"SceneRetain","KechengExamScene");
+}
+
+void KechengExamScene::onExit(){
+    KechengBaseLayer::onExit();
+    BaiduStat::onStatEvent(kBaiduOneEventEnd,"SceneRetain","KechengExamScene");
+}
 
 void KechengExamScene::outOfOrder(){
     size_t size=S_KC->getHanziVector()->size();
@@ -388,7 +395,6 @@ void KechengExamScene::examEnd(){
         float time=m_heimao->action("heimao_renwuGuoguan");
         this->scheduleOnce(schedule_selector(KechengExamScene::reward), time);
     }else{
-        
         m_heimao->action("heimao_renwuJiayou");
         this->scheduleOnce(schedule_selector(KechengExamScene::showDialog), 5);
     }

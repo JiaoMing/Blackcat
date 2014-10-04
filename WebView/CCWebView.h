@@ -32,7 +32,7 @@ public:
     //回调委托
     void setDelegate(CCWebViewDelegate* pDelegate);
     
-    void callWebWithJs(const char* js);
+    const char* callWebWithJs(const char* js);
     
     virtual void setVisible(bool var);
     

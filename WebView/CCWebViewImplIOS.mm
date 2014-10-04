@@ -34,15 +34,25 @@
         self.uiWebview = [[[UIWebView alloc] initWithFrame:frameRect] autorelease];
         m_uiWebview.delegate=self;
 
-        NSString *filename = [NSString stringWithUTF8String:htmlFilename];
-        NSArray *components = [filename componentsSeparatedByString:@"."];
-        NSString* path = [[NSBundle mainBundle] pathForResource:(NSString *)[components objectAtIndex:0] ofType:(NSString *)[components objectAtIndex:1]];
-        NSURL* url = [NSURL fileURLWithPath:path];
+        NSString* filename = [NSString stringWithUTF8String:htmlFilename];
+        NSURL* url;
+        
+        NSRange range=[filename rangeOfString:@"http:" options:NSCaseInsensitiveSearch];
+        if(range.length>0) {
+            url =[NSURL URLWithString:filename];
+        } else {
+            NSArray *components = [filename componentsSeparatedByString:@"."];
+            NSString *path = [[NSBundle mainBundle] pathForResource:(NSString *)[components objectAtIndex:0] ofType:(NSString *)[components objectAtIndex:1]];
+            url = [NSURL fileURLWithPath:path];
+        }
         NSURLRequest* request = [NSURLRequest requestWithURL:url] ;
         [m_uiWebview loadRequest:request];
         
-        [(UIScrollView *)[[m_uiWebview subviews] objectAtIndex:0] setScrollEnabled:NO];
+        
+//        [(UIScrollView *)[[m_uiWebview subviews] objectAtIndex:0] setScrollEnabled:NO];
         m_uiWebview.alpha=0;
+        m_uiWebview.backgroundColor = [UIColor clearColor];
+        [m_uiWebview setOpaque:NO];
         [[EAGLView sharedEGLView] addSubview:m_uiWebview];
         
         self.ccWebview=webView;
@@ -69,9 +79,10 @@
     return YES;
 }
 
--(void)callWebWithJs:(const char*)js{
+-(const char*)callWebWithJs:(const char*)js{
     NSString *jsString = [NSString stringWithUTF8String:js];
-    [m_uiWebview stringByEvaluatingJavaScriptFromString:jsString];
+    NSString *str =[m_uiWebview stringByEvaluatingJavaScriptFromString:jsString];
+    return [str UTF8String];
 }
 
 -(void)setVisible:(BOOL)var{
@@ -108,8 +119,8 @@ bool CCWebViewImplIOS::initWithRectAndHtmlFilename(const CCRect& uiRect,const ch
     return false;
 }
 
-void CCWebViewImplIOS::callWebWithJs(const char* js){
-    [m_systemControl callWebWithJs:js];
+const char* CCWebViewImplIOS::callWebWithJs(const char* js){
+    return [m_systemControl callWebWithJs:js];
 }
 
 void CCWebViewImplIOS::setVisible(bool var){

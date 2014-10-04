@@ -54,8 +54,9 @@ bool CCWebViewImplAndroid::initWithRectAndHtmlFilename(const CCRect& uiRect,cons
     return false;
 }
 
-void CCWebViewImplAndroid::callWebWithJs(const char* js){
+const char* CCWebViewImplAndroid::callWebWithJs(const char* js){
     callWebWithJsJNI(m_key,js);
+    return "";
 }
 
 void CCWebViewImplAndroid::setVisible(bool var){
@@ -63,7 +64,7 @@ void CCWebViewImplAndroid::setVisible(bool var){
 }
 
 void CCWebViewImplAndroid::scheduleCallback(float t){
-    this->getDelegate()->webCallBack(this->getCCWebView(),this->getCmd());
+    if(this->getDelegate())this->getDelegate()->webCallBack(this->getCCWebView(),this->getCmd());
 }
 
 #endif

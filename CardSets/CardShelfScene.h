@@ -24,7 +24,10 @@ public:
     virtual void keyMenuClicked();
     
     virtual bool init();
+    virtual void onEnter();
+    virtual void onExit();
     static CCScene* scene();
+    
     virtual void menuCallback(CCObject* pSender);
     
     virtual void scrollViewDidScroll(extension::CCScrollView* view) {};

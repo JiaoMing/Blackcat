@@ -9,7 +9,6 @@
 #include "RankingLayer.h"
 #include "httpdata.h"
 #include "CocosJsonParser.h"
-#include "UserLoginLayer.h"
 #include "KapianScene.h"
 
 RankingLayer::RankingLayer(){
@@ -164,9 +163,11 @@ CCTableViewCell* RankingLayer::tableCellAtIndex(CCTableView *table, unsigned int
             icon->setPosition(S_RM->getRelativePosition("dialog_table_icon", cellHeight));
             rank->addChild(icon);
             
-            CCSprite* x=CCSprite::createWithSpriteFrameName("rank_x.png");
-            x->setPosition(S_RM->getRelativePosition("dialog_table_x", cellHeight));
-            rank->addChild(x);
+            if (m_rank!=kRankLevel) {
+                CCSprite* x=CCSprite::createWithSpriteFrameName("rank_x.png");
+                x->setPosition(S_RM->getRelativePosition("dialog_table_x", cellHeight));
+                rank->addChild(x);
+            }
             
             int count=0;
             switch (m_rank) {
@@ -181,6 +182,12 @@ CCTableViewCell* RankingLayer::tableCellAtIndex(CCTableView *table, unsigned int
                     break;
                 case kRankXingxing:
                     count=ranking->getxingxing();
+                    break;
+                case kRankLevel:{
+                    int jingyan=ranking->getjingyan();
+                    CCLog("%d",jingyan);
+                    count=S_LM->getLevelByExpAndRule(jingyan);
+                }
                     break;
                 default:
                     break;
@@ -223,6 +230,7 @@ void RankingLayer::onJsonCompleted(CCDictionary* root){
         ranking->setIntzika(((CCString*)rank->objectForKey("zika"))->intValue());
         ranking->setIntxingxing(((CCString*)rank->objectForKey("xingxing"))->intValue());
         ranking->setIntxunzhang(((CCString*)rank->objectForKey("xunzhang"))->intValue());
+        ranking->setIntjingyan(((CCString*)rank->objectForKey("jingyan"))->intValue());
         m_rankingVector->push_back(ranking);
     }
     m_pTableView->reloadData();

@@ -30,6 +30,7 @@ using namespace CocosDenshion;
 #include "LevelManager.h"
 #include "UserBarLayer.h"
 #include "AchieveManager.h"
+#include "ObjectManager.h"
 
 /*** 系统相关start ***/
 #define S_APP CCApplication::sharedApplication()
@@ -48,7 +49,9 @@ using namespace CocosDenshion;
 #define S_AFM ActionFlowManager::sharedActionFlowManager()
 #define S_TT Toast::sharedToast()
 #define S_LM LevelManager::sharedLevelManager()
+#define S_RDM RecordManager::sharedRecordManager()
 #define S_AEM AchieveManager::sharedAchieveManager()
+#define S_OM ObjectManager::sharedObjectManager()
 
 #define W_SIZE S_DR->getWinSize()
 #define TAGERT_PLATFORM S_APP->getTargetPlatform()
@@ -77,8 +80,8 @@ using namespace CocosDenshion;
 #define HANZI_VERIFY_PASS "status=4"
 #define TUPIAN_VERIFY_PASS "status=2"
 
-#define COLLECT_LIMIT 60000
-#define WRITE_LIMIT 20000
+#define COLLECT_LIMIT 100
+#define WRITE_LIMIT 30
 
 typedef enum{
     kCallWebRewrite=0,
@@ -107,7 +110,8 @@ static void static_uploadRanking(){
         int tuka=S_UD->getIntegerForKey(COLLECT_TUPIAN_COUNT,15);
         int xunzhang=S_UD->getIntegerForKey(LAST_KECHENG_ID,0)*6;
         int xingxing=S_UD->getIntegerForKey(COLLECT_XINGXING_COUNT,0);
-        CCString* data=CCString::createWithFormat("token=%s&ranking.zika=%d&ranking.tuka=%d&ranking.xunzhang=%d&ranking.xingxing=%d",token.c_str(),zika,tuka,xunzhang,xingxing);
+        int jingyan=S_UD->getIntegerForKey(USER_EXPERIENCE,0);
+        CCString* data=CCString::createWithFormat("token=%s&ranking.zika=%d&ranking.tuka=%d&ranking.xunzhang=%d&ranking.xingxing=%d&ranking.jingyan=%d",token.c_str(),zika,tuka,xunzhang,xingxing,jingyan);
         ApiStruct apiStruct;
         apiStruct.url="user_updateRanking_feedback";
         apiStruct.isBlackcat=true;
@@ -123,8 +127,8 @@ static void static_userDefaultIncrement(const char* key,int defaultValue){
     int count=S_UD->getIntegerForKey(key,defaultValue)+1;
     S_UD->setIntegerForKey(key, count);
     S_UD->flush();
-    
-    static_uploadRanking();
+//#pragma message "在等级管理中统一上传"
+//    static_uploadRanking();
 }
 /*** 任务相关end ***/
 

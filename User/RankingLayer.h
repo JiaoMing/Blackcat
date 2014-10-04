@@ -19,7 +19,8 @@ typedef enum{
     kRankKa=0,
     kRankZi,
     kRankXunzhang,
-    kRankXingxing
+    kRankXingxing,
+    kRankLevel
 }Rank;
 
 typedef struct _RankStruct
@@ -64,6 +65,14 @@ static RankStruct rankStruts[] = {
         0,
 		"rank_xingxing.png",
         "xingxing"
+	},
+	{
+		"data_level.png",
+		"",
+        USER_EXPERIENCE,
+        0,
+		"rank_level.png",
+        "jingyan"
 	}
 };
 

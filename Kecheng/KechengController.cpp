@@ -28,6 +28,7 @@ void KechengController::purgeInstance()
 }
 
 KechengController::KechengController(){
+    m_dayRenwuCount=0;
     m_hanziVector=new vector<Hanzi*>();
     this->initData();
 }
@@ -42,7 +43,8 @@ void KechengController::initData(){
     map<string, string>* data=new map<string, string>();
     map<string, string> expClause=map<string, string>();
     expClause.insert(pair<string, string>("maxKcid","max(kcid)"));
-    S_DM->statistic(data, "hanzi", expClause);
+    vector<const char*> whereClause=vector<const char*>();
+    S_DM->statistic(data, "hanzi", expClause,whereClause);
     
     m_kcCount=0;
     map<string, string>::iterator it;
@@ -54,14 +56,11 @@ void KechengController::initData(){
     
     //初始化kcid、m_lastKechengId、m_dayRenwuCount
     m_lastKechengId=S_UD->getIntegerForKey(LAST_KECHENG_ID,0);
-    m_dayRenwuCount=this->fetchDayRenwuCount();
-    if (m_dayRenwuCount<2) {
-        m_kcid=m_lastKechengId+1;
-    }else{
-        m_kcid=m_lastKechengId;
-    }
+    m_kcid=m_lastKechengId+1;
+    this->fetchDayRenwuCount();
     
     this->freshDataWithKcid(m_kcid);
+    
 }
 
 
@@ -73,6 +72,7 @@ void KechengController::freshDataWithKcid(int kcid){
     CLAUSE_INIT;
     CCString* where=CCString::createWithFormat("kcid=%d",m_kcid);
     whereClause.push_back(where->getCString());
+    orderbyClause.push_back("sort asc");
     
     S_DM->findScrollData(m_hanziVector,"id,zi,lastAnswer,cnAudioPath",whereClause, orderbyClause, groupByClause);
 }
@@ -112,8 +112,9 @@ bool KechengController::updateDataWhenCompleteKecheng(){
         S_UD->flush();
         
         //自动进入下一个任务
-        if (m_kcid<m_kcCount&&m_dayRenwuCount<2) {
-            m_kcid+=1;
+//        if (m_kcid<m_kcCount&&m_dayRenwuCount<2) {
+        if (m_kcid<m_kcCount) {
+            this->freshDataWithKcid(++m_kcid);
         }
         return true;
     }
@@ -125,7 +126,7 @@ bool KechengController::insertKechengIfNotExists(){
     kecheng->setIntid(0);
     S_DM->getByKey(kecheng, m_kcid);
     
-    int now=(int)(TimeUtils::millisecondNow().tv_sec/1000);
+    int now=(int)(TimeUtils::millisecondNow().tv_sec);
     int kcid=kecheng->getid();
     CC_SAFE_DELETE(kecheng);
     if (kcid==0) {
@@ -149,7 +150,7 @@ bool KechengController::updateKecheng(bool isWin){
     }
     
     CCString* sql;
-    int now=(int)(TimeUtils::millisecondNow().tv_sec/1000);
+    int now=(int)(TimeUtils::millisecondNow().tv_sec);
     if (kecheng->getid()==0) {
         sql=CCString::createWithFormat("insert into kecheng(id,win,lose,lastTime) values(%d,%d,%d,%d)",m_kcid,kecheng->getwin(),kecheng->getlose(),now);
     }else{

@@ -140,7 +140,7 @@ void KechengDialogLayer::setKecheng(int kcid){
     //复位
     this->unschedule(schedule_selector(KechengDialogLayer::dingShiTiXing));
     //定时提醒
-    if (S_KC->getDayRenwuCount()<2||kcid<S_KC->getLastKechengId()) {
+    if (kcid<S_KC->getLastKechengId()) {
         this->schedule(schedule_selector(KechengDialogLayer::dingShiTiXing), 20, kCCRepeatForever, 10);
     }
     
@@ -237,16 +237,32 @@ void KechengDialogLayer::menuCallback(CCObject* object){
         CCNode* node=(CCNode*)object;
         int tag=node->getTag();
         if (tag>0) {
-            S_AE->playEffect("renwu_hanzi.mp3");
+//            S_AE->playEffect("renwu_hanzi.mp3");
+//            
+//            m_tableLayer->setVisible(false);
+//            
+//            XieziCoverLayer* xieziCoverLayer=XieziCoverLayer::create(node->getTag(),m_heimao);
+//            xieziCoverLayer->setDelegate(this);
+//            this->addChild(xieziCoverLayer);
             
-            m_tableLayer->setVisible(false);
+            for (vector<Hanzi *>::iterator it = S_KC->getHanziVector()->begin(); it != S_KC->getHanziVector()->end(); it ++){
+                if (NULL != *it){
+                    Hanzi* hanzi=(*it);
+                    if(hanzi->getid()==tag){
+                        const char* audio=(CCFileUtils::sharedFileUtils()->getWritablePath()+hanzi->getcnAudioPath()).c_str();
+                        S_AE->playEffect(audio);
+                        break;
+                    }
+                }
+            }
             
-            XieziCoverLayer* xieziCoverLayer=XieziCoverLayer::create(node->getTag(),m_heimao);
-            xieziCoverLayer->setDelegate(this);
-            this->addChild(xieziCoverLayer);
             
         }else{
             if (tag==TAG_EXAM) {
+                if (S_KC->getKcid()==S_KC->getLastKechengId()+1) {
+                    S_UD->setIntegerForKey(LAST_BEGIN_KECHENG_ID, S_KC->getKcid());
+                    S_UD->flush();
+                }
                 S_DR->pushScene(KechengExamScene::scene(this));
             }
         }
@@ -262,40 +278,43 @@ void KechengDialogLayer::heimaoAction(){
     kecheng->setIntid(0);
     kecheng->setIntwin(0);
     S_DM->getByKey(kecheng, S_KC->getKcid());
-    int count=S_KC->getDayRenwuCount();
     
     HomeScene* homeScene=(HomeScene*)this->getDelegate();
     
-    if (S_KC->getLastKechengId()==S_KC->getKcCount()) {
+    
+    bool isKechengFinished=S_UD->getBoolForKey(KECHENG_FINISHED,false);
+    if (S_KC->getLastKechengId()==S_KC->getKcCount()&&!isKechengFinished) {
         homeScene->startGuide("HomeScene_Normal","heimao_11");
+        S_UD->setBoolForKey(KECHENG_FINISHED, true);
     }else{
-        switch (count) {
-            case 0:{
-                if (kecheng->getid()==0) {
-                    //新任务
-                    homeScene->startGuide("HomeScene_Normal","heimao_13");
-                }else{
-                    homeScene->startGuide("HomeScene_Normal","heimao_14");
-                }
+        bool isNewOpenKecheng=S_UD->getBoolForKey(NEW_OPEN_KECHENG,true);
+        if (isNewOpenKecheng) {
+            int lastBegin=S_UD->getIntegerForKey(LAST_BEGIN_KECHENG_ID);
+            if (S_KC->getLastKechengId()==S_KC->getKcCount()) {
+                //完成所有
+                homeScene->startGuide("HomeScene_Normal","heimao_11");
+            }else if(lastBegin>S_KC->getLastKechengId()&&S_KC->getDayRenwuCount()==0){
+                //上次未完成
+                homeScene->startGuide("HomeScene_Normal","heimao_14");
             }
-                break;
-            case 1:
-                if (kecheng->getid()==0) {
-                    //新任务
-                    homeScene->startGuide("HomeScene_Normal","heimao_15");
-                }else{
-                    homeScene->startGuide("HomeScene_Normal","heimao_14");
-                }
-                break;
-            case 2:
-                homeScene->startGuide("HomeScene_Normal","heimao_12");
-                
-                break;
-                
-            default:
-                break;
+            else if (kecheng->getid()==0){
+                //新任务
+                homeScene->startGuide("HomeScene_Normal","heimao_13");
+            }else{
+                //黑猫无动作，解决报错情况
+                homeScene->startGuide("HomeScene_Normal","heimao_16");
+            }
+            
+            S_UD->setBoolForKey(NEW_OPEN_KECHENG, false);
+        }else{
+            //黑猫无动作，解决报错情况
+            homeScene->startGuide("HomeScene_Normal","heimao_16");
         }
     }
+    
+    S_UD->flush();
+    
+    
     CC_SAFE_DELETE(kecheng);
 }
 

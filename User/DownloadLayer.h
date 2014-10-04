@@ -15,7 +15,9 @@ USING_NS_CC;
 class DownloadLayer : public CCLayerColor
 {
 public:
+    ~DownloadLayer();
     virtual bool init();
+    virtual void onExit();
     CREATE_FUNC(DownloadLayer);
     
     void download(CCObject* obj);

@@ -22,9 +22,23 @@ ObjectManager* ObjectManager::sharedObjectManager()
 ObjectManager::ObjectManager()
 {
     m_webView=NULL;
+    m_webVisible=false;
 }
 
 ObjectManager::~ObjectManager()
 {
     
 }
+
+void ObjectManager::hideNativeView(){
+    if(m_webView){
+        m_webVisible=m_webView->isVisible();
+        m_webView->setVisible(false);
+    }
+}
+
+
+void ObjectManager::resumeNativeView(){
+    if(m_webView)m_webView->setVisible(m_webVisible);
+}
+

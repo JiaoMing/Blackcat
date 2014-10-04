@@ -19,13 +19,13 @@ public:
     
     SYNTHESIZE_KEY(id);
     SYNTHESIZE_INT(sid);
-    SYNTHESIZE_STRING(background_image);
+    SYNTHESIZE_STRING(img);
     
     virtual void registTablenameAndProperty(){
         tablename="ecard_page";
         INSERT_PROPERTYMAP(ECardPage,id);
         INSERT_PROPERTYMAP(ECardPage,sid);
-        INSERT_PROPERTYMAP(ECardPage,background_image);
+        INSERT_PROPERTYMAP(ECardPage,img);
     }
 };
 

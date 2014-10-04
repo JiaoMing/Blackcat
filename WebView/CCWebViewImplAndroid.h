@@ -26,7 +26,7 @@ public:
     
 public:
     virtual bool initWithRectAndHtmlFilename(const CCRect& ccRect,const char* htmlFilename);
-    virtual void callWebWithJs(const char* js);
+    virtual const char* callWebWithJs(const char* js);
     virtual void setVisible(bool var);
     virtual void scheduleCallback(float t);
     

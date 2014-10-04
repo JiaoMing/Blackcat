@@ -23,7 +23,6 @@ bool WeixinLayer::init(){
     qr->setPosition(S_RM->getPositionWithName("dialog_qr"));
     this->addChild(qr);
     
-    
     return true;
 }
 

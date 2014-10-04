@@ -77,9 +77,8 @@ bool ParentLayer::init(){
     
     //检测是否从未打开
     int isNotFirstOpen=S_UD->getIntegerForKey(NEVER_OPEN_PARENT,0);
-    string first= S_UD->getStringForKey("HomeScene_First");
-#pragma message "注意结束heimao_11"
-    if (first=="heimao_11"&&isNotFirstOpen==0) {
+    bool yindaoOpen=S_UD->getBoolForKey("HomeScene_YindaoOpen");
+    if (!yindaoOpen&&isNotFirstOpen==0) {
         m_toggle->runAction(CCRepeatForever::create(CCSequence::create(CCFadeOut::create(0.5),CCFadeIn::create(0.5),NULL)));
     }
     

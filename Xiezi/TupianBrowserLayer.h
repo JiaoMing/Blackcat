@@ -35,8 +35,8 @@ public:
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent *pEvent);
     
     virtual void tupianLoadCallBack(int count);
-    virtual void tupianTouchCallBack(Tupian* tupian);
-    virtual void tupianTableScrollCallBack(ScrollState state){};
+    virtual void tupianTouchCallBack(Tupian* tupian,bool isOverLimit=false);
+    virtual void tupianTableScrollCallBack(ScrollState state,int cellCount){};
     
     virtual int topHandlerPriority(){return kCCMenuHandlerPriority-1;}
     virtual void dialogCallBack(GuideDialogCMD cmd);

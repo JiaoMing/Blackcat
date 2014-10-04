@@ -9,7 +9,9 @@
 #ifndef blackcat_Hanzi_h
 #define blackcat_Hanzi_h
 #include "Kapian.h"
-#include <iostream>
+#include "Utils.h"
+#include <vector>
+#include <string>
 using namespace std;
 
 #define HANZI_WRITE_THRESHOLD 3
@@ -20,7 +22,8 @@ class Hanzi: public Kapian{
     SYNTHESIZE_STRING(zi);
     SYNTHESIZE_STRING(pinyin);
     SYNTHESIZE_STRING(pinyinyindiao);
-    SYNTHESIZE_STRING(bihuashu);
+    SYNTHESIZE_STRING(ZPYYD);
+    SYNTHESIZE_INT(bihuashu);
     SYNTHESIZE_STRING(bushou);
     SYNTHESIZE_STRING(contour);
     SYNTHESIZE_STRING(locus);
@@ -30,12 +33,32 @@ class Hanzi: public Kapian{
     SYNTHESIZE_INT(lastAnswer);
     SYNTHESIZE_INT(isReward);
     
+public:
+    /**
+     *  获取主拼音音调
+     *
+     *  @return 主拼音音调
+     */
+    string getZpyyd(){
+        if (ZPYYD.length()>0){
+            return ZPYYD;
+        }
+        if (pinyinyindiao.find(",")>0) {
+            vector<string> dest;
+            StringUtils::split(pinyinyindiao, ",", dest);
+            return dest[0];
+        }else{
+            return pinyinyindiao;
+        }
+    }
+    
     virtual void registTablenameAndProperty(){
         tablename="hanzi";
         INSERT_PROPERTYMAP(Hanzi,id);
         INSERT_PROPERTYMAP(Hanzi,zi);
         INSERT_PROPERTYMAP(Hanzi,pinyin);
         INSERT_PROPERTYMAP(Hanzi,pinyinyindiao);
+        INSERT_PROPERTYMAP(Hanzi,ZPYYD);
         INSERT_PROPERTYMAP(Hanzi,bihuashu);
         INSERT_PROPERTYMAP(Hanzi,bushou);
         INSERT_PROPERTYMAP(Hanzi,contour);

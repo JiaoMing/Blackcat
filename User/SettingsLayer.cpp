@@ -15,18 +15,20 @@
 #include "KechengController.h"
 #include "ChildLayer.h"
 #include "WeixinLayer.h"
+#include "PlatformAction.h"
 
 enum
 {
     kTagLoginin=0,
-    kTagLoginout,
+    kTagLogout,
     kTagWeixin,
     kTagChild,
     kTagClear,
     kTagTime,
     kTagMenu,
     kTagMenuClose,
-    kTagVolume
+    kTagVolume,
+    kTagAvatar
 };
 
 bool SettingsLayer::init(){
@@ -47,7 +49,7 @@ bool SettingsLayer::init(){
         username="登  陆";
         loginTag=kTagLoginin;
     }else{
-        loginTag=kTagLoginout;
+        loginTag=kTagLogout;
     }
     Button9* userLabel=Button9::create(username,CCSizeMake(400, 50),20);
     CCMenuItemSprite* userItem=CCMenuItemSprite::create(userLabel, userLabel, this, menu_selector(SettingsLayer::menuCallback));
@@ -100,18 +102,20 @@ bool SettingsLayer::init(){
     weixinItem->setTag(kTagWeixin);
     this->addMenuItem(weixinItem);
     
-    CCLabelTTF* dhLabel=CCLabelTTF::create("片头动画: ", "", 20);
-    dhLabel->setPosition(S_RM->getPositionWithName("setting_dhLabel"));
-    dhLabel->setColor(ccc3(0, 0, 0));
-    this->addChild(dhLabel);
-    CCSprite* fk01 = CCSprite::createWithSpriteFrameName("fangkuang01.png");
-    CCMenuItem* fk01Item1=CCMenuItemSprite::create(fk01, fk01);
-    CCSprite* fk02 = CCSprite::createWithSpriteFrameName("fangkuang02.png");
-    CCMenuItem* fk01Item2=CCMenuItemSprite::create(fk02, fk02);
-    CCMenuItemToggle* toggle=CCMenuItemToggle::createWithTarget(this, menu_selector(SettingsLayer::menuCallback), fk01Item1,fk01Item2,NULL);
-    toggle->setPosition(S_RM->getPositionWithName("setting_dhToggle"));
-    toggle->setAnchorPoint(ccp(0,0.5));
-    this->addMenuItem(toggle);
+#if (CC_TARGET_PLATFORM==CC_PLATFORM_ANDROID)
+    if (S_UD->getStringForKey("USER_USERNAME", "")=="") {
+        CCLabelTTF* avatarLabel=CCLabelTTF::create("设置头像: ", "", 20);
+        avatarLabel->setPosition(S_RM->getPositionWithName("setting_avatarLabel"));
+        avatarLabel->setColor(ccc3(0, 0, 0));
+        this->addChild(avatarLabel);
+        Button9* avatar=Button9::create("设  置",CCSizeMake(150, 50),20);
+        CCMenuItemSprite* avatarItem=CCMenuItemSprite::create(avatar, avatar, this, menu_selector(SettingsLayer::menuCallback));
+        avatarItem->setPosition(S_RM->getPositionWithName("setting_avatarItem"));
+        avatarItem->setAnchorPoint(ccp(0,0.5));
+        avatarItem->setTag(kTagAvatar);
+        this->addMenuItem(avatarItem);
+    }
+#endif
     
     //音量开关
     CCLabelTTF* volumeLabel=CCLabelTTF::create("音  量:", "", 20);
@@ -143,21 +147,22 @@ void SettingsLayer::menuCallback(CCObject *obj){
     CCMenuItem* node=(CCMenuItem*)obj;
     if (!this->isCloseItem(node)) {
         DialogLayer::menuCallback(obj);
-        switch (node->getTag()) {
+        m_tag=node->getTag();
+        switch (m_tag) {
             case kTagLoginin:{
                 UserLoginLayer* layer=UserLoginLayer::create();
                 layer->setIsFromSetting(true);
                 this->replaceDialog(layer);
             }
                 break;
-            case kTagLoginout:{
-                S_UD->setStringForKey(UDKEY_USER_TOKEN, "");
-                S_UD->setStringForKey(UDKEY_USER_USERNAME, "");
-                node->setTag(kTagLoginin);
-                Button9* button=(Button9*)node->getChildren()->objectAtIndex(0);
-                button->setString("登  陆",CCSizeMake(400, 50));
-                
-                S_LM->getDelegate()->fresh();
+            case kTagLogout:{
+                GuideDialog* guideDialog=GuideDialog::create();
+                guideDialog->setText("您确定要注销吗？");
+                guideDialog->setMode(kGuideDialogYesOrNo);
+                GuideDialogLayer* gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
+                gudieDialogLayer->setDelegate(this);
+                this->addChild(gudieDialogLayer,INT_MAX);
+                gudieDialogLayer->setGuideDialogData(guideDialog);
             }
                 break;
             case kTagMenuClose:{
@@ -165,28 +170,13 @@ void SettingsLayer::menuCallback(CCObject *obj){
             }
                 break;
             case kTagClear:{
-                S_DM->executeSql("update hanzi set writeCount=0,lastAnswer=0,isCollected=0,isReward=0;update ciyu set isCollected=0,viewCount=0;update hanzi set isCollected=1 where zi in('生','火','男','木','白','菜','手','大','下','一','十','百','天','日','花');update ciyu set isCollected=1 where ci in('哭笑','杨树','飞机','书包','大象','啄木鸟','黄瓜','苹果','洗手','爸爸','妈妈','红色','铅笔','水盆','大海','老师');");
-                S_UD->setIntegerForKey(COLLECT_HANZI_COUNT, 15);
-                S_UD->setIntegerForKey(COLLECT_TUPIAN_COUNT, 15);
-                S_UD->setIntegerForKey(LAST_KECHENG_ID, 0);
-                S_UD->setIntegerForKey(LAST_RENWU_DAY_COUNT, 0);
-                S_UD->setIntegerForKey(COLLECT_XINGXING_COUNT, 0);
-                S_UD->setIntegerForKey(OVER_XINGXING_COUNT, 0);
-                
-                S_UD->setIntegerForKey(UDKEY_ACHIEVE_XZDW, 0);
-                S_UD->setIntegerForKey(UDKEY_ACHIEVE_ZKSCJ, 0);
-                S_UD->setIntegerForKey(UDKEY_ACHIEVE_TKSCJ, 0);
-                S_UD->setIntegerForKey(UDKEY_ACHIEVE_CGYS, 0);
-                S_UD->setIntegerForKey(UDKEY_ACHIEVE_CSJJ, 0);
-                
-                
-                static_uploadRanking();
-                
-                KechengController::purgeInstance();
-                
-                this->replaceDialog(ParentLayer::create());
-                S_TT->makeText("数据已重置。");
-                
+                GuideDialog* guideDialog=GuideDialog::create();
+                guideDialog->setText("确定要重置学习进度吗？");
+                guideDialog->setMode(kGuideDialogYesOrNo);
+                GuideDialogLayer* gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
+                gudieDialogLayer->setDelegate(this);
+                this->addChild(gudieDialogLayer,INT_MAX);
+                gudieDialogLayer->setGuideDialogData(guideDialog);
             }
                 break;
             case kTagTime:
@@ -209,12 +199,68 @@ void SettingsLayer::menuCallback(CCObject *obj){
                 this->replaceDialog(layer);
             }
                 break;
+            case kTagAvatar:{
+                if (S_UD->getStringForKey("USER_USERNAME", "")=="") {
+                    UserLoginLayer* layer=UserLoginLayer::create();
+                    layer->setIsFromSetting(true);
+                    this->replaceDialog(layer);
+                }else{
+                    PlatformAction::avatar();
+                }
+            }
+                break;
             default:
                 break;
         }
     }else{
         this->replaceDialog(ParentLayer::create());
     }
+}
+
+void SettingsLayer::dialogCallBack(GuideDialogCMD cmd){
+    if (cmd==kDialogCMDYes) {
+        switch (m_tag) {
+            case kTagLogout:{
+                S_LM->getDelegate()->logout();
+                CCNode* node=(CCNode*)m_menu->getChildByTag(kTagLogout);
+                node->setTag(kTagLoginin);
+                Button9* button=(Button9*)node->getChildren()->objectAtIndex(0);
+                button->setString("登  陆",CCSizeMake(400, 50));
+            }
+                break;
+            case kTagClear:{
+                
+                S_DM->executeSql("update hanzi set writeCount=0,lastAnswer=0,isCollected=0,isReward=0;update ciyu set isCollected=0,viewCount=0;update hanzi set isCollected=1 where zi in('生','火','男','木','白','菜','手','大','下','一','十','百','天','日','花');update ciyu set isCollected=1 where ci in('哭笑','杨树','飞机','书包','大象','啄木鸟','黄瓜','苹果','洗手','爸爸','妈妈','红色','铅笔','水盆','大海','老师');");
+                
+                S_UD->setIntegerForKey(COLLECT_HANZI_COUNT, 15);
+                S_UD->setIntegerForKey(COLLECT_TUPIAN_COUNT, 15);
+                S_UD->setIntegerForKey(LAST_KECHENG_ID, 0);
+                S_UD->setIntegerForKey(LAST_RENWU_DAY_COUNT, 0);
+                S_UD->setIntegerForKey(COLLECT_XINGXING_COUNT, 0);
+                S_UD->setIntegerForKey(OVER_XINGXING_COUNT, 0);
+                
+                S_UD->setIntegerForKey(UDKEY_ACHIEVE_XZDW, 0);
+                S_UD->setIntegerForKey(UDKEY_ACHIEVE_ZKSCJ, 0);
+                S_UD->setIntegerForKey(UDKEY_ACHIEVE_TKSCJ, 0);
+                S_UD->setIntegerForKey(UDKEY_ACHIEVE_CGYS, 0);
+                S_UD->setIntegerForKey(UDKEY_ACHIEVE_CSJJ, 0);
+                
+                
+                static_uploadRanking();
+                
+                KechengController::purgeInstance();
+                
+                this->replaceDialog(ParentLayer::create());
+                
+                S_TT->makeText("数据已重置。");
+                
+            }
+                break;
+            default:
+                break;
+        }
+    }
+    
 }
 
 void SettingsLayer::volumeValueChanged(CCObject *sender, CCControlEvent controlEvent)

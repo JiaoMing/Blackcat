@@ -46,7 +46,7 @@ protected:
     Cartoon* m_cartoon;
 };
 
-class GuideDialogDelegate :public CoverLayerDelegate{
+class GuideDialogDelegate :public DialogLayerDelegate{
 public:
     /**
      * 对话框按钮事件回调

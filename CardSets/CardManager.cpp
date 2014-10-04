@@ -46,7 +46,7 @@ vector<ECardSet*>* CardManager::getECardSets()
         CLAUSE_INIT;//初始化Clause
         CCString* where=CCString::create("show=1");
         whereClause.push_back(where->getCString());
-        orderbyClause.insert(pair<const char*, const char*>("sort","desc"));
+        orderbyClause.push_back("sort desc");
         S_DM->findScrollData(m_ecardsets, "*", whereClause, orderbyClause, groupByClause);//查询指定模型数据
         m_isInit=true;
     }
@@ -61,7 +61,7 @@ void CardManager::setCurrentECardSet(int index){
         this->setCurrentECardPage(m_pageNumer);
         
         int isOpen=m_ecardset->getisOpen();
-        if (isOpen==0&&m_ecardpages->size()>0) {
+        if (isOpen==0&&!m_ecardset->getisLock()) {
             m_ecardset->setIntisOpen(1);
             CCString* sql=CCString::createWithFormat("update ecard_set set isopen=1 where id=%d",m_ecardset->getid());
             S_DM->executeSql(sql->getCString());
@@ -107,4 +107,3 @@ void CardManager::setECards(int pid){
     whereClause.push_back(where->getCString());
     S_DM->findScrollData(m_ecards, "*", whereClause, orderbyClause, groupByClause);//查询指定模型数据
 }
-

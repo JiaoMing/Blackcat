@@ -60,9 +60,7 @@ CCTableViewCell* KechengDialogTableLayer::tableCellAtIndex(CCTableView *table, u
         
         CCSprite* xingxing=CCSprite::create();
         xingxing->setPosition(ccp(50, 50));
-        if (idx+1<=S_KC->getLastKechengId()) {
-            xingxing->setDisplayFrame(S_SF->spriteFrameByName("xingxing_2.png"));
-        }else if(idx==S_KC->getLastKechengId()&&S_KC->getDayRenwuCount()<2){
+        if (idx<=S_KC->getLastKechengId()) {
             xingxing->setDisplayFrame(S_SF->spriteFrameByName("xingxing_2.png"));
         }else{
             xingxing->setDisplayFrame(S_SF->spriteFrameByName("xingxing_1.png"));
@@ -80,7 +78,7 @@ void KechengDialogTableLayer::tableCellTouched(CCTableView* table, CCTableViewCe
     if(cell!=NULL&&this->isVisible()){
         int idx=cell->getIdx();
         
-        if (idx+1<=S_KC->getLastKechengId()||(idx==S_KC->getLastKechengId()&&S_KC->getDayRenwuCount()<2)) {
+        if (idx+1<=S_KC->getLastKechengId()||(idx==S_KC->getLastKechengId())) {
             m_delegate->setKecheng(idx+1);
             S_AE->playEffect("renwu.mp3");
             

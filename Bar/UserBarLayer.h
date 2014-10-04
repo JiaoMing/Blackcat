@@ -14,6 +14,7 @@
 USING_NS_CC;
 USING_NS_CC_EXT;
 #include "DialogLayer.h"
+//#include "CCAlbum.h"
 
 class LevelObject :public CCObject{
 public:
@@ -58,7 +59,10 @@ public:
     virtual void setPosition(const CCPoint &position)=0;
 };
 
-class UserBarLayer :public CCLayer,public LevelDelegate,public CoverLayerDelegate{
+
+
+//class UserBarLayer :public CCLayer,public LevelDelegate,public DialogLayerDelegate,public CCAlbumPickDelegate{
+    class UserBarLayer :public CCLayer,public LevelDelegate,public DialogLayerDelegate{
 public:
     static UserBarLayer* create();
     
@@ -70,10 +74,15 @@ public:
     virtual bool ccTouchBegan(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent);
     virtual void ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent);
     
-    
     virtual int topHandlerPriority(){return kCCMenuHandlerPriority;}
+    virtual void dialogCloseCallBack();
+    virtual void freshAvatar();
     
+
+    
+    void logout();
     void fresh();
+    void downloadAvatar(CCObject* obj);
     
     /**
      *获得经验动画，星星飞
@@ -98,6 +107,8 @@ private:
     CCPoint m_xingDisplayPoint;//星星消失的坐标
     LevelObject* m_levelObject;
     CCScale9Sprite* m_mingzi9Sprite;
+    CCSprite* m_touxiang;
+    
     int m_zOrder;//保存历史zorder
     int m_xingxingCount;
     int m_xingxingCallbackCount;

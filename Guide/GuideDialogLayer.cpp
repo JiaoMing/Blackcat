@@ -19,7 +19,8 @@ enum {
 enum {
     kDialogMenuOk=0,
     kDialogMenuYes,
-    kDialogMenuNo
+    kDialogMenuNo,
+    kDialogMenuGuangbo
 };
 
 GuideDialogLayer* GuideDialogLayer::create(GuideDialogType guideDialogType,GuideDialogWithTextButtonPosiztion dialogButtonPosiztion)
@@ -71,6 +72,13 @@ bool GuideDialogLayer::init(){
             noItem->setTag(kDialogMenuNo);
             this->addMenuItem(noItem);
             
+//            if (m_cartoon!=NULL) {
+//                CCSprite* guangbo=CCSprite::createWithSpriteFrameName("guangbo.png");
+//                CCMenuItemSprite* guangboItem=CCMenuItemSprite::create(guangbo,guangbo, this, menu_selector(GuideDialogLayer::menuCallback));
+//                guangboItem->setPosition(S_RM->getPositionWithName("dialog_title"));
+//                guangboItem->setTag(kDialogMenuGuangbo);
+//                this->addMenuItem(guangboItem);
+//            }
         }
             break;
         case kDialogWithText:{
@@ -96,7 +104,6 @@ bool GuideDialogLayer::init(){
             noItem->setTag(kDialogMenuNo);
             this->addMenuItem(noItem);
             
-            
             okItem->setPosition(S_RM->getPositionWithName("dialog_text_ok"));
             yesItem->setPosition(S_RM->getPositionWithName("dialog_text_yes"));
             noItem->setPosition(S_RM->getPositionWithName("dialog_text_no"));
@@ -110,7 +117,7 @@ bool GuideDialogLayer::init(){
 }
 
 //bool GuideDialogLayer::ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent){
-////    m_guideDialogDelegate->dialogCallBack(kDialogCMDBlank);
+////    S_ALP->play(m_guideDialog->getAudioArray());
 //    return true;
 //}
 
@@ -148,36 +155,40 @@ void GuideDialogLayer::setGuideDialogData(GuideDialog* guideDialog){
 }
 
 void GuideDialogLayer::menuCallback(CCObject* object){
-    unschedule(schedule_selector(GuideDialogLayer::sayFinished));
-    S_ALP->stop();
-    S_AE->stopAllEffects();
     CCNode* node=(CCNode*)object;
-    
-    GuideDialogCMD cmd;
-    if (isCloseItem((CCMenuItem*)object)) {
-        switch (m_guideDialog->getMode()) {
-            case kGuideDialogOk:{
-                cmd=kDialogCMDOk;
-            }
-                break;
-            case kGuideDialogYesOrNo:{
-                cmd=kDialogCMDNo;
-            }
-                break;
-            default:
-                break;
-        }
+    if (node->getTag()==kDialogMenuGuangbo) {
+        S_ALP->play(m_guideDialog->getAudioArray());
     }else{
-        cmd=(GuideDialogCMD)node->getTag();
+        unschedule(schedule_selector(GuideDialogLayer::sayFinished));
+        S_ALP->stop();
+        S_AE->stopAllEffects();
+        
+        GuideDialogCMD cmd;
+        if (isCloseItem((CCMenuItem*)object)) {
+            switch (m_guideDialog->getMode()) {
+                case kGuideDialogOk:{
+                    cmd=kDialogCMDOk;
+                }
+                    break;
+                case kGuideDialogYesOrNo:{
+                    cmd=kDialogCMDNo;
+                }
+                    break;
+                default:
+                    break;
+            }
+        }else{
+            cmd=(GuideDialogCMD)node->getTag();
+        }
+        this->removeFromParent();
+        DialogLayer::menuCallback(object);
+        
+        m_guideDialogDelegate->dialogCallBack(cmd);
     }
-    this->removeFromParent();
-    DialogLayer::menuCallback(object);
     
-    m_guideDialogDelegate->dialogCallBack(cmd);
 }
 
 void GuideDialogLayer::sayFinished(){
-    CCLog("sayFinished");
     this->setVisible(true);
     unschedule(schedule_selector(GuideDialogLayer::sayFinished));
     if (m_guideDialog->getIsAutoStep()) {

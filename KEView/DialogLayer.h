@@ -11,6 +11,8 @@
 
 #include "CoverLayer.h"
 
+class DialogLayerDelegate;
+
 class DialogLayer: public CoverLayer,public CoverLayerDelegate{
 public:
     DialogLayer(){m_title=NULL;m_forwardDialogLayer=NULL;}
@@ -23,7 +25,9 @@ public:
     virtual void onEnter();
     virtual void onExit();
     
-    virtual int topHandlerPriority(){return this->getDelegate()->topHandlerPriority()-1;}
+    virtual void setDelegate(DialogLayerDelegate* delegate);
+    
+    virtual int topHandlerPriority();
     
     virtual void enableTouch();
     
@@ -47,6 +51,16 @@ protected:
     CCMenuItemSprite* m_closeItem;
     CCLabelTTF* m_title;
     CCLayer* m_contentLayer;//暂时只在childlayer中使用
+    DialogLayerDelegate* m_dialogLayerDelegate;
+};
+
+
+class DialogLayerDelegate : public CoverLayerDelegate{
+public:
+    /**
+     * 对话框按钮事件回调
+     */
+    virtual void dialogCloseCallBack(){};
 };
 
 #endif

@@ -41,6 +41,18 @@ LevelManager* LevelManager::sharedLevelManager()
 	return g_instance;
 }
 
+int LevelManager::getLevelByExpAndRule(int exp){
+    int level=1;
+    for (vector<int>::iterator it=m_levelVector.begin(); it<m_levelVector.end(); it++) {
+        if(exp>=*it){
+            level++;
+        }else{
+            break;
+        }
+    }
+    return level;
+}
+
 int LevelManager::setLevelByExpAndRule(){
     int level=1;
     int exp=m_levelObject->getExp();
@@ -67,6 +79,9 @@ int LevelManager::gainExp(int exp){
     m_levelObject->setExp(m_levelObject->getExp()+exp);
     S_UD->setIntegerForKey(USER_EXPERIENCE, m_levelObject->getExp());
     S_UD->flush();
+    //上传
+    static_uploadRanking();
+    
     return this->setLevelByExpAndRule();
 }
 

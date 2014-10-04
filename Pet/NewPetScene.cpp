@@ -13,7 +13,7 @@
 #include "KechengController.h"
 #include "LoadingScene.h"
 #include "CloudLayer.h"
-using namespace CocosDenshion;
+#include "WelcomeScene.h"
 
 enum {
     kBack=0,
@@ -81,7 +81,7 @@ bool NewPetScene::init(){
         m_xiaobo->setScale(1.2);
         m_xiaobo->setTag(1);
         //小波不加入playLayer，因假如Guide，需要在根layer
-        this->addChild(m_xiaobo,0);
+        this->addChild(m_xiaobo,2);
         m_xiaobo->setCallback(this, cartoon_selector(NewPetScene::pressXiaoboCallBack));
         m_xiaobo->setBoxEnabled("z-shenti", true);
         
@@ -124,7 +124,6 @@ bool NewPetScene::init(){
         m_playLayer->addChild(userBarLayer,ORDER_USERBAR);
         
         int xingxingCount=this->xingxingCount();
-//        xingxingCount=20;
         if (xingxingCount>0) {
             CCRect rect=S_RM->getRectWithName("pet_xingxing_rect");
             for (int i=0; i<xingxingCount; i++) {
@@ -140,14 +139,21 @@ bool NewPetScene::init(){
             }
         }
         
+        
+        //打开android按键响应
+        this->setKeypadEnabled(true);
+        
+        
         return true;
+        
+        
     }
     return false;
 }
 
 int NewPetScene::xingxingCount(){
     string time=TimeUtils::getYYYYMMDD();
-    string lastTime=S_UD->getStringForKey(UDKEY_SONG_LAST_DAY);
+    string lastTime=S_UD->getStringForKey(UDKEY_SONG_LAST_DAY,"");
     int songCount=S_UD->getIntegerForKey(UDKEY_SONG_XINGXING_COUNT, 0);
     int lingquCount=S_UD->getIntegerForKey(UDKEY_SONG_XINGXING_LINGQU_COUNT, 0);
     int xingxing_count=0;
@@ -169,6 +175,10 @@ int NewPetScene::xingxingCount(){
         S_UD->setIntegerForKey(UDKEY_SONG_XINGXING_RENWU_COUNT, renwuSongCount+1);
     }
     S_UD->flush();
+    //20上限
+    if (xingxing_count>20) {
+        xingxing_count=20;
+    }
     return xingxing_count;
 }
 
@@ -260,6 +270,9 @@ void NewPetScene::onEnter()
             
             break;
     }
+    
+    
+    BaiduStat::onStatEvent(kBaiduOneEventStart,"SceneRetain","NewPetScene");
 }
 
 void NewPetScene::onExit()
@@ -270,6 +283,9 @@ void NewPetScene::onExit()
         S_AE->playBackgroundMusic("bg_musicbox.mp3");
     }
     GuideBaseLayer::onExit();
+    
+    
+    BaiduStat::onStatEvent(kBaiduOneEventEnd,"SceneRetain","NewPetScene");
 }
 
 void NewPetScene::pressXiaoboCallBack(CCObject *object, const char *pszBoxName)
@@ -298,11 +314,11 @@ void NewPetScene::menuCallBack(CCObject* pSender){
     CCNode* node=(CCNode*)pSender;
     int tag=node->getTag();
     if (tag>=kXMDH1&&tag<=kXMDH5) {
+        m_xiaobo->stopAllActions();
         if (tag==kXMDH5) {
             //比赛
             this->startGuide("PetScene_Normal", "xiezi");
         }else{
-            m_xiaobo->stopAllActions();
             if(m_xiaobo->isFlipX())m_xiaobo->setFlipX(false);
             m_rankingBarLayer->subXingxing();
             switch (tag) {
@@ -330,7 +346,7 @@ void NewPetScene::menuCallBack(CCObject* pSender){
         switch (tag) {
             case kBack:{
                 S_ALP->stop();
-                S_DR->replaceScene(LoadingScene::scene("HomeScene",true,kLoadingRoleXiaobo));
+                S_DR->replaceScene(LoadingScene::scene("WelcomeScene",true,kLoadingRoleXiaobo));
             }
                 break;
             case kModeToggle:{
@@ -402,4 +418,12 @@ void NewPetScene::dialogCallBack(GuideDialogCMD cmd){
     }
     m_xiaobo->setPosition(S_RM->getPositionWithName("pet_panda"));
     this->reorderChild(m_xiaobo, 0);
+}
+
+void NewPetScene::keyBackClicked(){
+    S_DR->replaceScene(LoadingScene::scene("WelcomeScene",true,kLoadingRoleXiaobo));
+}
+
+void NewPetScene::keyMenuClicked(){
+    
 }

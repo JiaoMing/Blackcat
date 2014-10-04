@@ -1,6 +1,5 @@
 ﻿#include "AsyncResource.h"
 #include "KapianScene.h"
-#include "KechengListScene.h"
 #include "HomeScene.h"
 #include "CardShelfScene.h"
 #include "NewPetScene.h"
@@ -38,12 +37,6 @@ static ResourceStruct res[] = {
 		"new_kapian.plist",
 		"",
         scene_selector(KapianTupianScene::scene)
-	},
-	{
-		"RenwuScene",
-		"renwu.plist",
-		"",
-        scene_selector(KechengListScene::scene)
 	},
 	{
 		"CardSetsScene",

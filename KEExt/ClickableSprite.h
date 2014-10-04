@@ -15,9 +15,10 @@ using namespace cocos2d;
 class ClickableSprite : public CCSprite, public CCTouchDelegate
 {
 public:
-    ClickableSprite():m_bIsMoved(false),m_touchableRect(CCRectZero){};
+    ClickableSprite():m_bIsMoved(false),m_touchableRect(CCRectZero),m_pTarget(NULL),m_pSelector(NULL){};
     
-    static ClickableSprite *createWithSpriteFrameName(const char *pszSpriteFrameName);
+    static ClickableSprite* create();
+    static ClickableSprite* createWithSpriteFrameName(const char *pszSpriteFrameName);
     void setTarget(CCObject *target, SEL_MenuHandler selector);
     void setTouchableRect(CCRect rect){this->m_touchableRect=rect;};
     

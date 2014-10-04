@@ -22,7 +22,7 @@ public:
     CCWebView* getCCWebView() { return m_pWebView; };
 public:
     virtual bool initWithRectAndHtmlFilename(const CCRect& rect,const char* htmlFilename) = 0;
-    virtual void callWebWithJs(const char* js)=0;
+    virtual const char* callWebWithJs(const char* js)=0;
     virtual void setVisible(bool var)=0;
     
 protected:

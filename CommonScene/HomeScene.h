@@ -15,6 +15,7 @@
 #include "GuideBaseLayer.h"
 #include "RankingBarLayer.h"
 #include "Hanzi.h"
+#include "ParentLayer.h"
 USING_NS_CC;
 
 class HomeScene :public GuideBaseLayer
@@ -64,6 +65,8 @@ private:
     
     int m_count;//用于引导
     long m_time;
+    
+    ParentLayer* m_parentLayer;
     
 };
 

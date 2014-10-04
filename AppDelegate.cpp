@@ -13,10 +13,12 @@
 #include "Utils.h"
 #include "LoadingScene.h"
 #include "resource.h"
-#include "KechengListScene.h"
 #include "HomeScene.h"
-#include "WelcomeScene.h"
 #include "InstallScene.h"
+#include "WelcomeScene.h"
+#include "LoadscapeScene.h"
+#include "WelcomeStudioScene.h"
+#include "GushiScene.h"
 
 #include "SimpleAudioEngine.h"
 using namespace CocosDenshion;
@@ -25,7 +27,7 @@ USING_NS_CC;
 
 AppDelegate::AppDelegate()
 {
-srand((unsigned int)time(NULL));
+    srand((unsigned int)time(NULL));
 }
 
 AppDelegate::~AppDelegate()
@@ -37,7 +39,6 @@ bool AppDelegate::applicationDidFinishLaunching()
 {
     S_DR->setOpenGLView(CCEGLView::sharedOpenGLView());
     S_DR->setAnimationInterval(1.0 / 60);
-
     
     float ratio=1.0;
     TargetPlatform target = getTargetPlatform();
@@ -45,6 +46,7 @@ bool AppDelegate::applicationDidFinishLaunching()
     std::vector<std::string> searchPaths;
     searchPaths.push_back("audio");
     searchPaths.push_back("audio/dialog");
+    searchPaths.push_back("audio/zuciju");
     searchPaths.push_back("global");
     searchPaths.push_back("global/lihe");
     if (target == kTargetIpad)
@@ -54,7 +56,6 @@ bool AppDelegate::applicationDidFinishLaunching()
         
 //        searchPaths.push_back("android");
 //        CCEGLView::sharedOpenGLView()->setDesignResolutionSize(1280, 720, kResolutionShowAll);
-        
     }else{
         searchPaths.push_back("android");
         CCEGLView::sharedOpenGLView()->setDesignResolutionSize(1280, 720, kResolutionShowAll);
@@ -64,26 +65,27 @@ bool AppDelegate::applicationDidFinishLaunching()
     
     S_DR->setDepthTest(false);
     
-    S_UD->setBoolForKey("BG_MUSIC",true);
-    S_AE->playBackgroundMusic("bg_musicbox.mp3",true);
-    
     S_UD->setBoolForKey(NEW_OPEN, true);
+    S_UD->setBoolForKey(NEW_OPEN_KECHENG, true);
     S_UD->flush();
+    
     
     //初始化坐标
     S_RM->init("position",ratio);
-//    if (S_UD->getBoolForKey(IS_SHOW_GONGKAIXIN,true)) {
-//        S_DR->runWithScene(WelcomeScene::scene());
-//    }else{
-//        S_RM->addSceneRes("LoadingScene", "loading");
-//        S_DR->runWithScene(LoadingScene::scene("HomeScene"));
-//    }
-//    S_DR->runWithScene(InstallScene::scene());
     
     
+//    S_DR->runWithScene(GushiScene::scene());
+    
+    
+    
+    S_RM->addSceneRes("global", "global,loading");
     if(S_UD->getBoolForKey(IS_INSTALLED, false)){
-        S_RM->addSceneRes("LoadingScene", "loading");
-        S_DR->runWithScene(LoadingScene::scene("HomeScene"));
+        if (target == kTargetIpad||target == kTargetIphone)
+        {
+            S_DR->runWithScene(WelcomeScene::scene());
+        }else{
+            S_DR->runWithScene(LoadscapeScene::scene());
+        }
     }else{
         S_DR->runWithScene(InstallScene::scene());
     }
@@ -95,7 +97,7 @@ bool AppDelegate::applicationDidFinishLaunching()
 void AppDelegate::applicationDidEnterBackground()
 {
     S_DR->pause();
-
+    
     S_AE->pauseBackgroundMusic();
 }
 

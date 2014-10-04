@@ -41,6 +41,8 @@ private:
     virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent);
     virtual void ccTouchEnded(CCTouch *pTouch, CCEvent *pEvent);
     
+    virtual void keyBackClicked();
+    virtual void keyMenuClicked();
     /**
      *  赠送星星数量
      *

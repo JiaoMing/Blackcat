@@ -224,7 +224,7 @@ void ChildLayer::menuCallback(cocos2d::CCObject *obj){
         if (isFromSetting) {
             this->replaceDialog(SettingsLayer::create());
         }else{
-            this->removeFromParent();
+            UserBaseLayer::menuCallback(obj);
         }
     }
     

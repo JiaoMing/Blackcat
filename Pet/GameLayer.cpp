@@ -119,9 +119,9 @@ void GameLayer::webCallBack(CCWebView* webview,std::string cmd){
             CCString* str=CCString::createWithFormat("init('%s','%s',%f,%f,0)",m_hanzi->getcontour().c_str(),m_hanzi->getlocus().c_str(),gameSize.width*scaleX,gameSize.height*scaleY);
             webview->callWebWithJs(str->getCString());
             
-            S_ALP->play("heimao041_1.mp3:2","heimao041_2.mp3:2",(CCFileUtils::sharedFileUtils()->getWritablePath().append(m_hanzi->getcnAudioPath()).append(":1.2")).c_str(),"heimao041_3.mp3:3","heimao044.mp3",NULL);
+            S_ALP->play("heimao041_1.mp3:2","heimao041_2.mp3:2",(CCFileUtils::sharedFileUtils()->getWritablePath().append(m_hanzi->getcnAudioPath()).append(":1.2")).c_str(),"heimao044.mp3",NULL);
             S_AE->playEffect("renwu_ding.mp3");
-            this->scheduleOnce(schedule_selector(GameLayer::startGame),10);
+            this->scheduleOnce(schedule_selector(GameLayer::startGame),7);
             
             m_xiaoboWriteLayer->runHanziLabelAnimate(4);
             m_woWriteLayer->runHanziLabelAnimate(4.5);

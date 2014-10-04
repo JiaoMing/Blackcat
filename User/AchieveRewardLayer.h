@@ -12,14 +12,17 @@
 #include "cocos2d.h"
 USING_NS_CC;
 #include "AchieveManager.h"
+#include "CoverLayer.h"
 
-class AchieveRewardLayer:public CCLayerColor{
+class AchieveRewardLayer:public CoverLayer{
 public:
     static AchieveRewardLayer* create(AchieveKey key,int level);
     
-    virtual void setTarget(CCObject* target,SEL_CallFunc selector);
-    
     virtual bool init(AchieveKey key,int level);
+    virtual void onEnter();
+    virtual void onExit();
+    
+    virtual void setTarget(CCObject* target,SEL_CallFunc selector);
     
     void callback(float t);
 protected:

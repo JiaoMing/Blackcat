@@ -24,11 +24,9 @@
 #include "KechengDialogLayer.h"
 #include "AchieveLayer.h"
 #include "KechengController.h"
+#include "DownloadLayer.h"
+#include "DownloadManager.h"
 using namespace CocosDenshion;
-
-#if(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-#include "Java_com_kidsedu_KEHelper.h"
-#endif
 
 enum {
     kBoy=0,
@@ -148,12 +146,21 @@ bool HomeScene::init(){
     this->addChild(userBarLayer,ORDER_USERBAR);
     
     //工具条
-    ParentLayer* parentLayer=ParentLayer::create();
-    parentLayer->setDelegate(this);
-    this->addChild(parentLayer,ORDER_DIALOG-1);
+    m_parentLayer=ParentLayer::create();
+    m_parentLayer->setDelegate(this);
+    this->addChild(m_parentLayer,ORDER_DIALOG-1);
     
     //打开android按键响应
     this->setKeypadEnabled(true);
+
+//    DownloadObject* dlObj=DownloadObject::create();
+//    CCString* avatar=CCString::createWithFormat("http://www.kidsedu.com/userdata/41401/avatar.jpg");
+//    dlObj->setUrl(avatar->getCString());
+//    dlObj->setExpectFilename("avatar.jpg");
+//    dlObj->setFileTotalSize(1000000000);
+//    dlObj->setTarget(userBarLayer);
+//    dlObj->setSelector(callfuncO_selector(UserBarLayer::downloadAvatar));
+//    DownloadManager::sharedDownloadManager()->download(dlObj);
     
     return true;
 }
@@ -169,21 +176,26 @@ void HomeScene::onEnter()
     label->setString(m_hanzi->getzi().c_str());
     
     //排行榜
-    m_rankingBarLayer=RankingBarLayer::create();
+    m_rankingBarLayer=RankingBarLayer::create(true);
     m_rankingBarLayer->setDelegate(this);
     this->addChild(m_rankingBarLayer);
     
     //引导流程
     cc_timeval now=TimeUtils::millisecondNow();
     long nowTimeStamp=now.tv_sec;
-    long lastTimeStamp=(long)S_UD->getFloatForKey(LAST_OPEN_TIMESTAMP);
-    string first= S_UD->getStringForKey("HomeScene_First");
-    
+//    long lastTimeStamp=(long)S_UD->getFloatForKey(LAST_OPEN_TIMESTAMP);
+    bool yindaoOpen=S_UD->getBoolForKey("HomeScene_YindaoOpen");
+    bool parentOpen=S_UD->getBoolForKey("HomeScene_ParentOpen");
     if(!DEBUG_OPEN){
-#pragma message "注意结束heimao_11"
-        if (first!="heimao_11") {
+        if (yindaoOpen) {
+            S_UD->setBoolForKey("HomeScene_YindaoOpen", false);
+            S_UD->flush();
             //        调试关闭引导
             this->startGuide("HomeScene_First","heimao_1",true);
+        }else if(parentOpen){
+            S_UD->setBoolForKey("HomeScene_ParentOpen", false);
+            S_UD->flush();
+            m_parentLayer->showOrHide(true);
         }else{
             Props* props=(Props*)this->getChildByTag(kPropsWawa);
             props->setIsImmediate(true);
@@ -192,39 +204,40 @@ void HomeScene::onEnter()
                 props->runRandomAnimate(0,false,false);
             }
             
-            cc_timeval time=TimeUtils::millisecondNow();
-            struct tm* locationTime= TimeUtils::getLocaltime(time.tv_sec);
-            int month=locationTime->tm_mon+1;
-            int day=locationTime->tm_mday;
-            
-            if(S_UD->getFloatForKey(LAST_OPEN_TIMESTAMP,0)>0){
-                if (month==1&&day==1) {
-                    //元旦
-                    this->startGuide("HomeScene_Normal","heimao_2");
-                }else if(month==6&&day==1){
-                    this->startGuide("HomeScene_Normal","heimao_3");
-                }else{
-                    if (nowTimeStamp-lastTimeStamp>2*24*3600){
-                        //              if (true){
-                        int random=(int) (CCRANDOM_0_1()*2);
-                        switch (random) {
-                            case 0:
-                                this->startGuide("HomeScene_Normal","heimao_6");
-                                break;
-                            case 1:
-                                this->startGuide("HomeScene_Normal","xiaobo_2");
-                                break;
-                            default:
-                                break;
-                        }
-                    }else if (S_KC->getDayRenwuCount()==0) {
-                        bool isNewOpen=S_UD->getBoolForKey(NEW_OPEN,true);
-                        if (isNewOpen) {
-                            this->startGuide("HomeScene_Normal","heimao_5");
-                        }
-                    }
-                }
-            }
+            //引导转到欢迎界面
+//            cc_timeval time=TimeUtils::millisecondNow();
+//            struct tm* locationTime= TimeUtils::getLocaltime(time.tv_sec);
+//            int month=locationTime->tm_mon+1;
+//            int day=locationTime->tm_mday;
+//            
+//            if(S_UD->getFloatForKey(LAST_OPEN_TIMESTAMP,0)>0){
+//                if (month==1&&day==1) {
+//                    //元旦
+//                    this->startGuide("HomeScene_Normal","heimao_2");
+//                }else if(month==6&&day==1){
+//                    this->startGuide("HomeScene_Normal","heimao_3");
+//                }else{
+//                    if (nowTimeStamp-lastTimeStamp>2*24*3600){
+//                        //              if (true){
+//                        int random=(int) (CCRANDOM_0_1()*2);
+//                        switch (random) {
+//                            case 0:
+//                                this->startGuide("HomeScene_Normal","heimao_6");
+//                                break;
+//                            case 1:
+//                                this->startGuide("HomeScene_Normal","xiaobo_2");
+//                                break;
+//                            default:
+//                                break;
+//                        }
+//                    }else if (S_KC->getDayRenwuCount()==0) {
+//                        bool isNewOpen=S_UD->getBoolForKey(NEW_OPEN,true);
+//                        if (isNewOpen) {
+//                            this->startGuide("HomeScene_Normal","heimao_5");
+//                        }
+//                    }
+//                }
+//            }
         }
     }
     
@@ -232,12 +245,12 @@ void HomeScene::onEnter()
     S_UD->setFloatForKey(LAST_OPEN_TIMESTAMP, nowTimeStamp);
     S_UD->flush();
     
-    BaiduStat::onStatEvent(kBaiduOneEventStart,"SceneRetain","HomeScene");
+    BaiduStat::onStatEvent(kBaiduOneEventStart,"SceneRetain","首页");
 }
 
 void HomeScene::onExit()
 {
-    BaiduStat::onStatEvent(kBaiduOneEventEnd,"SceneRetain","HomeScene");
+    BaiduStat::onStatEvent(kBaiduOneEventEnd,"SceneRetain","首页");
     
     GuideBaseLayer::onExit();
     S_DR->getTouchDispatcher()->removeDelegate(this);
@@ -250,9 +263,8 @@ void HomeScene::willEnterForeground(){
 }
 
 void HomeScene::keyBackClicked(){
-#if(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-	showTipDialogJNI("退出", "确定退出程序吗?");
-#endif
+    S_DR->replaceScene(LoadingScene::scene("WelcomeScene"));
+    S_ALP->stop();
 }
 
 void HomeScene::keyMenuClicked(){
@@ -284,13 +296,17 @@ void HomeScene::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
     }else if(m_Panda->boundingBox().containsPoint(touchPoint))
     {
         
-        
         if (DEBUG_OPEN) {
             S_UD->setIntegerForKey(PET_ENTER_MODE, 0);
             S_UD->flush();
             this->startGuide("HomeScene_Normal","xiaobo_1");
         }else{
-            int mode=CCRANDOM_0_1()*2;
+            int mode=CCRANDOM_0_1()*10;
+            if (mode==0) {
+                mode=kPetEnterGame;
+            }else{
+                mode=kPetEnterNormal;
+            }
             S_UD->setIntegerForKey(PET_ENTER_MODE, mode);
             S_UD->flush();
             switch (mode) {

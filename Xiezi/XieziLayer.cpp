@@ -9,6 +9,8 @@
 #include "XieziLayer.h"
 #include "SimpleAudioEngine.h"
 #include "KapianCollectLayer.h"
+#include "HanziDetailLayer.h"
+#include "XieziLog.h"
 
 enum {
     kTagRewrite=0,
@@ -32,13 +34,21 @@ enum {
     kTagXingxing2,
     kTagXingxing3,
     kTagXingxing4,
-    kTagXingxingCount
+    kTagXingxingCount,
+    kTagDetail
 };
 
-XieziLayer* XieziLayer::create(Hanzi* hanzi,bool isShowX,Heimao* heimao)
+XieziLayer* XieziLayer::create(Hanzi* hanzi,bool isShowX,Heimao* heimao,string pyyd)
 {
     XieziLayer *layer = new XieziLayer();
     layer->m_hanzi=hanzi;
+    //获取主拼音Content
+    if(pyyd.length()>0){
+        S_DM->getByProperty(layer->m_mContent, "MD", pyyd);
+    }else{
+        S_DM->getByProperty(layer->m_mContent, "MD", hanzi->getZpyyd());
+    }
+    
     layer->m_isShowX=isShowX;
     layer->m_heimao=heimao;
     if (layer && layer->init())
@@ -62,9 +72,16 @@ XieziLayer::XieziLayer(){
     m_delegate=NULL;
     
     m_heimao=NULL;
+    
+    m_isShowDetail=false;
+    
+    m_gudieDialogLayer=NULL;
+    
+    m_mContent=new Content();
 }
 
 XieziLayer::~XieziLayer(){
+    CC_SAFE_DELETE(m_mContent);
 }
 
 bool XieziLayer::init()
@@ -124,7 +141,15 @@ bool XieziLayer::init()
     S_UD->setIntegerForKey(LAST_HANZI_ID, m_hanzi->getid());
     S_UD->flush();
     
-    m_writeCount=S_DM->getCount("hanzi","writeCount>0");
+    m_writedHanziCount=S_DM->getCount("hanzi","writeCount>0");
+    
+    time_t time= TimeUtils::getToday0Time();
+    CLAUSE_INIT;
+    whereClause.push_back(CCString::createWithFormat("hid=%d",m_hanzi->getid())->getCString());
+    whereClause.push_back(CCString::createWithFormat("createTime>%ld",time)->getCString());
+    vector<XieziLog*>* logVector=new vector<XieziLog*>();
+    S_DM->findScrollData(logVector,"id",whereClause, orderbyClause, groupByClause);
+    m_todayXieziCount=logVector->size();
     
     m_collectedCount=0;
     if (m_hanzi->getisCollected()==0) {
@@ -132,7 +157,7 @@ bool XieziLayer::init()
         if (m_collectedCount>=COLLECT_LIMIT) {
             GuideDialog* guideDialog=new GuideDialog();
             guideDialog->autorelease();
-            guideDialog->setText("非常抱歉，本软件为测试版，收藏的卡片数量已经超出了测试版的限制。请关注我们的微信公众号，等待正式版本的发布，谢谢！");
+            guideDialog->setText("非常抱歉，收藏的卡片数量已经超出了免费版本限制，请检查账号状态。");
             guideDialog->setMode(kGuideDialogOk);
             m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
             m_gudieDialogLayer->setDelegate(this);
@@ -206,7 +231,7 @@ bool XieziLayer::init()
     }
     
     //拼音
-    CCLabelTTF *pinyinLabel = CCLabelTTF::create(m_hanzi->getpinyinyindiao().c_str(), "KaiTi.ttf", 30.0);
+    CCLabelTTF *pinyinLabel = CCLabelTTF::create(m_hanzi->getpinyinyindiao().c_str(), "Pinyinok.ttf", 30.0);
     pinyinLabel->setColor(ccc3(255, 255, 255));
     pinyinLabel->setPosition(S_RM->getPositionWithName("xiezi_pinyin"));
     this->addChild(pinyinLabel);
@@ -220,24 +245,26 @@ bool XieziLayer::init()
 }
 
 void XieziLayer::dingShiTiXing(){
-    if (m_heimao!=NULL) {
-        switch (m_hanzi->getwriteCount()) {
-            case 1:
-                m_heimao->action("heimao_tishi1");
-                break;
-            case 2:
-                m_heimao->action("heimao_tishi2");
-                break;
-            case 3:
-                m_heimao->action("heimao_tishi3");
-                break;
-            case 0:
-            default:
-                m_heimao->action("heimao_tishi0");
-                break;
+    if(!m_isShowDetail){
+        if (m_heimao!=NULL) {
+            switch (m_hanzi->getwriteCount()) {
+                case 1:
+                    m_heimao->action("heimao_tishi1");
+                    break;
+                case 2:
+                    m_heimao->action("heimao_tishi2");
+                    break;
+                case 3:
+                    m_heimao->action("heimao_tishi3");
+                    break;
+                case 0:
+                default:
+                    m_heimao->action("heimao_tishi0");
+                    break;
+            }
         }
+        m_webView->callWebWithJs("setMode(Modes.kWrite);");
     }
-    m_webView->callWebWithJs("setMode(Modes.kWrite);");
 }
 
 void XieziLayer::onEnter(){
@@ -256,6 +283,7 @@ void XieziLayer::onEnter(){
     }else{
         m_webView->setVisible(true);
     }
+    
 }
 
 void XieziLayer::onExit(){
@@ -273,25 +301,112 @@ void XieziLayer::enableTouch(){
     menu->setHandlerPriority(m_topHandlerPriority-1);
 }
 
+CCSprite* XieziLayer::generateSnapshot(){
+    
+    CCSize mainSize=S_RM->getSizeWithName("xiezi_webview_size");
+    CCPoint mainPoint=S_RM->getPositionWithName("xiezi_main");
+    
+    CCSprite* snapshot=(CCSprite*)this->getChildByTag(kTagSnapshot);
+    
+    const char* data=m_webView->callWebWithJs("getCanvasBase64Data()");
+    int length=(int)strlen(data);
+    
+    if(length>0){
+        
+        string pngData=StringUtils::base64Decode(data, (int)strlen(data));
+        CCImage* img=new CCImage();
+        img->autorelease();
+        img->initWithImageData(const_cast<char*>(pngData.c_str()), (int)pngData.length());
+        CCTexture2D *texture = new CCTexture2D();
+        texture->initWithImage(img);
+        texture->autorelease();
+        
+        if (snapshot) {
+            snapshot->setTexture(texture);
+        }else{
+            snapshot= CCSprite::createWithTexture(texture);
+            snapshot->setPosition(mainPoint);
+            snapshot->setTag(kTagSnapshot);
+            
+            if (mainSize.width!=snapshot->getContentSize().width) {
+                snapshot->setScale(mainSize.width/snapshot->getContentSize().width);
+            }
+            this->addChild(snapshot);
+        }
+        
+    }else{
+        if (!snapshot) {
+            snapshot=CCSprite::createWithSpriteFrameName("tianzige.png");
+            snapshot->setPosition(mainPoint);
+            
+            CCLabelTTF* label=CCLabelTTF::create(m_hanzi->getzi().c_str(), "KaiTi.ttf", 400.0);
+            label->setColor(ccc3(100,53,14));
+            label->setPosition(ccp(mainSize.width/2, mainSize.height/2));
+            snapshot->addChild(label);
+            
+            snapshot->setTag(kTagSnapshot);
+            
+            this->addChild(snapshot);
+        }
+    }
+    
+    return snapshot;
+}
+
 void XieziLayer::callWeb(CCObject* pSender)
 {
-    CCSprite* snapshot=(CCSprite*)this->getChildByTag(kTagSnapshot);
-    if(snapshot!=NULL)snapshot->removeFromParentAndCleanup(false);
-    m_webView->setVisible(true);
-    
     int tag=((CCNode*)pSender)->getTag();
+    
     switch (tag) {
-        case kTagRewrite:
+        case kTagRewrite:{
             m_webView->callWebWithJs("reWrite();");
             m_isWriteFinished=false;
+            m_webView->setVisible(true);
+            m_isShowDetail=false;
+            CCSprite* snapshot=(CCSprite*)this->getChildByTag(kTagSnapshot);
+            if(snapshot)snapshot->removeFromParentAndCleanup(false);
+        }
             break;
-        case kTagTansuo:
-            S_TT->makeText("开发中");
+        case kTagTansuo:{
+            CCSprite* snapshot=this->generateSnapshot();
+            if (m_isShowDetail==false) {
+                m_webView->setVisible(false);
+                
+                HanziDetailLayer* detailLayer=(HanziDetailLayer*)this->getChildByTag(kTagDetail);
+                if (!detailLayer) {
+                    detailLayer=HanziDetailLayer::create(m_hanzi);
+                    detailLayer->setHandlerPriority(m_topHandlerPriority-1);
+                    detailLayer->setTag(kTagDetail);
+                    this->addChild(detailLayer);
+                }
+                detailLayer->setVisible(false);
+                
+                snapshot->setVisible(true);
+                snapshot->runAction(CCSequence::create(CCOrbitCamera::create(0.3, 1, 0, 0, -90, 0, 0),CCHide::create(),NULL));
+                detailLayer->runAction(CCSequence::create(CCDelayTime::create(0.3),CCShow::create(),CCOrbitCamera::create(0.3, 1, 0, 90, -90, 0, 0),NULL));
+            }else{
+                m_webView->setVisible(false);
+                CCLayer* detailLayer=(CCLayer*)this->getChildByTag(kTagDetail);
+                detailLayer->setVisible(true);
+                detailLayer->runAction(CCSequence::create(CCOrbitCamera::create(0.3, 1, 0, 0, -90, 0, 0),CCHide::create(),NULL));
+                snapshot->runAction(CCSequence::create(CCDelayTime::create(0.3),CCShow::create(),CCOrbitCamera::create(0.3, 1, 0, 90, -90, 0, 0),NULL));
+                m_webView->runAction(CCSequence::create(CCDelayTime::create(0.6),CCShow::create(),NULL));
+            }
+            m_isShowDetail=!m_isShowDetail;
             
+        }
             break;
         case kTagGuangbo:
-            S_AE->playEffect((CCFileUtils::sharedFileUtils()->getWritablePath()+m_hanzi->getcnAudioPath()).c_str());
+            string url=CCFileUtils::sharedFileUtils()->getWritablePath()+"blackcat/uploadfile/"+m_mContent->getfileUrl();
+            S_AE->playEffect(url.c_str());
             break;
+    }
+    
+    CCSprite* tansuo=(CCSprite*)this->getChildByTag(kTagSpriteTansuo);
+    if (m_isShowDetail) {
+        tansuo->setDisplayFrame(S_SF->spriteFrameByName("bi.png"));
+    }else{
+        tansuo->setDisplayFrame(S_SF->spriteFrameByName("tansuo.png"));
     }
 }
 
@@ -310,8 +425,8 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
             CCString* str=CCString::createWithFormat("init('%s','%s',%f,%f,%d,Modes.kFillAll)",m_hanzi->getcontour().c_str(),m_hanzi->getlocus().c_str(),webViewSize.width*scaleX,webViewSize.height*scaleY,m_hanzi->getwriteCount());
             webview->callWebWithJs(str->getCString());
             
-            const char* audio=(CCFileUtils::sharedFileUtils()->getWritablePath()+m_hanzi->getcnAudioPath()).c_str();
-            S_AE->playEffect(audio);
+            string url=CCFileUtils::sharedFileUtils()->getWritablePath()+"blackcat/uploadfile/"+m_mContent->getfileUrl();
+            S_AE->playEffect(url.c_str());
             
             m_webView->callWebWithJs("setIsCanAutoWrite(true);");
         }
@@ -319,6 +434,8 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
             break;
         case kWebCallBackWriteHanziOk:{
             //书写成功
+            
+            m_todayXieziCount++;
             int writeCount=m_hanzi->getwriteCount();
             m_hanzi->setIntwriteCount(++writeCount);
             CCString *sql=CCString::createWithFormat("update hanzi set writeCount=writeCount+1 where id=%d;",m_hanzi->getid());
@@ -331,42 +448,40 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
             static_userDefaultIncrement(OVER_XINGXING_COUNT,0);
             
             string token=S_UD->getStringForKey(UDKEY_USER_TOKEN);
-            if (token.length()>0&&splitCmd.size()>1&&splitCmd[1].length()>0) {
-                CCString* data=CCString::createWithFormat("hwd.writeData=%s&hwd.hanzi.id=%d",splitCmd[1].c_str(),m_hanzi->getid());
-                CCString* url=CCString::createWithFormat("user_uploadHanziWriteData_feedback?token=%s",token.c_str());
-                ApiStruct apiStruct;
-                apiStruct.url=url->getCString();
-                apiStruct.isBlackcat=true;
-                apiStruct.target=NULL;
-                apiStruct.data=data->getCString();
-                apiStruct.requestType=CCHttpRequest::kHttpPost;
-//                CCLog("%s",url->getCString());
-//                CCLog("%s",data->getCString());
-                Api* api=Api::create(apiStruct);
-                api->send();
+            if (splitCmd.size()>1&&splitCmd[1].length()>0) {
+                int createTime=(int)(TimeUtils::millisecondNow().tv_sec);
+                CCString* sql=CCString::createWithFormat("insert into xiezi_log(hid,locus,createTime) values(%d,'%s',%d)",m_hanzi->getid(),splitCmd[1].c_str(),createTime);
+                S_DM->executeSql(sql->getCString());
+                CLAUSE_INIT;
+                whereClause.push_back(CCString::createWithFormat("hid=%d",m_hanzi->getid())->getCString());
+                whereClause.push_back(CCString::createWithFormat("createTime=%d",createTime)->getCString());
+                vector<XieziLog*>* logVector=new vector<XieziLog*>();
+                S_DM->findScrollData(logVector,"id",whereClause, orderbyClause, groupByClause);
+                if (logVector->size()==1) {
+                    m_xieziLogId=((*logVector)[0])->getid();
+                }
+                
+                if (token.length()>0) {
+                    CCString* data=CCString::createWithFormat("hwd.writeData=%s&hwd.hanzi.id=%d",splitCmd[1].c_str(),m_hanzi->getid());
+                    CCString* url=CCString::createWithFormat("user_uploadHanziWriteData_feedback?token=%s",token.c_str());
+                    ApiStruct apiStruct;
+                    apiStruct.url=url->getCString();
+                    apiStruct.isBlackcat=true;
+                    apiStruct.target=this;
+                    apiStruct.sel_response=apiresponse_selector(XieziLayer::apiCallBack);
+                    apiStruct.data=data->getCString();
+                    apiStruct.requestType=CCHttpRequest::kHttpPost;
+                    Api* api=Api::create(apiStruct);
+                    api->send();
+                }
             }
             
             m_isWriteFinished=true;
             
             if (splitCmd.size()>2&&splitCmd[2].length()>10) {
                 m_webView->setVisible(false);
-                string pngData=StringUtils::base64Decode(splitCmd[2].c_str(), (int)splitCmd[2].length());
-                CCImage* img=new CCImage();
-                img->initWithImageData(const_cast<char*>(pngData.c_str()), (int)pngData.length());
-                CCTexture2D *texture = new CCTexture2D();
-                texture->initWithImage(img);
-                CCSprite* snapshot= CCSprite::createWithTexture(texture);
-                CCPoint point=S_RM->getPositionWithName("xiezi_main");
-                snapshot->setPosition(ccp(point.x,point.y));
-                snapshot->setTag(kTagSnapshot);
                 
-                CCSize webViewSize=S_RM->getSizeWithName("xiezi_webview_size");
-                if (webViewSize.width!=snapshot->getContentSize().width) {
-                    snapshot->setScale(webViewSize.width/snapshot->getContentSize().width);
-                }
-                
-                this->addChild(snapshot);
-                CC_SAFE_DELETE(img);
+                this->generateSnapshot();
             }
             
             //星星动画
@@ -378,15 +493,19 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
             this->addChild(xingxing);
             
             if (m_heimao) {
-                if (writeCount<=3) {
-                    CCString* str=CCString::createWithFormat("heimao_xieziOk%d",writeCount);
-                    m_heimao->action(str->getCString());
-                }else if(writeCount<6){
-                    m_heimao->action("heimao_xieziOkgt3");
-                }else if(writeCount==6){
-                    m_heimao->action("heimao_xieziOk6");
-                }else if(writeCount>6){
-                    m_heimao->action("heimao_xieziOkgt6");
+                if (m_todayXieziCount==3) {
+                    m_heimao->action("heimao_xieziOkday3");
+                }else{
+                    if (writeCount<=3) {
+                        CCString* str=CCString::createWithFormat("heimao_xieziOk%d",writeCount);
+                        m_heimao->action(str->getCString());
+                    }else if(writeCount<6){
+                        m_heimao->action("heimao_xieziOkgt3");
+                    }else if(writeCount==6){
+                        m_heimao->action("heimao_xieziOk6");
+                    }else if(writeCount>6){
+                        m_heimao->action("heimao_xieziOkgt6");
+                    }
                 }
             }
             
@@ -407,10 +526,10 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
             this->unschedule(schedule_selector(XieziLayer::dingShiTiXing));
             
             //切换到写字模式
-            if (m_writeCount>=WRITE_LIMIT&&m_hanzi->getwriteCount()==0&&m_gudieDialogLayer==NULL) {
+            if (m_writedHanziCount>=WRITE_LIMIT&&m_hanzi->getwriteCount()==0&&m_gudieDialogLayer==NULL) {
                 GuideDialog* guideDialog=new GuideDialog();
                 guideDialog->autorelease();
-                guideDialog->setText("非常抱歉，本软件为测试版，练习书写的汉字数量已经超出了测试版的限制。请关注我们的微信公众号，等待正式版本的发布，谢谢！");
+                guideDialog->setText("非常抱歉，练习书写的汉字数量已经超出了免费版本的限制，请检查账号状态。");
                 guideDialog->setMode(kGuideDialogOk);
                 m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
                 m_gudieDialogLayer->setDelegate(this);
@@ -418,6 +537,8 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
                 m_gudieDialogLayer->setGuideDialogData(guideDialog);
                 webview->setVisible(false);
             }
+            
+            
         }
             break;
         case kWebCallBackWriteStrokeOk:
@@ -462,4 +583,9 @@ void XieziLayer::dialogCallBack(GuideDialogCMD cmd){
 void XieziLayer::setVisible(bool isVisible){
     CCNode::setVisible(isVisible);
     m_webView->setVisible(isVisible);
+}
+
+void XieziLayer::apiCallBack(cocos2d::CCDictionary *root){
+    CCString *sql=CCString::createWithFormat("update xiezi_log set isUploaded=1 where id=%d;",m_xieziLogId);
+    S_DM->executeSql(sql->getCString());
 }

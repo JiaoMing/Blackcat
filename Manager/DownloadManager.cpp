@@ -16,6 +16,8 @@
 #include <queue>
 #include <errno.h>
 
+#define MAXBUFFER 128
+
 static DownloadManager* s_pDownloadManager = NULL;
 static const char *postfix = ".tmp";
 
@@ -25,10 +27,6 @@ static long speed=0;
 static CURLM *s_multiHandle = NULL;
 static pthread_mutex_t  s_curlQueueMutex;
 static std::queue<CURL*>* s_curlQueue = NULL;
-
-static pthread_mutex_t  s_dlObjQueueMutex;
-
-static std::queue<DownloadObject*>* s_dlObjQueue = NULL;
 
 static pthread_t s_downloadThread;
 
@@ -58,10 +56,9 @@ static long getDownloadedSize(DownloadObject* dlObj){
 
 static void mergeFile(DownloadObject* dlObj)
 {
-    dlObj->setIsMerged(true);
-    
+    dlObj->setIsMerging(true);
     string rootPath=CCFileUtils::sharedFileUtils()->getWritablePath();
-    char buffer[8];
+    char buffer[MAXBUFFER];
     int len;
     
     FILE *file = NULL;
@@ -79,7 +76,7 @@ static void mergeFile(DownloadObject* dlObj)
         if (file==NULL) {
             break;
         }else{
-            while ((len = fread(buffer,1,8,file)) > 0) {
+            while ((len = fread(buffer,1,MAXBUFFER,file)) > 0) {
                 fwrite(buffer,1,len,wtFile);
             }
             fclose(file);
@@ -88,6 +85,7 @@ static void mergeFile(DownloadObject* dlObj)
     }while (true);
     
     fclose(wtFile);
+    dlObj->setIsMerged(true);
 }
 
 static size_t writeFunc(void *ptr, size_t size, size_t nmemb, void *userdata)
@@ -102,16 +100,12 @@ static int progressFunc(void *ptr, double totalToDownload, double nowDownloaded,
 {
     DownloadObject* dlObj=(DownloadObject*)ptr;
     
-    pthread_mutex_lock(&s_dlObjQueueMutex);
-    s_dlObjQueue->push(dlObj);
-    pthread_mutex_unlock(&s_dlObjQueueMutex);
-    
     if (totalToDownload>0) {
         int downloadedSize=dlObj->getLastDownloadedSize()+nowDownloaded;
         int percent=(int)(downloadedSize/(dlObj->getLastDownloadedSize()+totalToDownload)*100);
         if (percent>0) {
             dlObj->setPercent(percent);
-            if (percent==100&&!dlObj->getIsMerged()) {
+            if (percent==100&&!dlObj->getIsMerging()) {
                 fclose(dlObj->getCurrentFile());
                 mergeFile(dlObj);
             }
@@ -233,9 +227,8 @@ static void* downloadThread(void *data){
         pthread_mutex_unlock(&s_curlQueueMutex);
         
         CC_SAFE_DELETE(s_curlQueue);
-        CC_SAFE_DELETE(s_dlObjQueue);
         pthread_mutex_destroy(&s_curlQueueMutex);
-        pthread_mutex_destroy(&s_dlObjQueueMutex);
+        
     }
     
     
@@ -243,6 +236,7 @@ static void* downloadThread(void *data){
     
     curl_global_cleanup();
     
+    s_multiHandle=NULL;
     
     return NULL;
 }
@@ -254,7 +248,7 @@ void DownloadManager::download(DownloadObject* dlObj){
     if (s_multiHandle==NULL) {
         
         s_curlQueue=new queue<CURL*>();
-        s_dlObjQueue=new queue<DownloadObject*>();
+        m_dlObjVector=new vector<DownloadObject*>();
         
         curl_global_init(CURL_GLOBAL_DEFAULT);
         
@@ -262,7 +256,6 @@ void DownloadManager::download(DownloadObject* dlObj){
         s_multiHandle = curl_multi_init();
         
         pthread_mutex_init(&s_curlQueueMutex, NULL);
-        pthread_mutex_init(&s_dlObjQueueMutex, NULL);
         pthread_create(&s_downloadThread, NULL, downloadThread, NULL);
         
         CCDirector::sharedDirector()->getScheduler()->scheduleSelector(schedule_selector(DownloadManager::downloadCallBack), this, 0, false);
@@ -277,30 +270,41 @@ void DownloadManager::download(DownloadObject* dlObj){
     s_curlQueue->push(curl);
     pthread_mutex_unlock(&s_curlQueueMutex);
     
+    m_dlObjVector->push_back(dlObj);
+    dlObj->retain();//计数器+1
+    
 }
 
 
 void DownloadManager::downloadCallBack(float t){
-    pthread_mutex_lock(&s_dlObjQueueMutex);
-    
-    if (s_dlObjQueue->empty())
-    {
-        pthread_mutex_unlock(&s_dlObjQueueMutex);
-    }
-    else
-    {
-        DownloadObject* dlObj= s_dlObjQueue->front();
-        s_dlObjQueue->pop();
-        pthread_mutex_unlock(&s_dlObjQueueMutex);
-        
-        CCObject *target = dlObj->getTarget();
-        SEL_CallFuncO selector = dlObj->getSelector();
-        if (target && selector)
-        {
-            (target->*selector)(dlObj);
+    if (m_dlObjVector!=NULL){
+        for (vector<DownloadObject*>::iterator it = m_dlObjVector->begin(); it != m_dlObjVector->end();){
+            DownloadObject* dlObj=*it;
+            
+            CCObject *target = dlObj->getTarget();
+            SEL_CallFuncO selector = dlObj->getSelector();
+            
+            if (target&& selector)
+            {
+                (target->*selector)(dlObj);
+            }
+            
+            CCLog("percent=%d%%",dlObj->getPercent());
+            
+            if (dlObj->getIsMerged()) {
+                //文件已合并完成，释放ldObj
+                m_dlObjVector->erase(it);
+                dlObj->release();//计数器-1
+            }else{
+                it ++;
+                //注意迭代器指针
+            }
+        }
+        if (m_dlObjVector->empty()) {
+            CC_SAFE_DELETE(m_dlObjVector);
+            CCDirector::sharedDirector()->getScheduler()->unscheduleSelector(schedule_selector(DownloadManager::downloadCallBack), s_pDownloadManager);
         }
     }
-    
 }
 
 
@@ -317,5 +321,11 @@ DownloadManager::DownloadManager(){
 
 DownloadManager::~DownloadManager(){
     s_pDownloadManager=NULL;
+    
+    CC_SAFE_DELETE(s_curlQueue);
+    pthread_mutex_destroy(&s_curlQueueMutex);
+    
+    CC_SAFE_DELETE(m_dlObjVector);
+    
     CCDirector::sharedDirector()->getScheduler()->unscheduleSelector(schedule_selector(DownloadManager::downloadCallBack), s_pDownloadManager);
 }

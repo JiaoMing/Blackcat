@@ -11,7 +11,7 @@
 
 
 bool DialogLayer::init(const ccColor4B& color){
-    if (!CoverLayer::initWithColor(color)) {
+    if (!CoverLayer::init(color)) {
         return false;
     }
     m_bg=CCSprite::createWithSpriteFrameName("dialog_bg.png");
@@ -43,8 +43,17 @@ void DialogLayer::onExit()
     CoverLayer::onExit();
 }
 
+int DialogLayer::topHandlerPriority(){
+    return m_dialogLayerDelegate->topHandlerPriority()-1;
+}
+
+void DialogLayer::setDelegate(DialogLayerDelegate *delegate){
+    CoverLayer::setDelegate(delegate);
+    m_dialogLayerDelegate=delegate;
+}
+
 void DialogLayer::replaceDialog(DialogLayer *dialogLayer){
-    dialogLayer->setDelegate(this->getDelegate());
+    dialogLayer->setDelegate(m_dialogLayerDelegate);
     this->getParent()->addChild(dialogLayer,ORDER_DIALOG);
     this->removeFromParent();
 }
@@ -72,6 +81,7 @@ void DialogLayer::menuCallback(CCObject* obj){
         if (m_forwardDialogLayer==NULL) {
             this->removeFromParent();
             S_ALP->stop();
+            m_dialogLayerDelegate->dialogCloseCallBack();
         }else{
 #pragma message "m_forwardDialogLayer不能初始化问题"
             this->replaceDialog(m_forwardDialogLayer);

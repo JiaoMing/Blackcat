@@ -92,8 +92,8 @@ private:
 class TupianTableDelegate{
 public:
     virtual void tupianLoadCallBack(int count)=0;
-    virtual void tupianTouchCallBack(Tupian* tupian)=0;
-    virtual void tupianTableScrollCallBack(ScrollState state)=0;
+    virtual void tupianTouchCallBack(Tupian* tupian,bool isOverLimit=false)=0;
+    virtual void tupianTableScrollCallBack(ScrollState state,int cellCount)=0;
 };
 
 

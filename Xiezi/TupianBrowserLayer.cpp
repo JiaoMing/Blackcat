@@ -107,15 +107,13 @@ void TupianBrowserLayer::setMainTupianSprite(bool isFromInit){
     COLLECTED_SPRITE;
     this->addChild(sprite);
     
-    
-    
     if (!m_tupian->getisCollected()) {
         
         int count=S_DM->getCount("ciyu","isCollected>0");
         if (count>=COLLECT_LIMIT) {
             GuideDialog* guideDialog=new GuideDialog();
             guideDialog->autorelease();
-            guideDialog->setText("非常抱歉，本软件为测试版，收藏的卡片数量已经超出了测试版的限制。请关注我们的微信公众号，等待正式版本的发布，谢谢！");
+            guideDialog->setText("非常抱歉，收藏的卡片数量已经超出了免费版本限制，请检查账号状态。");
             guideDialog->setMode(kGuideDialogOk);
             m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
             m_gudieDialogLayer->setDelegate(this);
@@ -158,7 +156,8 @@ void TupianBrowserLayer::setMainTupianSprite(bool isFromInit){
     
     vector<Hanzi*>* hanzis=new vector<Hanzi*>();
     
-    vector<const char*> whereClause=vector<const char*>();
+    CLAUSE_INIT;
+    
     whereClause.push_back(HANZI_VERIFY_PASS);
     
     
@@ -171,8 +170,6 @@ void TupianBrowserLayer::setMainTupianSprite(bool isFromInit){
     }
     
     whereClause.push_back(where.c_str());
-    map<const char*, const char*> orderbyClause=map<const char*, const char*>();
-    vector<const char*> groupByClause=vector<const char*>();
     S_DM->findScrollData(hanzis, "id,zi", whereClause, orderbyClause, groupByClause);
     
     m_delay=0.0f;
@@ -314,10 +311,21 @@ void TupianBrowserLayer::tupianLoadCallBack(int count){
     }
 }
 
-void TupianBrowserLayer::tupianTouchCallBack(Tupian* tupian){
-    if (m_isTableShow) {
-        this->m_tupian=tupian;
-        this->setMainTupianSprite(false);
+void TupianBrowserLayer::tupianTouchCallBack(Tupian* tupian,bool isOverLimit){
+    if (isOverLimit) {
+        GuideDialog* guideDialog=new GuideDialog();
+        guideDialog->autorelease();
+        guideDialog->setText("非常抱歉，收藏的卡片数量已经超出了免费版本限制，请检查账号状态。");
+        guideDialog->setMode(kGuideDialogOk);
+        GuideDialogLayer* gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
+        gudieDialogLayer->setDelegate(this);
+        this->addChild(gudieDialogLayer,ORDER_DIALOG);
+        gudieDialogLayer->setGuideDialogData(guideDialog);
+    }else{
+        if (m_isTableShow) {
+            this->m_tupian=tupian;
+            this->setMainTupianSprite(false);
+        }
     }
 }
 

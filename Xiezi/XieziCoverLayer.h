@@ -14,9 +14,9 @@
 
 class XieziCoverLayer: public CoverLayer{
 public:
-    static XieziCoverLayer* create(int hid,Heimao* heimao);
+    static XieziCoverLayer* create(int hid,Heimao* heimao,string zi="",string pyyd="");
 public:
-    XieziCoverLayer(int hid);
+    XieziCoverLayer(int hid,string zi="");
     ~XieziCoverLayer();
     virtual bool init();
     virtual void onEnter();
@@ -28,6 +28,7 @@ private:
     XieziLayer* m_xieziLayer;
     Hanzi* m_hanzi;
     Heimao* m_heimao;
+    string m_pyyd;
     
     CCPoint m_userBarLayerPoint;//保存原userBarLayer位置，用于关闭xiezilayer时恢复
 };

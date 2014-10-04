@@ -28,7 +28,7 @@ CardListScene::CardListScene() {
 }
 
 CardListScene::~CardListScene() {
-    CCString *path = CCString::createWithFormat("%secards/%s", CCFileUtils::sharedFileUtils()->getWritablePath().c_str(),CURRENT_ECARDPAGE->getbackground_image().c_str());
+    CCString *path = CCString::createWithFormat("%secards/%s", CCFileUtils::sharedFileUtils()->getWritablePath().c_str(),CURRENT_ECARDPAGE->getimg().c_str());
     CCTextureCache::sharedTextureCache()->removeTextureForKey(path->getCString());
 }
 
@@ -45,7 +45,7 @@ bool CardListScene::init()
     spriteBg->setPosition(S_RM->getJpgBgPosition());
     this->addChild(spriteBg);
     
-    CCSprite* spritePage=CCSprite::create(CCString::createWithFormat("%secards/%s", CCFileUtils::sharedFileUtils()->getWritablePath().c_str(),CURRENT_ECARDPAGE->getbackground_image().c_str())->getCString());
+    CCSprite* spritePage=CCSprite::create(CCString::createWithFormat("%secards/%s", CCFileUtils::sharedFileUtils()->getWritablePath().c_str(),CURRENT_ECARDPAGE->getimg().c_str())->getCString());
     spritePage->setPosition(S_RM->getJpgBgPosition());
     float scale=W_SIZE.height/spritePage->getContentSize().height;
     spritePage->setScale(scale);
@@ -70,14 +70,14 @@ bool CardListScene::init()
     float minX=(W_SIZE.width-spritePage->getContentSize().width*scale)/2;
     for (int i=0; i<S_CM->getECards()->size(); i++) {
         ECard* ecard = (*S_CM->getECards())[i];
-        CCLabelTTF *labelWord = CCLabelTTF::create(ecard->getcontent().c_str(), "KaiTi.ttf", S_RM->getPositionWithName("CardList_wordFontSize").x);
+        CCLabelTTF *labelWord = CCLabelTTF::create(ecard->getzi().c_str(), "KaiTi.ttf", S_RM->getPositionWithName("CardList_wordFontSize").x);
         labelWord->setColor(ccc3(0, 0, 0));
         CCMenuItemLabel* labelItem=CCMenuItemLabel::create(labelWord, this,menu_selector(CardListScene::menuCallback));
         labelItem->setAnchorPoint(CCPointZero);
         float x=minX+ecard->getx()*scale+2;
         float y=S_DR->getWinSize().height-ecard->gety()*scale-labelWord->getContentSize().height-2;
         labelItem->setPosition(ccp(x, y));
-        labelItem->setTag(ecard->getwid());
+        labelItem->setTag(ecard->gethid());
         pMenu->addChild(labelItem);
     }
     
@@ -97,11 +97,14 @@ bool CardListScene::init()
 void CardListScene::onEnter(){
     CCLayer::onEnter();
     S_DR->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
+    BaiduStat::onStatEvent(kBaiduOneEventStart,"SceneRetain","CardListScene");
 }
 
 void CardListScene::onExit(){
     CCLayer::onExit();
     S_DR->getTouchDispatcher()->removeDelegate(this);
+    S_DR->setDepthTest(false);
+    BaiduStat::onStatEvent(kBaiduOneEventEnd,"SceneRetain","CardListScene");
 }
 
 bool CardListScene::ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent)
@@ -186,6 +189,7 @@ void CardListScene::menuCallback(CCObject* pSender)
         S_DR->replaceScene(CardShelfScene::scene());
     }else{
         S_AE->playEffect("E4.mp3");
+        
         XieziCoverLayer* xieziCoverLayer=XieziCoverLayer::create(tag,NULL);
         xieziCoverLayer->setDelegate(this);
         this->addChild(xieziCoverLayer,INT_MAX);

@@ -46,6 +46,18 @@ bool AchieveRewardLayer::init(AchieveKey key,int level){
     return true;
 }
 
+void AchieveRewardLayer::onEnter(){
+    CoverLayer::onEnter();
+    
+    S_OM->hideNativeView();
+}
+
+void AchieveRewardLayer::onExit(){
+    CoverLayer::onExit();
+    S_OM->resumeNativeView();
+}
+
+
 void AchieveRewardLayer::callback(float t){
     this->removeFromParent();
     if (m_target && m_selector) {

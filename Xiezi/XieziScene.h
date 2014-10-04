@@ -35,8 +35,6 @@ public:
     
     void menuCallback(CCObject* pSender);
     
-    
-    
     void xingxingAnimateEnd();
     
     void pressHeimaoCallback();
@@ -44,8 +42,8 @@ public:
     virtual void webCallBack(WebCallBackCMD cmd);
     
     virtual void tupianLoadCallBack(int count);
-    virtual void tupianTouchCallBack(Tupian* tupian);
-    virtual void tupianTableScrollCallBack(ScrollState state);
+    virtual void tupianTouchCallBack(Tupian* tupian,bool isOverLimit=false);
+    virtual void tupianTableScrollCallBack(ScrollState state,int cellCount);
     
     virtual void hideBrowserCallBack();
     virtual bool isPushToXieziScene(){return false;}

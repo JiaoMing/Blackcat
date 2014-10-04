@@ -25,10 +25,9 @@ void Heimao::stop(){
     
     this->setDisplayFrame(S_SF->spriteFrameByName("z-daijizhayan_1.png"));
     
-    #pragma message "可能有问题，stop有可能其他事件的音效"
+    #pragma message "有可能stop其他事件的音效"
     S_ALP->stop();
 }
-
 
 float Heimao::action(const char* key,bool random,int actionIndex,int audioIndex){
     float time=0;

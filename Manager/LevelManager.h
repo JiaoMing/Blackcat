@@ -17,6 +17,7 @@ using namespace std;
 class LevelManager :public CCObject{
 public:
     static LevelManager* sharedLevelManager();
+    int getLevelByExpAndRule(int exp);
 public:
     LevelManager();
     ~LevelManager();

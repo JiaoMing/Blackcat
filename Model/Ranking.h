@@ -21,6 +21,7 @@ public:
     SYNTHESIZE_INT(tuka);
     SYNTHESIZE_INT(xunzhang);
     SYNTHESIZE_INT(xingxing);
+    SYNTHESIZE_INT(jingyan);
     
     virtual void registTablenameAndProperty(){
         tablename="ranking";
@@ -30,6 +31,7 @@ public:
         INSERT_PROPERTYMAP(Ranking,tuka);
         INSERT_PROPERTYMAP(Ranking,xunzhang);
         INSERT_PROPERTYMAP(Ranking,xingxing);
+        INSERT_PROPERTYMAP(Ranking,jingyan);
     }
 };
 

@@ -8,7 +8,18 @@
 
 #include "ClickableSprite.h"
 
-ClickableSprite *ClickableSprite::createWithSpriteFrameName(const char *pszSpriteFrameName)
+ClickableSprite* ClickableSprite::create()
+{
+    ClickableSprite *sprite = new ClickableSprite();
+    if (sprite && sprite->init()) {
+        sprite->autorelease();
+    } else {
+        CC_SAFE_RELEASE_NULL(sprite);
+    }
+    return sprite;
+}
+
+ClickableSprite* ClickableSprite::createWithSpriteFrameName(const char *pszSpriteFrameName)
 {
     ClickableSprite *sprite = new ClickableSprite();
     if (sprite && sprite->initWithSpriteFrameName(pszSpriteFrameName)) {

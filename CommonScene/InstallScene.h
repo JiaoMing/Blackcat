@@ -24,9 +24,11 @@ public:
     
     void gotoHomeScene();
     void installCallback();
+    void loadingProcessFresh(float t);
 private:
     CCLabelTTF* m_labelProcess;
-    int m_installCount;
+    int m_installedCount;
+    int m_count;
 };
 
 #endif

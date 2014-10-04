@@ -120,8 +120,67 @@ BaseModel* DBManager::getByKey(BaseModel* model,int key){
     return model;
 }
 
+BaseModel* DBManager::getByProperty(BaseModel *model, string name, string value){
+    if (this->openDB()) {
+        model->registTablenameAndProperty();//注册模型属性
+        CCString* sql=CCString::createWithFormat("select * from %s where %s='%s';",model->tablename.c_str(),name.c_str(),value.c_str());
+        string keyname=model->getKeyName();
+        CCLog("%s",sql->getCString());
+        int sqliteResultCode=sqlite3_prepare(m_db, sql->getCString(), -1, &m_stmt, 0);
+        if (sqliteResultCode==SQLITE_OK) {
+            int column_count=sqlite3_column_count(m_stmt);
+            if(sqlite3_step(m_stmt)==SQLITE_ROW){
+                //数据获取成功
+                for (int i = 0; i < column_count; i++) {
+                    const char* column_name=sqlite3_column_name(m_stmt, i);
+                    char* column_text=(char*)sqlite3_column_text(m_stmt, i);
+                    if (column_text!=NULL) {
+                        CCString* propertySetMethod=CCString::createWithFormat("set%s",column_name);
+                        SEL_SetHandler handler=model->m_propertyMap[propertySetMethod->getCString()];
+                        if(handler){
+                            (model->*handler)(column_text);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    this->closeDB();
+    return model;
+}
+
+
+BaseModel* DBManager::getByQuery(BaseModel* model,vector<const char*> whereClause){
+    if (this->openDB()) {
+        model->registTablenameAndProperty();//注册模型属性
+        CCString* sql=CCString::createWithFormat("select * from %s %s;",model->tablename.c_str(),buildWhereClause(whereClause).c_str());
+        CCLog("%s",sql->getCString());
+        string keyname=model->getKeyName();
+        int sqliteResultCode=sqlite3_prepare(m_db, sql->getCString(), -1, &m_stmt, 0);
+        if (sqliteResultCode==SQLITE_OK) {
+            int column_count=sqlite3_column_count(m_stmt);
+            if(sqlite3_step(m_stmt)==SQLITE_ROW){
+                //数据获取成功
+                for (int i = 0; i < column_count; i++) {
+                    const char* column_name=sqlite3_column_name(m_stmt, i);
+                    char* column_text=(char*)sqlite3_column_text(m_stmt, i);
+                    if (column_text!=NULL) {
+                        CCString* propertySetMethod=CCString::createWithFormat("set%s",column_name);
+                        SEL_SetHandler handler=model->m_propertyMap[propertySetMethod->getCString()];
+                        if(handler){
+                            (model->*handler)(column_text);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    this->closeDB();
+    return model;
+}
+
 //统计
-map<string, string>*  DBManager::statistic(map<string, string>*  data,string table,map<string, string> expClause,vector<const char*> whereClause,map<const char*, const char*> orderbyClause,vector<const char*> groupByClause){
+map<string, string>*  DBManager::statistic(map<string, string>*  data,string table,map<string, string> expClause,vector<const char*> whereClause,vector<const char*> orderbyClause,vector<const char*> groupByClause){
     string groupby;
     for(vector<const char*>::iterator it=groupByClause.begin();it!=groupByClause.end();++it){
         groupby.append(*it).append(",");
@@ -166,18 +225,32 @@ string DBManager::buildWhereClause(vector<const char*> whereClause){
     return where;
 }
 
-string DBManager::buildOrderByClause(map<const char*, const char*> orderbyClause){
+string DBManager::buildOrderByClause(vector<const char*> orderbyClause){
     string orderby;
     if (orderbyClause.size()>0) {
-        orderby=" order by";
-        map<const char*, const char*>::iterator it;
+        orderby=" order by ";
+        vector<const char*>::iterator it;
         for(it=orderbyClause.begin();it!=orderbyClause.end();++it){
-            orderby.append(" ").append(it->first).append(" ").append(it->second).append(",");
+            orderby.append(" ").append(*it).append(",");
         }
         orderby=orderby.substr(0,orderby.length()-1);
     }
     return orderby;
 }
+
+//c++ map 不能按照插入排序
+//string DBManager::buildOrderByClause(map<const char*, const char*> orderbyClause){
+//    string orderby;
+//    if (orderbyClause.size()>0) {
+//        orderby=" order by";
+//        map<const char*, const char*>::iterator it;
+//        for(it=orderbyClause.begin();it!=orderbyClause.end();++it){
+//            orderby.append(" ").append(it->first).append(" ").append(it->second).append(",");
+//        }
+//        orderby=orderby.substr(0,orderby.length()-1);
+//    }
+//    return orderby;
+//}
 
 string DBManager::buildGroupByClause(vector<const char*> groupByClause){
     string groupby;

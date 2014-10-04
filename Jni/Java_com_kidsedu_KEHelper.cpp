@@ -1,3 +1,6 @@
+#include "../cocos2dx/platform/CCPlatformConfig.h"
+#if (CC_TARGET_PLATFORM==CC_PLATFORM_ANDROID)
+
 #include <stdlib.h>
 #include <jni.h>
 #include <android/log.h>
@@ -7,7 +10,10 @@
 #include "cocoa/CCString.h"
 #include "Java_com_kidsedu_KEHelper.h"
 
+#include "resource.h"
+
 #include "CCDirector.h"
+#include "support/user_default/CCUserDefault.h"
 using namespace cocos2d;
 
 #define  LOG_TAG    "Java_com_kidsedu_KEHelper.cpp"
@@ -34,6 +40,16 @@ extern "C" {
     JNIEXPORT void JNICALL Java_com_kidsedu_KEHelper_popScene(JNIEnv * env) {
         CCDirector::sharedDirector()->popScene();
     }
+    
+    JNIEXPORT void JNICALL Java_com_kidsedu_KEHelper_updateAvatar(JNIEnv * env) {
+        UserBarLayer* userBarLayer=S_LM->getDelegate();
+        CCDirector::sharedDirector()->getScheduler()->scheduleSelector(schedule_selector(UserBarLayer::freshAvatar),userBarLayer, 0.0f,0, 0,false);
+    }
+    
+    JNIEXPORT void JNICALL Java_com_kidsedu_KEHelper_logout(JNIEnv * env) {
+        UserBarLayer* userBarLayer=S_LM->getDelegate();
+        CCDirector::sharedDirector()->getScheduler()->scheduleSelector(schedule_selector(UserBarLayer::logout),userBarLayer, 0.0f,0, 0,false);
+    }
 }
 
 void addWebViewJNI(int key,const char* htmlFilename, int x,int y,int width,int height, WebViewCallback pfWebViewCallback, void* ctx) {
@@ -41,11 +57,8 @@ void addWebViewJNI(int key,const char* htmlFilename, int x,int y,int width,int h
 
     JniMethodInfo t;
     if (JniHelper::getStaticMethodInfo(t, CLASS_NAME, "addWebView", "(ILjava/lang/String;IIII)V")) {
-
         jstring stringArg1 = t.env->NewStringUTF(htmlFilename);
-
         t.env->CallStaticVoidMethod(t.classID, t.methodID,key, stringArg1, x,y,width,height);
-
         t.env->DeleteLocalRef(stringArg1);
     }
 }
@@ -102,3 +115,4 @@ void onStatEventJNI(int eventType, const char* event_id, const char* label, int 
     }
 }
 
+#endif

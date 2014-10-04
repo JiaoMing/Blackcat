@@ -19,8 +19,13 @@ public:
 public:
     ObjectManager();
     ~ObjectManager();
+    
+    void hideNativeView();
+    void resumeNativeView();
+    
 protected:
     CC_SYNTHESIZE(CCWebView*, m_webView, WebView);
+    bool m_webVisible;
 };
 
 #endif /* defined(__Blackcat__ObjectManager__) */
