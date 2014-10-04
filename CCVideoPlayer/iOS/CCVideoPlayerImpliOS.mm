@@ -111,7 +111,7 @@ USING_NS_CC;
 	}
 	else if ( [theMovie respondsToSelector:@selector(setMovieControlMode:)] )
 	{
-		[theMovie setMovieControlMode: MPMovieControlModeHidden]; 
+        [theMovie setMovieSourceType:MPMovieControlStyleNone];
 	}	
 	
     // Register for the playback finished notification.
