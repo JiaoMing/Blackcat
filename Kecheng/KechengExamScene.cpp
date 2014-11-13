@@ -142,7 +142,7 @@ bool KechengExamScene::init()
     }
     
     //打乱顺序
-    this->outOfOrder();
+    S_KC->disOrderHanzi();
     
     float time=m_heimao->action("heimao_renwuKaishi");
     //延时后开始测试
@@ -157,22 +157,14 @@ bool KechengExamScene::init()
 void KechengExamScene::onEnter(){
     KechengBaseLayer::onEnter();
     BaiduStat::onStatEvent(kBaiduOneEventStart,"SceneRetain","KechengExamScene");
+    if(DEBUG_OPEN)this->reward(0);
 }
 
 void KechengExamScene::onExit(){
     KechengBaseLayer::onExit();
     BaiduStat::onStatEvent(kBaiduOneEventEnd,"SceneRetain","KechengExamScene");
-}
-
-void KechengExamScene::outOfOrder(){
-    size_t size=S_KC->getHanziVector()->size();
-    int i=0,random=0;
-    for (i=0; i<size; i++) {
-        random=(int) (CCRANDOM_0_1()*size);
-        Hanzi* swp=(*S_KC->getHanziVector())[i];
-        (*S_KC->getHanziVector())[i]=(*S_KC->getHanziVector())[random];
-        (*S_KC->getHanziVector())[random]=swp;
-    }
+    
+    S_KC->reOrderHanzi();
 }
 
 void KechengExamScene::yanshuOut(float delay){
@@ -263,7 +255,7 @@ void KechengExamScene::startAndCountdown(){
 
 void KechengExamScene::readHanzi(float t){
     //播放汉字音频
-    string audioPath=(CCFileUtils::sharedFileUtils()->getWritablePath()+m_hanzi->getcnAudioPath());
+    string audioPath=FileUtils::getContentFilePath(m_hanzi->getcnAudioPath());
     if (m_isPlayDing) {
         S_ALP->play("renwu_ding.mp3:1.5",audioPath.c_str(),NULL);
     }else{
@@ -341,8 +333,8 @@ void KechengExamScene::menuCallback(CCObject* object){
         switch (tag) {
             case TAG_BACK:
                 S_ALP->stop();
-                SimpleAudioEngine::sharedEngine()->stopAllEffects();
-                CCDirector::sharedDirector()->popScene();
+                S_AE->stopAllEffects();
+                S_DR->popScene();
                 break;
                 
             default:
@@ -394,18 +386,36 @@ void KechengExamScene::examEnd(){
         xiaohonghua->removeAllChildrenWithCleanup(false);
         float time=m_heimao->action("heimao_renwuGuoguan");
         this->scheduleOnce(schedule_selector(KechengExamScene::reward), time);
+        
+        BaiduStat::onStatEvent(kBaiduOneEvent, "Kecheng", "任务成功");
     }else{
         m_heimao->action("heimao_renwuJiayou");
         this->scheduleOnce(schedule_selector(KechengExamScene::showDialog), 5);
+        
+        BaiduStat::onStatEvent(kBaiduOneEvent, "Kecheng", "任务失败");
     }
-    
-    
 }
 
 void KechengExamScene::reward(float t){
     //需要禁止掉返回按钮
+    
+    m_isSuccessNew=false;
+    //判断，并更新数据
+    if (S_KC->updateDataWhenCompleteKecheng()) {
+        m_isSuccessNew=true;
+        //提升成就
+        bool isLevelUp=S_AEM->achieveUp(kAchieveCGYS,1,this,callfunc_selector(KechengExamScene::achiveCallback));
+        if (!isLevelUp) {
+            this->achiveCallback();
+        }
+    }else{
+        this->achiveCallback();
+    }
+}
+
+void KechengExamScene::achiveCallback(){
     S_DR->popScene();
-    if(m_kechengExamSceneDelegate)m_kechengExamSceneDelegate->examAllRightCallback();
+    if(m_kechengExamSceneDelegate)m_kechengExamSceneDelegate->examAllRightCallback(m_isSuccessNew);
 }
 
 void KechengExamScene::showDialog(){
@@ -441,7 +451,7 @@ void KechengExamScene::dialogCallBack(GuideDialogCMD cmd){
 }
 
 void KechengExamScene::keyBackClicked(){
-    CCDirector::sharedDirector()->popScene();
+    S_DR->popScene();
 }
 
 void KechengExamScene::keyMenuClicked(){

@@ -29,6 +29,8 @@ public:
     void startGuide(const char *queueKey,const char* stepKey,bool isDefaultFirstStepKey=false);
     void step();
     
+    void stop();
+    
     virtual void dialogCallBack(GuideDialogCMD cmd);
     
     CC_SYNTHESIZE(string, m_queueKey, QueueKey);

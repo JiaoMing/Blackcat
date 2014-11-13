@@ -9,6 +9,9 @@
 #ifndef __Blackcat__Platform__
 #define __Blackcat__Platform__
 
+#include "cocos2d.h"
+USING_NS_CC;
+
 class PlatformAction
 {
 public:

@@ -107,7 +107,7 @@ static id kNSNO = NULL;
     if (theData && theData.length >= 4)
         {
         // This code is lame, but it works. Because the first character of any JSON string will always be a (ascii) control character we can work out the Unicode encoding by the bit pattern. See section 3 of http://www.ietf.org/rfc/rfc4627.txt
-        const char *theChars = (char *)theData.bytes;
+        const char *theChars = theData.bytes;
         NSStringEncoding theEncoding = NSUTF8StringEncoding;
         if (theChars[0] != 0 && theChars[1] == 0)
             {

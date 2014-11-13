@@ -48,11 +48,18 @@ PropsManager::~PropsManager(){
 
 Props* PropsManager::getPropsWithName(const char* name)
 {
-    Props* props=new Props();
+    Props* props=new Props(name);
     CCDictionary* animateDict=(CCDictionary*)m_dictRoot->objectForKey(name);
     const CCString* stopPosName=animateDict->valueForKey("stopPos");
     CCSpriteFrame* stopPos=S_SF->spriteFrameByName(stopPosName->getCString());
     props->initWithSpriteFrame(stopPos);
+    
+    const CCString* hasXingxing=animateDict->valueForKey("hasXingxing");
+    if (hasXingxing->length()>0) {
+       props->setHasXingxing(hasXingxing->boolValue());
+    }else{
+        props->setHasXingxing(false);
+    }
     
     const CCString* _touchRect=animateDict->valueForKey("touchableRect");
     if (_touchRect) {
@@ -98,7 +105,6 @@ Props* PropsManager::getPropsWithName(const char* name)
         props->getAnimates()->addObject(aaa);
     }
     
-    props->setName(name);
     props->setStopPos(stopPos);
     props->autorelease();
     return props;

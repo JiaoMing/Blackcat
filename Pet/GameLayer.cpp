@@ -43,6 +43,10 @@ bool GameLayer::init(){
     DELETE_MODEL_VECTOR(Hanzi,hanzis);
     m_hanzi=new Hanzi();
     S_DM->getByKey(m_hanzi, id);
+    m_content=new Content();
+    //获取主拼音Content
+    S_DM->getByProperty(m_content, "MD", m_hanzi->getZpyyd());
+    
     
     CCSize gameSize=S_RM->getSizeWithName("pet_game_size");
     
@@ -119,7 +123,7 @@ void GameLayer::webCallBack(CCWebView* webview,std::string cmd){
             CCString* str=CCString::createWithFormat("init('%s','%s',%f,%f,0)",m_hanzi->getcontour().c_str(),m_hanzi->getlocus().c_str(),gameSize.width*scaleX,gameSize.height*scaleY);
             webview->callWebWithJs(str->getCString());
             
-            S_ALP->play("heimao041_1.mp3:2","heimao041_2.mp3:2",(CCFileUtils::sharedFileUtils()->getWritablePath().append(m_hanzi->getcnAudioPath()).append(":1.2")).c_str(),"heimao044.mp3",NULL);
+            S_ALP->play("heimao041_1.mp3:2","heimao041_2.mp3:2",(FileUtils::getContentFilePath(m_content->getfileUrl()).append(":1.2")).c_str(),"heimao044.mp3",NULL);
             S_AE->playEffect("renwu_ding.mp3");
             this->scheduleOnce(schedule_selector(GameLayer::startGame),7);
             

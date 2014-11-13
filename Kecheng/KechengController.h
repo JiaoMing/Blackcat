@@ -23,13 +23,11 @@ public:
     static KechengController* getInstance();
     static void purgeInstance();
     
-    
-    
     /**
-     * 根据kcid生成m_hanziVector
+     * 修改kcid，并根据kcid生成m_hanziVector,
+     * 返回是否刷新标记，如果kcid未变则返回false
      */
-    void freshDataWithKcid(int kcid);
-    
+    bool changeKecheng(int kcid);
     
     /**
      * 完成任务后进行数据更新
@@ -41,6 +39,10 @@ public:
     bool insertKechengIfNotExists();
     
     bool updateKecheng(bool isWin);
+    
+    
+    void disOrderHanzi();//打乱顺序
+    void reOrderHanzi();//重新排序
     
 private:
     /**
@@ -58,7 +60,7 @@ protected:
     
     CC_SYNTHESIZE_READONLY(int, m_kcCount, KcCount);//课程总数量
     
-    CC_SYNTHESIZE_READONLY(int, m_lastKechengId, LastKechengId);
+    CC_SYNTHESIZE_READONLY(int, m_lastKechengId, LastKechengId);//最新完成的任务id
     
     CC_SYNTHESIZE_READONLY(int, m_dayRenwuCount, DayRenwuCount);
     

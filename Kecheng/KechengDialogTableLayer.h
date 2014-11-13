@@ -18,7 +18,7 @@ USING_NS_CC_EXT;
 
 class KechengDialogTableLayerDelegate{
 public:
-    virtual void setKecheng(int kcid)=0;
+    virtual void freshKecheng(bool isInit=false)=0;
 };
 
 class KechengDialogTableLayer : public CCLayer, public CCTableViewDataSource,public CCTableViewDelegate{
@@ -40,7 +40,8 @@ public:
     virtual unsigned int numberOfCellsInTableView(CCTableView *table);
     
     void setHandlerPriority(int newPriority);
-    void examAllRightCallback(int kcid);
+    void middleOffset();
+    void openNewXingxing();
 private:
     CCTableView* m_tableView;
     KechengDialogTableLayerDelegate* m_delegate;

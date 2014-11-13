@@ -282,7 +282,7 @@ CCTableViewCell* KapianTableLayer::tableCellAtIndex(CCTableView *table, unsigned
                     break;
                     
                 case kTupian:{
-                    string path=CCFileUtils::sharedFileUtils()->getWritablePath()+kapian->getPath();
+                    string path=FileUtils::getContentFilePath(kapian->getPath());
                     CCSize cellSize=S_RM->getSizeWithName("kapian_table_cell_thumb_size");
                     
                     CCPoint thumbPoint=S_RM->getRelativePosition("kapian_in_cell",m_gridSize.height);

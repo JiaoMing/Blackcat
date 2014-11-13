@@ -81,13 +81,13 @@ bool NewPetScene::init(){
         m_xiaobo->setScale(1.2);
         m_xiaobo->setTag(1);
         //小波不加入playLayer，因假如Guide，需要在根layer
-        this->addChild(m_xiaobo,2);
+        this->addChild(m_xiaobo,1);
         m_xiaobo->setCallback(this, cartoon_selector(NewPetScene::pressXiaoboCallBack));
         m_xiaobo->setBoxEnabled("z-shenti", true);
         
         m_playLayer=CCLayer::create();//交互层，和游戏层相对应
         m_playLayer->setPosition(CCPointZero);
-        this->addChild(m_playLayer,1);
+        this->addChild(m_playLayer,2);
         
         CCSprite *mode1 = CCSprite::createWithSpriteFrameName("pet_mode1.png");
         CCMenuItem* item1=CCMenuItemSprite::create(mode1, mode1);
@@ -139,14 +139,10 @@ bool NewPetScene::init(){
             }
         }
         
-        
         //打开android按键响应
         this->setKeypadEnabled(true);
         
-        
         return true;
-        
-        
     }
     return false;
 }
@@ -230,6 +226,7 @@ void NewPetScene::ccTouchEnded(CCTouch *pTouch, CCEvent *pEvent){
     
     m_xiaobo->saySomething("D2.mp3",2.5);
     
+    BaiduStat::onStatEvent(kBaiduOneEvent,"PET","小波走动");
 }
 
 void NewPetScene::zouluEnd(){
@@ -240,7 +237,11 @@ void NewPetScene::onEnter()
 {
     GuideBaseLayer::onEnter();
     S_DR->getTouchDispatcher()->addTargetedDelegate(this,1, true);
-    S_AE->playBackgroundMusic("bg_fengling.mp3",true);
+    
+    bool isBgMusicRunning=S_UD->getBoolForKey("BG_MUSIC",true);
+    if (isBgMusicRunning) {
+        S_AE->playBackgroundMusic("bg_fengling.mp3",true);
+    }
     
     int enterMode=S_UD->getIntegerForKey(PET_ENTER_MODE);
     switch (enterMode) {
@@ -256,10 +257,8 @@ void NewPetScene::onEnter()
                 m_xiaobo->doAction("z-dazhaohu", "z-budongshuohua:0", NULL);
             }
         }
-            
             break;
         case kPetEnterGame:{
-            
             //开始比赛
             m_gameLayer=GameLayer::create();
             m_gameLayer->setDelegate(this);
@@ -267,29 +266,26 @@ void NewPetScene::onEnter()
             m_playLayer->setVisible(false);
             m_xiaobo->setVisible(false);
         }
-            
             break;
     }
     
-    
     BaiduStat::onStatEvent(kBaiduOneEventStart,"SceneRetain","NewPetScene");
+    
 }
 
 void NewPetScene::onExit()
 {
     S_DR->getTouchDispatcher()->removeDelegate(this);
-    bool isBgMusicRunning=S_UD->getBoolForKey("BG_MUSIC",true);
-    if (isBgMusicRunning) {
-        S_AE->playBackgroundMusic("bg_musicbox.mp3");
-    }
     GuideBaseLayer::onExit();
     
-    
     BaiduStat::onStatEvent(kBaiduOneEventEnd,"SceneRetain","NewPetScene");
+    S_AE->stopBackgroundMusic();
 }
 
 void NewPetScene::pressXiaoboCallBack(CCObject *object, const char *pszBoxName)
 {
+    //统计
+    BaiduStat::onStatEvent(kBaiduOneEvent,"PET","点击小波");
     m_xiaobo->stopAllActions();
     if(m_xiaobo->isFlipX())m_xiaobo->setFlipX(false);
     if(strcmp(pszBoxName, "z-shenti") == 0)
@@ -321,6 +317,10 @@ void NewPetScene::menuCallBack(CCObject* pSender){
         }else{
             if(m_xiaobo->isFlipX())m_xiaobo->setFlipX(false);
             m_rankingBarLayer->subXingxing();
+            
+            //统计
+            CCString* statlabel=CCString::createWithFormat("点击宠物动画%d",tag);
+            BaiduStat::onStatEvent(kBaiduOneEvent,"PET",statlabel->getCString());
             switch (tag) {
                 case kXMDH1:
                     m_xiaobo->doAction("z-niuzai:2", "z-budongshuohua:0", NULL);
@@ -375,7 +375,7 @@ void NewPetScene::gameEnd(GamePlayer winner){
             this->startGuide("PetScene_Normal", "xiaobo_win");
             break;
         case kGamePlayerWo:{
-            int random=(int) (CCRANDOM_0_1()*4)+1;
+            int random=(int) (CCRANDOM_0_1()*3)+1;
             CCString* step=CCString::createWithFormat("wo_win%d",random);
             this->startGuide("PetScene_Normal",step->getCString());
             

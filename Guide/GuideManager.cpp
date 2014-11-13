@@ -45,6 +45,7 @@ Guide* GuideManager::getGuideDialogWithQueueKeyAndStepKey(const char* queueKey,c
             const CCString* text=dialogDict->valueForKey("text");
             const CCString* autoStep=dialogDict->valueForKey("autoStep");
             const CCString* autoPlayAudio=dialogDict->valueForKey("autoPlayAudio");
+            const CCString* isDelayShow=dialogDict->valueForKey("isDelayShow");
             const CCString* mode=dialogDict->valueForKey("mode");
             const CCString* type=dialogDict->valueForKey("type");
             const CCString* action=dialogDict->valueForKey("action");
@@ -60,6 +61,9 @@ Guide* GuideManager::getGuideDialogWithQueueKeyAndStepKey(const char* queueKey,c
             }
             if (autoPlayAudio->length()>0) {
                 guideDialog->setIsAutoPlayAudio(autoPlayAudio->boolValue());
+            }
+            if (isDelayShow->length()>0) {
+                guideDialog->setIsDelayShow(isDelayShow->boolValue());
             }
             
             guideDialog->setMode((GuideDialogMode)mode->intValue());

@@ -189,7 +189,7 @@ static  CCVideoPlayerImpl *_impl = nil;
         NSURL *url = [NSURL fileURLWithPath: cachedVideoPath];
         // If the current thread is the main thread,than
 		// this message will be processed immediately.
-		[ _impl performSelectorOnMainThread: @selector(playMovieAtURL:) 
+		[ _impl performSelectorOnMainThread: @selector(playMovieAtURL:)
 								 withObject: url
 							  waitUntilDone: [NSThread isMainThread]  ];
         return;

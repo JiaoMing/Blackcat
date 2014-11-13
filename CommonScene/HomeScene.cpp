@@ -46,7 +46,8 @@ enum {
     kPropsXiaoqiche,
     //    kPropsMenpai,
     //    kPropsDitu,
-    kMenuHanzi
+    kMenuHanzi,
+    kMenuBack
 };
 
 const std::string g_propsName[kPropsXiaoqiche-kPropsHezi+1] = {
@@ -108,7 +109,13 @@ bool HomeScene::init(){
     m_hanziMenuItem->setPosition(S_RM->getPositionWithName("home_heiban"));
     m_hanziMenuItem->setTag(kMenuHanzi);
     
-    CCMenu* pMenu = CCMenu::create(m_hanziMenuItem, NULL);
+    //返回按钮
+    CCSprite *back= CCSprite::createWithSpriteFrameName("fanhui.png");
+    CCMenuItem* backItem=CCMenuItemSprite::create(back, back, this, menu_selector(HomeScene::menuCallBack));
+    backItem->setPosition(S_RM->getPositionWithName("global_back"));
+    backItem->setTag(kMenuBack);
+    
+    CCMenu* pMenu = CCMenu::create(m_hanziMenuItem,backItem, NULL);
     pMenu->setPosition(CCPointZero);
     this->addChild(pMenu);
     
@@ -153,15 +160,6 @@ bool HomeScene::init(){
     //打开android按键响应
     this->setKeypadEnabled(true);
 
-//    DownloadObject* dlObj=DownloadObject::create();
-//    CCString* avatar=CCString::createWithFormat("http://www.kidsedu.com/userdata/41401/avatar.jpg");
-//    dlObj->setUrl(avatar->getCString());
-//    dlObj->setExpectFilename("avatar.jpg");
-//    dlObj->setFileTotalSize(1000000000);
-//    dlObj->setTarget(userBarLayer);
-//    dlObj->setSelector(callfuncO_selector(UserBarLayer::downloadAvatar));
-//    DownloadManager::sharedDownloadManager()->download(dlObj);
-    
     return true;
 }
 
@@ -169,6 +167,11 @@ void HomeScene::onEnter()
 {
     GuideBaseLayer::onEnter();
     S_DR->getTouchDispatcher()->addTargetedDelegate(this, 0, false);
+    
+    bool isBgMusicRunning=S_UD->getBoolForKey("BG_MUSIC",true);
+    if (isBgMusicRunning) {
+        S_AE->playBackgroundMusic("bg_musicbox.mp3",true);
+    }
     
     int hid=S_UD->getIntegerForKey(LAST_HANZI_ID,34);
     S_DM->getByKey(m_hanzi, hid);
@@ -199,7 +202,6 @@ void HomeScene::onEnter()
         }else{
             Props* props=(Props*)this->getChildByTag(kPropsWawa);
             props->setIsImmediate(true);
-            bool isBgMusicRunning=S_UD->getBoolForKey("BG_MUSIC",true);
             if (isBgMusicRunning) {
                 props->runRandomAnimate(0,false,false);
             }
@@ -256,6 +258,7 @@ void HomeScene::onExit()
     S_DR->getTouchDispatcher()->removeDelegate(this);
     
     m_rankingBarLayer->removeFromParentAndCleanup(false);
+    S_AE->stopBackgroundMusic();
 }
 
 void HomeScene::willEnterForeground(){
@@ -322,41 +325,41 @@ void HomeScene::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
         }
         
     }else{
-        CCPoint point =pTouch->getLocationInView();
-        CCRect rect=CCRectMake(0, 320, 120, 100);
-        if (rect.containsPoint(point)) {
-            cc_timeval time=TimeUtils::millisecondNow();
-            if (time.tv_sec-m_time>1) {
-                m_count=0;
-            }else{
-                m_count+=1;
-            }
-            m_time=time.tv_sec;
-            if (m_count>=2) {
-                S_UD->setStringForKey("HomeScene_First","heimao_1");
-                S_UD->setIntegerForKey("EVENT_OPEN_KAPIAN_HANZI",0);
-                S_UD->setIntegerForKey("EVENT_OPEN_KAPIAN_TUPIAN",0);
-                S_UD->setIntegerForKey("EVENT_OPEN_CARDSET",0);
-                S_UD->flush();
-                this->startGuide("HomeScene_First","heimao_1",true);
-                //关闭娃娃
-                Props* props=(Props*)this->getChildByTag(kPropsWawa);
-                props->showStopPose();
-            }
-            
-        }
-        
-        //点击未相应区域
-        //        if(status){
-        //            this->setScale(1);
-        //            this->setPosition(CCPointZero);
-        //        }else{
-        //            this->setScale(2);
-        //            CCPoint point =pTouch->getLocationInView();
-        //            CCPoint midPoint=ccp(point.x*2,point.y*2);
-        //            this->setPosition(CCPointZero);
-        //        }
-        m_status=!m_status;
+//        CCPoint point =pTouch->getLocationInView();
+//        CCRect rect=CCRectMake(0, 320, 120, 100);
+//        if (rect.containsPoint(point)) {
+//            cc_timeval time=TimeUtils::millisecondNow();
+//            if (time.tv_sec-m_time>1) {
+//                m_count=0;
+//            }else{
+//                m_count+=1;
+//            }
+//            m_time=time.tv_sec;
+//            if (m_count>=2) {
+//                S_UD->setStringForKey("HomeScene_First","heimao_1");
+//                S_UD->setIntegerForKey("EVENT_OPEN_KAPIAN_HANZI",0);
+//                S_UD->setIntegerForKey("EVENT_OPEN_KAPIAN_TUPIAN",0);
+//                S_UD->setIntegerForKey("EVENT_OPEN_CARDSET",0);
+//                S_UD->flush();
+//                this->startGuide("HomeScene_First","heimao_1",true);
+//                //关闭娃娃
+//                Props* props=(Props*)this->getChildByTag(kPropsWawa);
+//                props->showStopPose();
+//            }
+//            
+//        }
+//        
+//        //点击未相应区域
+//        //        if(status){
+//        //            this->setScale(1);
+//        //            this->setPosition(CCPointZero);
+//        //        }else{
+//        //            this->setScale(2);
+//        //            CCPoint point =pTouch->getLocationInView();
+//        //            CCPoint midPoint=ccp(point.x*2,point.y*2);
+//        //            this->setPosition(CCPointZero);
+//        //        }
+//        m_status=!m_status;
     }
 }
 
@@ -382,7 +385,7 @@ void HomeScene::dialogCallBack(GuideDialogCMD cmd){
             }
         }else if (this->getStepKey()=="xiaobo_1"||this->getStepKey()=="xiaobo_3"){
             if (cmd==kDialogCMDYes) {
-                S_DR->replaceScene(LoadingScene::scene("NewPetScene",false,kLoadingRoleXiaobo));
+                S_DR->replaceScene(LoadingScene::scene("NewPetScene",true,kLoadingRoleXiaobo));
                 return;
             }
         }
@@ -398,17 +401,16 @@ void HomeScene::dialogCallBack(GuideDialogCMD cmd){
 
 void HomeScene::menuCallBack(CCObject* pSender){
     S_ALP->stop();
-    S_AE->stopAllEffects();
     
     CCMenuItem *menuItem = (CCMenuItem *)pSender;
     int tag=menuItem->getTag();
-    if (tag>=kPropsHezi&&tag<=kPropsXiaoqiche) {
-        int random=(int)(CCRANDOM_0_1()*10);
-        if (random==1) {
-            S_LM->gain(1, ((CCNode*)pSender)->getPosition());
-        }
-    }
+    
     switch (tag) {
+        case kMenuBack:{
+            S_ALP->stop();
+            S_DR->replaceScene(LoadingScene::scene("WelcomeScene",true));
+        }
+            break;
         case kHeimao:{
             
             KechengDialogLayer* floatLayer=KechengDialogLayer::create(m_heimao);
@@ -440,10 +442,10 @@ void HomeScene::menuCallBack(CCObject* pSender){
             bool isBgMusicRunning=S_UD->getBoolForKey("BG_MUSIC",true);
             Props* props=(Props*)menuItem;
             if (isBgMusicRunning) {
-                SimpleAudioEngine::sharedEngine()->pauseBackgroundMusic();
+                S_AE->pauseBackgroundMusic();
                 props->showStopPose();
             }else{
-                SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
+                S_AE->resumeBackgroundMusic();
                 props->runRandomAnimate(0,false,false);
             }
             S_UD->setBoolForKey("BG_MUSIC",!isBgMusicRunning);

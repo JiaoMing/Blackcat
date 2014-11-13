@@ -125,7 +125,6 @@ BaseModel* DBManager::getByProperty(BaseModel *model, string name, string value)
         model->registTablenameAndProperty();//注册模型属性
         CCString* sql=CCString::createWithFormat("select * from %s where %s='%s';",model->tablename.c_str(),name.c_str(),value.c_str());
         string keyname=model->getKeyName();
-        CCLog("%s",sql->getCString());
         int sqliteResultCode=sqlite3_prepare(m_db, sql->getCString(), -1, &m_stmt, 0);
         if (sqliteResultCode==SQLITE_OK) {
             int column_count=sqlite3_column_count(m_stmt);

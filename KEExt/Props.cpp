@@ -7,20 +7,29 @@
 //
 
 #include "Props.h"
-#include "SimpleAudioEngine.h"
-using namespace CocosDenshion;
+#include "resource.h"
 
-
-Props::Props(){
+Props::Props(string key){
     m_animates=CCArray::create();
     m_animates->retain();
     m_isImmediate=false;
     m_isShowStopPosAfterARun=true;
     m_touchRect=CCRectMake(0, 0, 0, 0);
+    
+    m_prop=new Prop();
+    m_prop->setIntid(0);
+    S_DM->getByProperty(m_prop, "key", key);
+    if (m_prop->getid()==0) {
+        m_prop->setkey(key.c_str());
+        m_prop->setday("");
+        CCString* sql=CCString::createWithFormat("insert into prop(key,day) values('%s','')",m_prop->getkey().c_str());
+        S_DM->executeSql(sql->getCString());
+    }
 }
 
 Props::~Props(){
     m_animates->release();
+    CC_SAFE_DELETE(m_prop);
 }
 
 void Props::showStopPose(){
@@ -71,11 +80,19 @@ void Props::runAnimate(int animateIndex,unsigned int animateTime,unsigned int an
     }
     
     if (willPlayMusic) {
-        SimpleAudioEngine::sharedEngine()->playEffect(aaa->getAudioName()->getCString());
+        S_AE->playEffect(aaa->getAudioName()->getCString());
     }
 }
 
 void Props::runCallBack(){
+    if (this->getHasXingxing()&&TimeUtils::getYYYYMMDD()!=m_prop->getday()) {
+        S_LM->gain(1, this->getPosition());
+        m_prop->setday(TimeUtils::getYYYYMMDD().c_str());
+        
+        CCString* sql=CCString::createWithFormat("update prop set day='%s' where id=%d",m_prop->getday().c_str(),m_prop->getid());
+        S_DM->executeSql(sql->getCString());
+    }
+    
     if(m_isShowStopPosAfterARun){
         this->showStopPose();
     }

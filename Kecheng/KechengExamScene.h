@@ -36,7 +36,6 @@ public:
     virtual void keyBackClicked();
     virtual void keyMenuClicked();
 private:
-    void outOfOrder();//打乱顺序
     void yanshuOut(float delay);//鼹鼠下层动画（首先会禁止其他动画，用于结束和进入下一题时过度）
     void exam();//执行考试逻辑和动画
     void reExam();//执行考试前消失动作并重新测试
@@ -53,6 +52,8 @@ private:
      */
     virtual int topHandlerPriority(){return kCCMenuHandlerPriority-1;}
     virtual void dialogCallBack(GuideDialogCMD cmd);
+    
+    void achiveCallback();
 private:
     int m_examCount;//答题数量
     int m_rightCount;//答对次数
@@ -62,11 +63,12 @@ private:
     int m_daojishi;//倒计时计数
     GuideDialogLayer* m_gudieDialogLayer;//对话框
     bool m_isPlayDing;//是否播放ding
+    bool m_isSuccessNew;//完成的任务是不是最新的
 };
 
 class KechengExamSceneDelegate{
 public:
-    virtual void examAllRightCallback()=0;
+    virtual void examAllRightCallback(bool m_isSuccessNew)=0;
 };
 
 #endif

@@ -7,6 +7,7 @@
 //
 
 #include "HanziDetailLayer.h"
+#include "Content.h"
 
 enum{
     kTagCi1=0,
@@ -32,11 +33,23 @@ HanziDetailLayer* HanziDetailLayer::create(Hanzi* hanzi)
 }
 
 HanziDetailLayer::HanziDetailLayer(){
-    m_zucijus=new vector<Zuciju*>();
+    m_zczjs=new vector<Zczj*>();
+    m_contentMap=new map<string, Content*>();
 }
 
 HanziDetailLayer::~HanziDetailLayer(){
-    DELETE_MODEL_VECTOR(Zuciju, m_zucijus);
+    DELETE_MODEL_VECTOR(Zczj, m_zczjs);
+    
+    for (map<string,Content*>::iterator it = m_contentMap->begin(); it != m_contentMap->end(); it ++){
+        if (NULL != it->second)
+        {
+            delete it->second;
+            it->second = NULL;
+        }
+    }
+    m_contentMap->clear();
+    delete m_contentMap;
+    m_contentMap=NULL;
 }
 
 
@@ -83,20 +96,26 @@ bool HanziDetailLayer::init(){
     bihua->setAnchorPoint(ccp(0,0.5));
     bg->addChild(bihua);
     
+//    CLAUSE_INIT;
+//    CCString* where=CCString::createWithFormat("zid=%d",m_hanzi->getid());
+//    whereClause.push_back(where->getCString());
+//    orderbyClause.push_back("ci1 desc");
+//    S_DM->findScrollData(m_zucijus,"*",whereClause, orderbyClause, groupByClause);
+    
     CLAUSE_INIT;
-    CCString* where=CCString::createWithFormat("zid=%d",m_hanzi->getid());
+    CCString* where=CCString::createWithFormat("hid=%d",m_hanzi->getid());
     whereClause.push_back(where->getCString());
-    orderbyClause.push_back("ci1 desc");
-    S_DM->findScrollData(m_zucijus,"*",whereClause, orderbyClause, groupByClause);
+    orderbyClause.push_back("c1Cid desc");
+    S_DM->findScrollData(m_zczjs,"*",whereClause, orderbyClause, groupByClause);
     
     string pinyin;
-    for (int i=0; i<m_zucijus->size(); i++) {
-        Zuciju* zuciju=(*m_zucijus)[i];
-        if (zuciju->getci1().length()>0) {
+    for (int i=0; i<m_zczjs->size(); i++) {
+        Zczj* zczj=(*m_zczjs)[i];
+        if (zczj->getc1Cid()>0) {
             if (i>0) {
                 pinyin.append(" , ");
             }
-            pinyin.append(zuciju->getpinyinyindiao());
+            pinyin.append(zczj->getpyyd());
         }
     }
     
@@ -108,51 +127,64 @@ bool HanziDetailLayer::init(){
     
     float width=0;
     CCPoint ciStartPoint=S_RM->getRelativePosition("xiezi_zucizaoju_dian4", height);
-    for (int i=0; i<m_zucijus->size(); i++) {
-        Zuciju* zuciju=(*m_zucijus)[i];
-        if (zuciju->getci1().length()>0) {
+    for (int i=0; i<m_zczjs->size(); i++) {
+        Zczj* zczj=(*m_zczjs)[i];
+        if (zczj->getc1Cid()>0) {
             if (i>0) {
                 
             }
+            Content* content=new Content();
+            S_DM->getByKey(content, zczj->getc1Cid());
+            CCString* key=CCString::createWithFormat("%d_%d",kTagCi1,content->getid());
+            m_contentMap->insert(std::pair<std::string, Content*>(key->getCString(), content));
             
-            CCLabelTTF* zuci=CCLabelTTF::create(zuciju->getci1().c_str(), "KaiTi.ttf", 30);
+            
+            CCLabelTTF* zuci=CCLabelTTF::create(content->getMD().c_str(), "KaiTi.ttf", 30);
             zuci->setColor(ccc3(0, 0, 0));
             CCMenuItem* item=CCMenuItemLabel::create(zuci, this, menu_selector(HanziDetailLayer::menuCallback));
             item->setPosition(ccp(ciStartPoint.x+width, ciStartPoint.y));
             item->setAnchorPoint(ccp(0,0.5));
             item->setTag(kTagCi1);
-            item->setZOrder(i);//zorder保存i
+            item->setZOrder(content->getid());
             m_menu->addChild(item);
-            width+=zuciju->getci1().length()*10+10;
+            width+=content->getMD().length()*10+10;
         }
         
-        if (zuciju->getci2().length()>0) {
+        if (zczj->getc2Cid()>0) {
+            Content* content=new Content();
+            S_DM->getByKey(content, zczj->getc2Cid());
+            CCString* key=CCString::createWithFormat("%d_%d",kTagCi2,content->getid());
+            m_contentMap->insert(std::pair<std::string, Content*>(key->getCString(), content));
             
-            CCLabelTTF* zuci=CCLabelTTF::create(zuciju->getci2().c_str(), "KaiTi.ttf", 30);
+            CCLabelTTF* zuci=CCLabelTTF::create(content->getMD().c_str(), "KaiTi.ttf", 30);
             zuci->setColor(ccc3(0, 0, 0));
             CCMenuItem* item=CCMenuItemLabel::create(zuci, this, menu_selector(HanziDetailLayer::menuCallback));
             item->setPosition(ccp(ciStartPoint.x+width, ciStartPoint.y));
             item->setAnchorPoint(ccp(0,0.5));
             m_menu->addChild(item);
             item->setTag(kTagCi2);
-            item->setZOrder(i);//zorder保存i
-            width+=zuciju->getci2().length()*10+10;
+            item->setZOrder(content->getid());
+            width+=content->getMD().length()*10+10;
         }
     }
     
     
     CCPoint juPoint=S_RM->getRelativePosition("xiezi_zucizaoju_dian5", height);
-    for (int i=0; i<m_zucijus->size(); i++) {
-        Zuciju* zuciju=(*m_zucijus)[i];
-        if (zuciju->getju().length()>0) {
+    for (int i=0; i<m_zczjs->size(); i++) {
+        Zczj* zczj=(*m_zczjs)[i];
+        if (zczj->getjuCid()>0) {
+            Content* content=new Content();
+            S_DM->getByKey(content, zczj->getjuCid());
+            CCString* key=CCString::createWithFormat("%d_%d",kTagJu,content->getid());
+            m_contentMap->insert(std::pair<std::string, Content*>(key->getCString(), content));
             CCPoint point=ccp(juPoint.x, juPoint.y-i*40);
-            CCLabelTTF* ju=CCLabelTTF::create(zuciju->getju().c_str(), "KaiTi.ttf", 25);
+            CCLabelTTF* ju=CCLabelTTF::create(content->getMD().c_str(), "KaiTi.ttf", 25);
             ju->setColor(ccc3(0, 0, 0));
             CCMenuItem* item=CCMenuItemLabel::create(ju, this, menu_selector(HanziDetailLayer::menuCallback));
             item->setPosition(point);
             item->setAnchorPoint(ccp(0,0.5));
             item->setTag(kTagJu);
-            item->setZOrder(i);//zorder保存i
+            item->setZOrder(content->getid());
             m_menu->addChild(item);
         }
     }
@@ -162,28 +194,11 @@ bool HanziDetailLayer::init(){
 
 void HanziDetailLayer::menuCallback(CCObject* pSender){
     CCMenuItem* item=(CCMenuItem*)pSender;
-    int id=item->getZOrder();
-    Zuciju* zuciju=(*m_zucijus)[id];
+    int cid=item->getZOrder();
+    int tag=item->getTag();
+    CCString* key=CCString::createWithFormat("%d_%d",tag,cid);
+    Content* content=m_contentMap->find(key->getCString())->second;
     
-    CCString* str;
-    switch (item->getTag()) {
-        case kTagCi1:{
-            str=CCString::createWithFormat("ci1_%d.mp3",zuciju->getid());
-        }
-            break;
-        case kTagCi2:{
-            str=CCString::createWithFormat("ci2_%d.mp3",zuciju->getid());
-            
-        }
-            break;
-        case kTagJu:{
-            str=CCString::createWithFormat("ju_%d.mp3",zuciju->getid());
-            
-        }
-            break;
-            
-        default:
-            break;
-    }
-    S_ALP->play(str->getCString(),NULL);
+    string url=FileUtils::getContentFilePath(content->getfileUrl());
+    S_ALP->play(url.c_str(),NULL);
 }

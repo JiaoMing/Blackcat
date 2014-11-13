@@ -29,7 +29,8 @@ typedef enum{
 typedef enum{
     kGuideDialogOk=0,
     kGuideDialogYesOrNo,
-    kGuideDialogHidden
+    kGuideDialogHidden,
+    kGuideDialogCustomized
 }GuideDialogMode;
 
 typedef enum{
@@ -69,6 +70,7 @@ public:
         m_text="";
         m_isAutoStep=false;
         m_isAutoPlayAudio=false;
+        m_isDelayShow=true;
         m_mode=kGuideDialogOk;
         m_dialogType=kDialogBtuOnly;
         m_actionArray=CCArray::create();
@@ -96,6 +98,8 @@ public:
     CC_SYNTHESIZE(bool, m_isAutoStep, IsAutoStep);
     
     CC_SYNTHESIZE(bool, m_isAutoPlayAudio, IsAutoPlayAudio);
+    
+    CC_SYNTHESIZE(bool, m_isDelayShow, IsDelayShow);
     
     //对话框模式，OK，yesorno，隐藏模式
     CC_SYNTHESIZE(GuideDialogMode, m_mode, Mode);

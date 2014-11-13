@@ -163,7 +163,7 @@ void GuideDialogLayer::menuCallback(CCObject* object){
         S_ALP->stop();
         S_AE->stopAllEffects();
         
-        GuideDialogCMD cmd;
+        GuideDialogCMD cmd=kDialogCMDClose;
         if (isCloseItem((CCMenuItem*)object)) {
             switch (m_guideDialog->getMode()) {
                 case kGuideDialogOk:{

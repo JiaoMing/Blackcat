@@ -32,12 +32,19 @@ bool AchieveRewardLayer::init(AchieveKey key,int level){
     this->addChild(guang);
     guang->runAction(CCRotateTo::create(3, 90));
     
+    if(level==0)level=1;
     CCString* str=CCString::createWithFormat("reward_%s_%d.png",achieveStruts[key].icon.c_str(),level);
     CCSprite* xunzhang=CCSprite::createWithSpriteFrameName(str->getCString());
     xunzhang->setPosition(S_RM->getJpgBgPosition());
     xunzhang->setScale(0.1);
     this->addChild(xunzhang);
     xunzhang->runAction(CCSequence::create(CCScaleTo::create(1, 1),CCDelayTime::create(2),CCSpawn::create(CCScaleTo::create(1,0.01),CCFadeOut::create(1),NULL),NULL));
+    
+    CCString* strWord=CCString::createWithFormat("恭喜你获得了%d级『%s』!",level,achieveStruts[key].word.c_str());
+    CCLabelTTF* label=CCLabelTTF::create(strWord->getCString(), "KaiTi.ttf", 30);
+    CCPoint middle=S_RM->getJpgBgPosition();
+    label->setPosition(ccp(middle.x,middle.y-xunzhang->getContentSize().height/2-20));
+    this->addChild(label);
     
     this->runAction(CCSequence::create(CCDelayTime::create(3),CCFadeOut::create(1),NULL));
     
@@ -56,7 +63,6 @@ void AchieveRewardLayer::onExit(){
     CoverLayer::onExit();
     S_OM->resumeNativeView();
 }
-
 
 void AchieveRewardLayer::callback(float t){
     this->removeFromParent();

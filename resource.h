@@ -61,10 +61,9 @@ using namespace CocosDenshion;
 
 /*** 全局start ***/
 
-#define DEBUG_OPEN 0//调试开关
+#define DEBUG_OPEN 1//调试开关
 #define ORDER_DIALOG INT_MAX//对话框层序(order)
 #define ORDER_USERBAR (ORDER_DIALOG-1)//用户信息bar层序(order)
-
 
 //!!!!!有冲突需要解决
 #define GUIDE_DIALOG_LAYER INT_MAX
@@ -75,13 +74,15 @@ using namespace CocosDenshion;
 
 
 /*** 卡片写字相关start ***/
+#define AVATAR_WIDTH 150
+
 #define TUPIAN_SIZE 600
 
 #define HANZI_VERIFY_PASS "status=4"
 #define TUPIAN_VERIFY_PASS "status=2"
 
-#define COLLECT_LIMIT 100
-#define WRITE_LIMIT 30
+#define COLLECT_LIMIT 80
+#define WRITE_LIMIT 20
 
 typedef enum{
     kCallWebRewrite=0,

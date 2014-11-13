@@ -35,6 +35,8 @@ LoadingScene::LoadingScene(const char* sceneName,bool isReleaseCurrentScene,Load
     m_sceneName=sceneName;
     m_isReleaseCurrentScene=isReleaseCurrentScene;
     m_loadingRole=loadingRole;
+    m_isLoadFinish=false;
+    m_isTimeEnd=false;
 }
 
 LoadingScene::~LoadingScene()
@@ -51,20 +53,6 @@ bool LoadingScene::init()
     CCSprite *bg = CCSprite::createWithSpriteFrame(S_SF->spriteFrameByName("loading_bg.png"));
     bg->setPosition(S_RM->getJpgBgPosition());
     this->addChild(bg);
-    
-//    CCSprite *progressBg = CCSprite::create("jindutiao01.png");
-//    progressBg->setPosition(ccp(512, 125));
-//    this->addChild(progressBg);
-//    
-//    CCSprite *pic = CCSprite::create("jindutiao02.png");
-//    CCProgressTimer* progress = CCProgressTimer::create(pic);
-//    progress->setType(kCCProgressTimerTypeBar);
-//    progress->setMidpoint(ccp(0, 0));
-//    progress->setBarChangeRate(ccp(1, 0));
-//    progress->setPercentage(0);
-//    progress->setPosition(ccp(512, 125));
-//    progress->setTag(PROGRESS);
-//    this->addChild(progress);
     
     Cartoon* role = Cartoon::cartoonWithName("kaishi");
     role->setPosition(S_RM->getPositionWithName("loading_role"));
@@ -87,6 +75,8 @@ bool LoadingScene::init()
     m_resCurrent = m_resTotal = 0;
     m_resTotal=S_AM->getResourceCount(m_sceneName);
     
+    this->scheduleOnce(schedule_selector(LoadingScene::countdown), 2);
+    
     return true;
 }
 
@@ -94,49 +84,38 @@ void LoadingScene::onEnter(){
     CCLayer::onEnter();
     if (m_resTotal==0)
     {
-        this->processReplaceScene();
+        m_isLoadFinish=true;
+//        this->repalceScene();
     }else{
         S_AM->loadAsyncResource(m_sceneName, this, callfuncO_selector(LoadingScene::loadFinishedCallback));
-        //未加载先走进度，Android下提升体验
-//        CCProgressFromTo *progressFromTo = CCProgressFromTo::create(1.0f, 0, 1.0f/(m_resTotal+1)*100);
-//        CCProgressTimer* progress=(CCProgressTimer*)this->getChildByTag(PROGRESS);
-//        progress->runAction(progressFromTo);
     }
 }
 
 
 void LoadingScene::loadFinishedCallback(CCObject *pSender)
 {
-//    CCProgressTimer* progress=(CCProgressTimer*)this->getChildByTag(PROGRESS);
-//    float percent = progress->getPercentage();
-    
 	m_resCurrent++;
 	CCString *pStr = dynamic_cast<CCString *>(pSender);
 	if (pStr != NULL)
 	{
 		CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile(pStr->getCString());
-        //未加载先走进度，Android下提升体验
-//        CCProgressFromTo *progressFromTo = CCProgressFromTo::create(1.0f, percent, (float)(m_resCurrent+1)/(m_resTotal+1)*100);
-//        progress->runAction(progressFromTo);
         
 	}
 	if (m_resCurrent == m_resTotal)
 	{
-        this->processReplaceScene();
+        m_isLoadFinish=true;
+        if (m_isTimeEnd) {
+            this->repalceScene();
+        }
 	}
 }
 
-void LoadingScene::processReplaceScene(){
-//    CCProgressTimer* progress=(CCProgressTimer*)this->getChildByTag(PROGRESS);
-//    float percent = progress->getPercentage();
-//    CCProgressFromTo *progressFromTo = CCProgressFromTo::create(0.5, percent, 100);
-//    progress->runAction(progressFromTo);
-//    CCDelayTime *waiting = CCDelayTime::create(0.5);
-//    CCCallFunc *callBack = CCCallFunc::create(this, callfunc_selector(LoadingScene::repalceScene));
-//    this->runAction(CCSequence::create(waiting, callBack, NULL));
-    repalceScene();
+void LoadingScene::countdown(float t){
+    if (m_isLoadFinish) {
+        this->repalceScene();
+    }
+    m_isTimeEnd=true;
 }
-
 
 void LoadingScene::repalceScene(){
     S_DR->replaceScene((*S_AM->getSelector(m_sceneName))());

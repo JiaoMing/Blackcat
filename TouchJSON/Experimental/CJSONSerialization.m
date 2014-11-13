@@ -44,7 +44,7 @@
     NSData *theData = [self dataWithJSONObject:obj options:opt error:error];
     if (theData)
         {
-        theSize = [stream write:(const UInt8*)[theData bytes] maxLength:[theData length]];
+        theSize = [stream write:[theData bytes] maxLength:[theData length]];
         }
     return(theSize);
     }

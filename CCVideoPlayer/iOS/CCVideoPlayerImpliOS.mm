@@ -109,7 +109,7 @@ USING_NS_CC;
 	{
 		[ theMovie setControlStyle: MPMovieControlStyleNone ];
 	}
-	else if ( [theMovie respondsToSelector:@selector(setMovieControlMode:)] )
+	else if ( [theMovie respondsToSelector:@selector(setMovieSourceType:)] )
 	{
         [theMovie setMovieSourceType:MPMovieControlStyleNone];
 	}	

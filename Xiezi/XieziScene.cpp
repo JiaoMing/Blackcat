@@ -44,7 +44,7 @@ public:
 
 #define TABLE_VISIBLE_COUNT 3
 
-#define ICON_PATH CCFileUtils::sharedFileUtils()->getWritablePath()+((Tupian*)m_kapian)->geticonPath()
+#define ICON_PATH FileUtils::getContentFilePath(m_tupian->geticonPath())
 
 CCScene* XieziScene::scene(int hid,XieziSceneDelegate* xieziSceneDelegate,int indexInKapianTable)
 {
@@ -141,47 +141,6 @@ bool XieziScene::init()
     m_xieziLayer->setDelegate(this);
     this->addChild(m_xieziLayer);
     
-    CCSize mainSize=S_RM->getSizeWithName("xiezi_webview_size");
-    CCPoint mainPoint=S_RM->getPositionWithName("xiezi_main");
-    
-    //修改上次进入汉字（用于首页）
-    S_UD->setIntegerForKey(LAST_HANZI_ID, m_hanzi->getid());
-    S_UD->flush();
-    
-    m_writeCount=S_DM->getCount("hanzi","writeCount>0");
-    
-    m_collectedCount=0;
-    if (m_hanzi->getisCollected()==0) {
-        m_collectedCount=S_DM->getCount("hanzi","isCollected>0");
-        if (m_collectedCount>=COLLECT_LIMIT) {
-            GuideDialog* guideDialog=GuideDialog::create();
-            guideDialog->setText("非常抱歉，本软件为测试版，收藏的卡片数量已经超出了测试版的限制。请关注我们的微信公众号，等待正式版本的发布，谢谢！");
-            guideDialog->setMode(kGuideDialogOk);
-            m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
-            m_gudieDialogLayer->setDelegate(this);
-            this->addChild(m_gudieDialogLayer,ORDER_DIALOG);
-            m_gudieDialogLayer->setGuideDialogData(guideDialog);
-        }else{
-            //收集到汉字
-            CCString *sql=CCString::createWithFormat("update hanzi set isCollected=1 where id=%d;",m_hanzi->getid());
-            S_DM->executeSql(sql->getCString());
-            
-            static_userDefaultIncrement(COLLECT_HANZI_COUNT,15);
-            
-            CCSprite* hanziSprite=CCSprite::createWithSpriteFrameName("tianzige.png");
-            hanziSprite->setPosition(mainPoint);
-            
-            CCLabelTTF* label=CCLabelTTF::create(m_hanzi->getzi().c_str(), "KaiTi.ttf", 400.0);
-            label->setColor(ccc3(100,53,14));
-            label->setPosition(ccp(mainSize.width/2, mainSize.height/2));
-            hanziSprite->addChild(label);
-            hanziSprite->setTag(kTagCollect);
-            
-            KapianCollectLayer* kapianCollectLayer=KapianCollectLayer::create(hanziSprite,kHanzi);
-            this->addChild(kapianCollectLayer);
-            kapianCollectLayer->collectAnimate();
-        }
-    }
     
     //打开android按键响应
     this->setKeypadEnabled(true);
@@ -298,7 +257,7 @@ void XieziScene::tupianTouchCallBack(Tupian* tupian,bool isOverLimit){
     if (isOverLimit) {
         GuideDialog* guideDialog=new GuideDialog();
         guideDialog->autorelease();
-        guideDialog->setText("非常抱歉，收藏的卡片数量已经超出了免费版本限制，请检查账号状态。");
+        guideDialog->setText("非常抱歉，收藏的卡片数量已经超出了限制，请检查账号状态。");
         guideDialog->setMode(kGuideDialogOk);
         GuideDialogLayer* gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
         gudieDialogLayer->setDelegate(this);

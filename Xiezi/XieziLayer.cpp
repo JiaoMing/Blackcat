@@ -78,6 +78,8 @@ XieziLayer::XieziLayer(){
     m_gudieDialogLayer=NULL;
     
     m_mContent=new Content();
+    
+    m_collected=false;
 }
 
 XieziLayer::~XieziLayer(){
@@ -134,8 +136,6 @@ bool XieziLayer::init()
     this->addChild(m_count);
     
     
-    CCSize mainSize=S_RM->getSizeWithName("xiezi_webview_size");
-    CCPoint mainPoint=S_RM->getPositionWithName("xiezi_main");
     
     //修改上次进入汉字（用于首页）
     S_UD->setIntegerForKey(LAST_HANZI_ID, m_hanzi->getid());
@@ -157,7 +157,7 @@ bool XieziLayer::init()
         if (m_collectedCount>=COLLECT_LIMIT) {
             GuideDialog* guideDialog=new GuideDialog();
             guideDialog->autorelease();
-            guideDialog->setText("非常抱歉，收藏的卡片数量已经超出了免费版本限制，请检查账号状态。");
+            guideDialog->setText("非常抱歉，收藏的卡片数量已经超出了限制，请检查账号状态。");
             guideDialog->setMode(kGuideDialogOk);
             m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
             m_gudieDialogLayer->setDelegate(this);
@@ -168,20 +168,10 @@ bool XieziLayer::init()
             CCString *sql=CCString::createWithFormat("update hanzi set isCollected=1 where id=%d;",m_hanzi->getid());
             S_DM->executeSql(sql->getCString());
             
-            static_userDefaultIncrement(COLLECT_HANZI_COUNT,15);
+            static_userDefaultIncrement(COLLECT_HANZI_COUNT,18);
             
-            CCSprite* hanziSprite=CCSprite::createWithSpriteFrameName("tianzige.png");
-            hanziSprite->setPosition(mainPoint);
+            m_collected=true;
             
-            CCLabelTTF* label=CCLabelTTF::create(m_hanzi->getzi().c_str(), "KaiTi.ttf", 400.0);
-            label->setColor(ccc3(100,53,14));
-            label->setPosition(ccp(mainSize.width/2, mainSize.height/2));
-            hanziSprite->addChild(label);
-            hanziSprite->setTag(kTagCollect);
-            
-            KapianCollectLayer* kapianCollectLayer=KapianCollectLayer::create(hanziSprite,kHanzi);
-            this->addChild(kapianCollectLayer);
-            kapianCollectLayer->collectAnimate();
         }
     }
     
@@ -238,7 +228,7 @@ bool XieziLayer::init()
     
     //定时3秒提醒
     if (m_heimao!=NULL) {
-        this->scheduleOnce(schedule_selector(XieziLayer::dingShiTiXing), 3);
+        this->scheduleOnce(schedule_selector(XieziLayer::dingShiTiXing), 6);
     }
     
     return true;
@@ -270,6 +260,7 @@ void XieziLayer::dingShiTiXing(){
 void XieziLayer::onEnter(){
     CCLayer::onEnter();
     
+    CCSize mainSize=S_RM->getSizeWithName("xiezi_webview_size");
     CCPoint mainPoint=S_RM->getPositionWithName("xiezi_main");
     //添加WEBVIEW
     CCSize win_size=S_DR->getWinSize();
@@ -284,11 +275,29 @@ void XieziLayer::onEnter(){
         m_webView->setVisible(true);
     }
     
+    //注意收藏顺序
+    if (m_collected) {
+        CCSprite* hanziSprite=CCSprite::createWithSpriteFrameName("tianzige.png");
+        hanziSprite->setPosition(mainPoint);
+        
+        CCLabelTTF* label=CCLabelTTF::create(m_hanzi->getzi().c_str(), "KaiTi.ttf", 400.0);
+        label->setColor(ccc3(100,53,14));
+        label->setPosition(ccp(mainSize.width/2, mainSize.height/2));
+        hanziSprite->addChild(label);
+        hanziSprite->setTag(kTagCollect);
+        
+        KapianCollectLayer* kapianCollectLayer=KapianCollectLayer::create(hanziSprite,kHanzi);
+        this->addChild(kapianCollectLayer);
+        kapianCollectLayer->collectAnimate();
+    }
+    
+    BaiduStat::onStatEvent(kBaiduOneEventStart, "Xiezi", "写字界面停留");
 }
 
 void XieziLayer::onExit(){
     CCLayer::onExit();
     this->removeChild(m_webView, false);
+    BaiduStat::onStatEvent(kBaiduOneEventEnd, "Xiezi", "写字界面停留");
 }
 
 void XieziLayer::setHandlerPriority(int handlerPriority){
@@ -355,6 +364,7 @@ CCSprite* XieziLayer::generateSnapshot(){
 
 void XieziLayer::callWeb(CCObject* pSender)
 {
+    this->unschedule(schedule_selector(XieziLayer::dingShiTiXing));
     int tag=((CCNode*)pSender)->getTag();
     
     switch (tag) {
@@ -397,7 +407,7 @@ void XieziLayer::callWeb(CCObject* pSender)
         }
             break;
         case kTagGuangbo:
-            string url=CCFileUtils::sharedFileUtils()->getWritablePath()+"blackcat/uploadfile/"+m_mContent->getfileUrl();
+            string url=FileUtils::getContentFilePath(m_mContent->getfileUrl());
             S_AE->playEffect(url.c_str());
             break;
     }
@@ -425,7 +435,7 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
             CCString* str=CCString::createWithFormat("init('%s','%s',%f,%f,%d,Modes.kFillAll)",m_hanzi->getcontour().c_str(),m_hanzi->getlocus().c_str(),webViewSize.width*scaleX,webViewSize.height*scaleY,m_hanzi->getwriteCount());
             webview->callWebWithJs(str->getCString());
             
-            string url=CCFileUtils::sharedFileUtils()->getWritablePath()+"blackcat/uploadfile/"+m_mContent->getfileUrl();
+            string url=FileUtils::getContentFilePath(m_mContent->getfileUrl());
             S_AE->playEffect(url.c_str());
             
             m_webView->callWebWithJs("setIsCanAutoWrite(true);");
@@ -434,6 +444,8 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
             break;
         case kWebCallBackWriteHanziOk:{
             //书写成功
+            
+            BaiduStat::onStatEvent(kBaiduOneEventStart, "Xiezi", "写对");
             
             m_todayXieziCount++;
             int writeCount=m_hanzi->getwriteCount();
@@ -529,7 +541,7 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
             if (m_writedHanziCount>=WRITE_LIMIT&&m_hanzi->getwriteCount()==0&&m_gudieDialogLayer==NULL) {
                 GuideDialog* guideDialog=new GuideDialog();
                 guideDialog->autorelease();
-                guideDialog->setText("非常抱歉，练习书写的汉字数量已经超出了免费版本的限制，请检查账号状态。");
+                guideDialog->setText("非常抱歉，练习书写的汉字数量已经超出了的限制，请检查账号状态。");
                 guideDialog->setMode(kGuideDialogOk);
                 m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
                 m_gudieDialogLayer->setDelegate(this);
@@ -537,8 +549,6 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
                 m_gudieDialogLayer->setGuideDialogData(guideDialog);
                 webview->setVisible(false);
             }
-            
-            
         }
             break;
         case kWebCallBackWriteStrokeOk:
@@ -546,10 +556,13 @@ void XieziLayer::webCallBack(CCWebView* webview,std::string cmd){
             if(m_heimao)m_heimao->action("heimao_strokeOk");
             break;
             
-        case kWebCallBackWriteStrokeError:
-            
+        case kWebCallBackWriteStrokeError:{
             //写错时调用
             if(m_heimao)m_heimao->action("heimao_strokeError");
+            
+            BaiduStat::onStatEvent(kBaiduOneEventStart, "Xiezi", "写错");
+        }
+            
             break;
             
         default:

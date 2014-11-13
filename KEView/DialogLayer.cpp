@@ -9,6 +9,29 @@
 #include "DialogLayer.h"
 #include "resource.h"
 
+#define S_DS DialogLayerStack::sharedDialogLayerStack()
+
+DialogLayerStack* s_dialogLayerStack=NULL;
+DialogLayerStack* DialogLayerStack::sharedDialogLayerStack(){
+    if (s_dialogLayerStack==NULL) {
+        s_dialogLayerStack=new DialogLayerStack();
+    }
+    return s_dialogLayerStack;
+}
+
+
+void DialogLayerStack::push(DialogLayer* layer){
+    _dialogStack.push(layer);
+}
+
+DialogLayer* DialogLayerStack::popAndReturn(){
+    if(!_dialogStack.empty()){
+        DialogLayer* layer=_dialogStack.top();
+        _dialogStack.pop();
+        return layer;
+    }else
+        return  NULL;
+}
 
 bool DialogLayer::init(const ccColor4B& color){
     if (!CoverLayer::init(color)) {
@@ -54,8 +77,36 @@ void DialogLayer::setDelegate(DialogLayerDelegate *delegate){
 
 void DialogLayer::replaceDialog(DialogLayer *dialogLayer){
     dialogLayer->setDelegate(m_dialogLayerDelegate);
-    this->getParent()->addChild(dialogLayer,ORDER_DIALOG);
+    CCNode* parent=this->getParent();
     this->removeFromParent();
+    dialogLayer->setPosition(parent->convertToNodeSpace(CCPointZero));
+    parent->addChild(dialogLayer,ORDER_DIALOG);
+}
+
+void DialogLayer::pushDialog(DialogLayer *dialogLayer){
+    this->retain();//remove前计数器+1防止释放
+    S_DS->push(this);
+    CCNode* parent=this->getParent();
+    this->removeFromParent();
+    dialogLayer->setDelegate(m_dialogLayerDelegate);
+    dialogLayer->setPosition(parent->convertToNodeSpace(CCPointZero));
+    parent->addChild(dialogLayer,ORDER_DIALOG);
+}
+
+void DialogLayer::popDialog(){
+    DialogLayer* dialogLayer=S_DS->popAndReturn();
+    if(dialogLayer){
+        CCNode* parent=this->getParent();
+        this->removeFromParent();
+        if(dialogLayer->getParent()==NULL){
+            parent->addChild(dialogLayer);
+        }else{
+            CCLog("child->m_pParent != __null");
+        }
+        CC_SAFE_RELEASE(dialogLayer);//恢复计数器
+    }else{
+        this->removeFromParent();
+    }
 }
 
 void DialogLayer::enableTouch(){
@@ -75,16 +126,24 @@ void DialogLayer::setTitle(const char *title){
     }
 }
 
-
 void DialogLayer::menuCallback(CCObject* obj){
     if (m_closeItem==obj) {
-        if (m_forwardDialogLayer==NULL) {
-            this->removeFromParent();
-            S_ALP->stop();
-            m_dialogLayerDelegate->dialogCloseCallBack();
-        }else{
-#pragma message "m_forwardDialogLayer不能初始化问题"
-            this->replaceDialog(m_forwardDialogLayer);
+        DialogLayer* layer=S_DS->popAndReturn();
+        while (layer) {
+            layer->removeFromParent();
+            layer=S_DS->popAndReturn();
         }
+        this->removeFromParent();
+        S_ALP->stop();
+        m_dialogLayerDelegate->dialogCloseCallBack();
+        
     }
+}
+
+void DialogLayer::rePosition(){
+    CCPoint middle=S_RM->getJpgBgPosition();
+    CCSize size=m_bg->getContentSize();
+    CCPoint orignInBg=ccp(35,60);
+    this->setPosition(middle.x-size.width/2+orignInBg.x, middle.y-size.height/2+orignInBg.y);
+    m_bg->setPosition(ccp(size.width/2-orignInBg.x, size.height/2-orignInBg.y));
 }

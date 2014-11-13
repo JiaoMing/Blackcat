@@ -206,7 +206,7 @@ static NSData *kTrue = NULL;
 
     NSMutableData *theData = [NSMutableData dataWithLength:strlen(theUTF8String) * 2 + 2];
 
-    char *theOutputStart = (char *)[theData mutableBytes];
+    char *theOutputStart = [theData mutableBytes];
     char *OUT = theOutputStart;
 
     *OUT++ = '"';

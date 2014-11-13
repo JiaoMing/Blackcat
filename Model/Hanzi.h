@@ -32,6 +32,7 @@ class Hanzi: public Kapian{
     SYNTHESIZE_INT(kcid);
     SYNTHESIZE_INT(lastAnswer);
     SYNTHESIZE_INT(isReward);
+    SYNTHESIZE_INT(sort);
     
 public:
     /**
@@ -69,6 +70,7 @@ public:
         INSERT_PROPERTYMAP(Hanzi,lastAnswer);
         INSERT_PROPERTYMAP(Hanzi,isReward);
         INSERT_PROPERTYMAP(Hanzi,isCollected);
+        INSERT_PROPERTYMAP(Hanzi,sort);
     }
     
 public:

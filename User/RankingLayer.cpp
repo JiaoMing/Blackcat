@@ -150,6 +150,10 @@ CCTableViewCell* RankingLayer::tableCellAtIndex(CCTableView *table, unsigned int
             def->m_alignment=kCCTextAlignmentLeft;
             def->m_vertAlignment=kCCVerticalTextAlignmentCenter;
             username->setTextDefinition(def);
+            CCLog("%d %d",ranking->getuid(),S_UD->getIntegerForKey(UDKEY_USER_UID));
+            if (ranking->getuid()==S_UD->getIntegerForKey(UDKEY_USER_UID)) {
+                username->setColor(ccORANGE);
+            }
             
             float maxUsernameWidth=S_RM->getSizeWithName("dialog_table_username_size").width;
             if (username->getContentSize().width>maxUsernameWidth) {
@@ -225,6 +229,7 @@ void RankingLayer::onJsonCompleted(CCDictionary* root){
     {
         CCDictionary* rank = (CCDictionary *)pObject;
         Ranking* ranking=new Ranking();
+        ranking->setIntuid(((CCString*)rank->objectForKey("uid"))->intValue());
         ranking->setusername(((CCString*)rank->objectForKey("username"))->getCString());
         ranking->setInttuka(((CCString*)rank->objectForKey("tuka"))->intValue());
         ranking->setIntzika(((CCString*)rank->objectForKey("zika"))->intValue());

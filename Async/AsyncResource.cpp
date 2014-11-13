@@ -22,7 +22,7 @@ typedef struct _ResouceStruct
 static ResourceStruct res[] = {
 	{
 		"HomeScene",
-		"xiezi.plist,heimao.plist,home1.plist,home2.plist,global.plist,achieve.plist",
+		"xiezi.plist,heimao.plist,home1.plist,home2.plist",
 		"",
         scene_selector(HomeScene::scene)
 	},
@@ -46,7 +46,7 @@ static ResourceStruct res[] = {
 	},
 	{
 		"NewPetScene",
-		"pet.plist,pet2.plist,pet3.plist,xiaobo_1.plist,xiaobo_2.plist,xiaobo_3.plist",
+		"pet.plist,pet2.plist,pet3.plist,xiaobo_1.plist,xiaobo_2.plist,xiaobo_3.plist,xiaobo_4.plist",
 		"",
         scene_selector(NewPetScene::scene)
 	},

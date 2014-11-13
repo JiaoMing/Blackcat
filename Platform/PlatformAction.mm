@@ -24,7 +24,8 @@ void PlatformAction::playMovie()
 
 void PlatformAction::avatar()
 {
-
+    
 }
+
 
 #endif

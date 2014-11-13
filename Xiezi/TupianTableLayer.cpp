@@ -186,7 +186,7 @@ CCTableViewCell* TupianTableLayer::tableCellAtIndex(CCTableView *table, unsigned
             kuang->setPosition(cardPoint);
             cell->addChild(kuang,2);
             
-            string path=CCFileUtils::sharedFileUtils()->getWritablePath()+tupian->getPath();
+            string path=FileUtils::getContentFilePath(tupian->getPath());
             
             CCSize cellSize=m_tupianTablePosition.getCellThumbSize();
             CCSprite* tupianSprite=CCSprite::create(path.c_str());

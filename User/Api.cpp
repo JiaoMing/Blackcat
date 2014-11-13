@@ -70,15 +70,19 @@ void Api::onHttpRequestCompleted(CCHttpClient *sender, CCHttpResponse *response)
     //处理接口数据
     CocosJsonParser jsonParser;
     CCDictionary* root=jsonParser.parse(responseDataStr.c_str());
-    const CCString* feedback=root->valueForKey("feedback");
-    if (feedback->intValue()!=100) {
-        CCString* feedbackStr=(CCString*)m_feedbackDict->objectForKey(feedback->getCString());
-        S_TT->makeText(feedbackStr->getCString());
-        if (feedback->intValue()==-401||feedback->intValue()==-102) {
-            //未登录处理
-            if(S_LM->getDelegate())S_LM->getDelegate()->logout();
+    if(root!=NULL){
+        const CCString* feedback=root->valueForKey("feedback");
+        if (feedback->intValue()!=100) {
+            CCString* feedbackStr=(CCString*)m_feedbackDict->objectForKey(feedback->getCString());
+            S_TT->makeText(feedbackStr->getCString());
+            if (feedback->intValue()==-401||feedback->intValue()==-102) {
+                //未登录处理
+                if(S_LM->getDelegate())S_LM->getDelegate()->logout();
+            }
+        }else{
+            if(m_apiStruct.target)(m_apiStruct.target->*m_apiStruct.sel_response)(root);
         }
     }else{
-        if(m_apiStruct.target)(m_apiStruct.target->*m_apiStruct.sel_response)(root);
+        S_TT->makeText("数据请求失败。");
     }
 }

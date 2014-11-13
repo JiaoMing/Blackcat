@@ -14,7 +14,6 @@
 USING_NS_CC;
 USING_NS_CC_EXT;
 #include "DialogLayer.h"
-//#include "CCAlbum.h"
 
 class LevelObject :public CCObject{
 public:
@@ -61,8 +60,7 @@ public:
 
 
 
-//class UserBarLayer :public CCLayer,public LevelDelegate,public DialogLayerDelegate,public CCAlbumPickDelegate{
-    class UserBarLayer :public CCLayer,public LevelDelegate,public DialogLayerDelegate{
+class UserBarLayer :public CCLayer,public LevelDelegate,public DialogLayerDelegate{
 public:
     static UserBarLayer* create();
     
@@ -76,13 +74,13 @@ public:
     
     virtual int topHandlerPriority(){return kCCMenuHandlerPriority;}
     virtual void dialogCloseCallBack();
-    virtual void freshAvatar();
     
 
     
     void logout();
     void fresh();
     void downloadAvatar(CCObject* obj);
+    void delayToFreshAvatar();
     
     /**
      *获得经验动画，星星飞
@@ -95,9 +93,13 @@ public:
     virtual void xingxingCallback(CCNode* node);
     
     virtual void setPosition(const CCPoint &position){CCNode::setPosition(position);};
+    
+    
+    
 private:
     void levelUp();
     void scheduleReOrder(float t);
+    void freshAvatar(CCNode* node);
 private:
     CCSprite* m_progressGuang;
     CCProgressTimer* m_progress;

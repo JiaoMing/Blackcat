@@ -14,7 +14,10 @@
 #include "HomeScene.h"
 
 #define TAG_EXAM -2
-#define TAG_KUANGZI -5
+
+#define CONTENT_WIDTH 500
+#define CONTENT_HEIGHT 400
+
 enum TAG {
     kTagBadge=0,
     kTagCaidai,
@@ -25,6 +28,7 @@ enum TAG {
 KechengDialogLayer::KechengDialogLayer(){
     m_jiangpaiArray=CCArray::create();
     m_jiangpaiArray->retain();
+    m_dialogKcid=S_KC->getKcid();
 }
 
 KechengDialogLayer::~KechengDialogLayer(){
@@ -53,14 +57,39 @@ bool KechengDialogLayer::init(){
     
     m_title->setFontSize(45);
     
-    CCLayer* kuangziLayer=CCLayer::create();
-    kuangziLayer->setPosition(CCPointZero);
-    kuangziLayer->setTag(TAG_KUANGZI);
-    this->addChild(kuangziLayer);
+    CCPoint middle=S_RM->getJpgBgPosition();
+    CCSize size=CCSizeMake(CONTENT_WIDTH,CONTENT_HEIGHT);
+    m_clippingNode = CCClippingNode::create();
+    //设置裁剪区域大小
+    m_clippingNode->setContentSize(size);
+//    clippingNode->setAnchorPoint(ccp(0.5, 0.5));
+    m_clippingNode->setPosition(CCPointZero);
+    this->addChild(m_clippingNode);
+    
+    //创建裁剪模板，裁剪节点将按照这个模板来裁剪区域
+    CCDrawNode *stencil = CCDrawNode::create();
+    CCPoint rectangle[4];
+    rectangle[0] = ccp(0, 0);
+    rectangle[1] = ccp(size.width, 0);
+    rectangle[2] = ccp(size.width, size.height);
+    rectangle[3] = ccp(0, size.height);
+    
+    ccColor4F white = {1, 1, 1, 1};
+    //画一个多边形 这画一个200x200的矩形作为模板
+    stencil->drawPolygon(rectangle, 4, white, 1, white);
+    stencil->setPosition(ccp(middle.x-size.width/2,middle.y-size.height/2));
+    m_clippingNode->setStencil(stencil);
+    
+    //用来设置显示裁剪区域还是非裁剪区域的
+    m_clippingNode->setInverted(false);//在裁剪区域内显示加入的内容
+    
+    m_kuangziLayer=CCLayer::create();
+    m_kuangziLayer->setPosition(CCPointZero);
+    m_clippingNode->addChild(m_kuangziLayer);
     
     m_hanziLabelMenu=CCMenu::create();
     m_hanziLabelMenu->setPosition(CCPointZero);
-    this->addChild(m_hanziLabelMenu);
+    m_clippingNode->addChild(m_hanziLabelMenu);
     
     //测试按钮
     CCSprite* pexamNormal=CCSprite::createWithSpriteFrameName("renwu_ceshianniu.png");
@@ -90,10 +119,11 @@ bool KechengDialogLayer::init(){
     m_tableLayer->setVisible(false);
     this->addChild(m_tableLayer);
     
-    this->setKecheng(S_KC->getKcid());
+    //刷新课程文字
+    this->freshKecheng(true);
     
     //定时提醒
-    this->scheduleOnce(schedule_selector(KechengDialogLayer::ceShiTiXing), 4);
+    this->schedule(schedule_selector(KechengDialogLayer::ceShiTiXing), 4);
     
     return true;
 }
@@ -106,7 +136,6 @@ void KechengDialogLayer::enableTouch(){
 
 void KechengDialogLayer::onEnter(){
     GuideDialogLayer::onEnter();
-    
     this->heimaoAction();
 }
 
@@ -136,34 +165,74 @@ void KechengDialogLayer::showOrHideTable(){
     }
 }
 
-void KechengDialogLayer::setKecheng(int kcid){
-    //复位
-    this->unschedule(schedule_selector(KechengDialogLayer::dingShiTiXing));
-    //定时提醒
-    if (kcid<S_KC->getLastKechengId()) {
-        this->schedule(schedule_selector(KechengDialogLayer::dingShiTiXing), 20, kCCRepeatForever, 10);
-    }
-    
-    //清除奖牌
-    CCObject* object;
-    CCARRAY_FOREACH(m_jiangpaiArray, object){
-        CCNode* node=(CCNode*)object;
-        this->removeChild(node);
-    }
-    m_jiangpaiArray->removeAllObjects();
-    
-    S_KC->freshDataWithKcid(kcid);
-    
+void KechengDialogLayer::freshKechengEndCallback(CCNode* node){
     CCString* str=CCString::createWithFormat("%d",S_KC->getKcid());
     m_kechengLabel->setString(str->getCString());
+    m_kechengLabel->runAction(CCSequence::create(CCScaleTo::create(0.2, 1.5),CCScaleTo::create(0.2, 1),NULL));
+    m_clippingNode->removeChild(node);
+}
+
+void KechengDialogLayer::freshKecheng(bool isInit){
+    //停止其他动作
+    if(!isInit){
+        m_heimao->stop();
+    }
     
-    CCLayer* kuangziLayer=(CCLayer*)this->getChildByTag(TAG_KUANGZI);
-    kuangziLayer->removeAllChildren();
+    if (!isInit&&m_dialogKcid==S_KC->getKcid()) {
+        return;
+    }
+    int lastKechengId=S_KC->getLastKechengId();
+    //复位
+    S_ALP->stop();
+    this->unschedule(schedule_selector(KechengDialogLayer::dingShiTiXing));
+    //定时提醒
+    this->schedule(schedule_selector(KechengDialogLayer::dingShiTiXing), 20, kCCRepeatForever, 10);
     
-    m_hanziLabelMenu->removeAllChildren();
+    if(!isInit){
+        //非初始化
+        
+        //清除奖牌
+        CCObject* object;
+        CCARRAY_FOREACH(m_jiangpaiArray, object){
+            CCNode* node=(CCNode*)object;
+            this->removeChild(node);
+        }
+        m_jiangpaiArray->removeAllObjects();
+        
+        
+        CCPoint middle=S_RM->getJpgBgPosition();
+        CCRenderTexture* render=CCRenderTexture::create(W_SIZE.width, W_SIZE.height);
+        render->begin();
+        m_kuangziLayer->visit();
+        m_hanziLabelMenu->visit();
+        render->end();
+        render->setPosition(middle);
+        m_clippingNode->addChild(render);
+        
+        float changeX,renderX;
+        
+        if (m_dialogKcid<S_KC->getKcid()) {
+            changeX=CONTENT_WIDTH;
+            renderX=middle.x-CONTENT_WIDTH-100;
+            
+        }else{
+            changeX=-CONTENT_WIDTH;
+            renderX=middle.x+CONTENT_WIDTH+100;
+        }
+        render->runAction(CCSequence::create(CCMoveTo::create(0.5, ccp(renderX, middle.y)),CCCallFuncN::create(this, callfuncN_selector(KechengDialogLayer::freshKechengEndCallback)),NULL));
+        m_kuangziLayer->setPosition(ccp(changeX,0));
+        m_hanziLabelMenu->setPosition(ccp(changeX,0));
+        m_kuangziLayer->runAction(CCMoveTo::create(0.5, ccp(0, 0)));
+        m_hanziLabelMenu->runAction(CCMoveTo::create(0.5, ccp(0, 0)));
+        
+        
+        //清楚框子和字
+        m_kuangziLayer->removeAllChildren();
+        m_hanziLabelMenu->removeAllChildren();
+    }
+    m_dialogKcid=S_KC->getKcid();
     
     int i=0;
-    int lastKechengId=S_KC->getLastKechengId();
     for (vector<Hanzi *>::iterator it = S_KC->getHanziVector()->begin(); it != S_KC->getHanziVector()->end(); it ++){
         if (NULL != *it){
             i++;
@@ -171,7 +240,7 @@ void KechengDialogLayer::setKecheng(int kcid){
             CCSprite* kuangzi=CCSprite::create();
             kuangzi->setDisplayFrame(S_SF->spriteFrameByName("renwu_zikuang.png"));
             
-            if (kcid<=lastKechengId) {
+            if (S_KC->getKcid()<=lastKechengId) {
                 CCSprite* badge=CCSprite::createWithSpriteFrameName("renwu_dialog_badge.png");
                 CCSize size=S_RM->getSizeWithName("renwu_zi_kuangzi_badge_offset");
                 badge->setPosition(ccp(size.width, size.height));
@@ -185,9 +254,9 @@ void KechengDialogLayer::setKecheng(int kcid){
             kuangzi->setPosition(ziPoint);
             kuangzi->setTag((*it)->getid());
             
-            kuangziLayer->addChild(kuangzi);
+            m_kuangziLayer->addChild(kuangzi);
             
-            CCLabelTTF *txtLabel = CCLabelTTF::create((*it)->getText().c_str(), "KaiTi.ttf", 80.0);
+            CCLabelTTF* txtLabel = CCLabelTTF::create((*it)->getText().c_str(), "KaiTi.ttf", 80.0);
             txtLabel->setColor(ccc3(0, 0, 0));
             CCMenuItemLabel* labelItem=CCMenuItemLabel::create(txtLabel, this,menu_selector(KechengDialogLayer::menuCallback));
             labelItem->setPosition(ziPoint);
@@ -196,6 +265,8 @@ void KechengDialogLayer::setKecheng(int kcid){
             
         }
     }
+    
+    
 }
 
 void KechengDialogLayer::ceShiTiXing(float t){
@@ -214,7 +285,7 @@ void KechengDialogLayer::dingShiTiXing(float t){
         delay+=1.5;
         Audio* audio=new Audio();
         audio->autorelease();
-        audio->setAudioName((CCFileUtils::sharedFileUtils()->getWritablePath().append(((*S_KC->getHanziVector())[i++])->getcnAudioPath())));
+        audio->setAudioName((FileUtils::getContentFilePath(((*S_KC->getHanziVector())[i++])->getcnAudioPath())));
         audio->setDuration(1.5);
         audios->addObject(audio);
     }
@@ -249,8 +320,8 @@ void KechengDialogLayer::menuCallback(CCObject* object){
                 if (NULL != *it){
                     Hanzi* hanzi=(*it);
                     if(hanzi->getid()==tag){
-                        const char* audio=(CCFileUtils::sharedFileUtils()->getWritablePath()+hanzi->getcnAudioPath()).c_str();
-                        S_AE->playEffect(audio);
+                        const char* audio=FileUtils::getContentFilePath(hanzi->getcnAudioPath()).c_str();
+                        S_ALP->play(audio,NULL);
                         break;
                     }
                 }
@@ -263,7 +334,18 @@ void KechengDialogLayer::menuCallback(CCObject* object){
                     S_UD->setIntegerForKey(LAST_BEGIN_KECHENG_ID, S_KC->getKcid());
                     S_UD->flush();
                 }
-                S_DR->pushScene(KechengExamScene::scene(this));
+                if (S_KC->getKcid()>=8) {
+                    GuideDialog* guideDialog=new GuideDialog();
+                    guideDialog->autorelease();
+                    guideDialog->setText("非常抱歉，此功能已超出限制，请检查账号状态。");
+                    guideDialog->setMode(kGuideDialogOk);
+                    GuideDialogLayer* gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
+                    gudieDialogLayer->setDelegate(this);
+                    this->addChild(gudieDialogLayer,ORDER_DIALOG);
+                    gudieDialogLayer->setGuideDialogData(guideDialog);
+                }else{
+                    S_DR->pushScene(KechengExamScene::scene(this));
+                }
             }
         }
     }else{
@@ -280,7 +362,6 @@ void KechengDialogLayer::heimaoAction(){
     S_DM->getByKey(kecheng, S_KC->getKcid());
     
     HomeScene* homeScene=(HomeScene*)this->getDelegate();
-    
     
     bool isKechengFinished=S_UD->getBoolForKey(KECHENG_FINISHED,false);
     if (S_KC->getLastKechengId()==S_KC->getKcCount()&&!isKechengFinished) {
@@ -314,29 +395,17 @@ void KechengDialogLayer::heimaoAction(){
     
     S_UD->flush();
     
-    
     CC_SAFE_DELETE(kecheng);
 }
 
 
-void KechengDialogLayer::examAllRightCallback(){
-    
+void KechengDialogLayer::examAllRightCallback(bool isSuccessNew){
     m_tableLayer->setVisible(true);
     
-    
-    
-    //判断，并更新数据
-    if (S_KC->updateDataWhenCompleteKecheng()) {
-        //提升成就
-        S_AEM->achieveUp(kAchieveCGYS);
-        
+    if (isSuccessNew) {
         //执行奖励动画
         this->runRewardAnimate();
-        
-        //刷新tableview
-        m_tableLayer->examAllRightCallback(S_KC->getKcid());
     }
-    
 }
 
 void KechengDialogLayer::runRewardAnimate(){
@@ -404,9 +473,18 @@ void KechengDialogLayer::runRewardAnimateCallBack(CCObject* obj){
             }
         }
         S_LM->gain("RENWU",S_RM->getJpgBgPosition(),array);
+        
+        this->scheduleOnce(schedule_selector(KechengDialogLayer::delayTofreshKecheng),3);
     }
 }
 
+void KechengDialogLayer::delayTofreshKecheng(float t){
+    //等待tablelayer中闪过后更新
+    m_tableLayer->openNewXingxing();
+    this->freshKecheng(false);
+}
 
-
-
+void KechengDialogLayer::dialogCallBack(GuideDialogCMD cmd){
+    //8关限制
+    
+}

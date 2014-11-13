@@ -11,7 +11,8 @@
 
 #include "resource.h"
 #include "Hanzi.h"
-#include "Zuciju.h"
+#include "Zczj.h"
+#include "Content.h"
 
 class HanziDetailLayer : public CCLayer
 {
@@ -28,7 +29,8 @@ public:
     void setHandlerPriority(int priority);
 private:
     Hanzi* m_hanzi;
-    vector<Zuciju*>* m_zucijus;
+    vector<Zczj*>* m_zczjs;
+    map<string, Content*>* m_contentMap;
     CCMenu* m_menu;
     int m_priority;
 };

@@ -54,7 +54,7 @@ bool UserLoginLayer::init(){
     m_editPswd->setFontColor(ccBLACK);
     m_editPswd->setPlaceHolder("密码");
     m_editPswd->setPlaceholderFontColor(ccGRAY);
-    m_editPswd->setMaxLength(8);
+    m_editPswd->setMaxLength(16);
     m_editPswd->setInputFlag(kEditBoxInputFlagPassword);
     m_editPswd->setReturnType(kKeyboardReturnTypeDone);
     m_editPswd->setDelegate(this);
@@ -124,12 +124,14 @@ void UserLoginLayer::onJsonCompleted(CCDictionary* root){
     const CCString* username=user->valueForKey("username");
     const CCString* token=loginUser->valueForKey("token");
     const CCString* avatarKey=user->valueForKey("avatar");
+    const CCString* uid=user->valueForKey("uid");
     S_UD->setStringForKey(UDKEY_USER_TOKEN, token->getCString());
     S_UD->setStringForKey(UDKEY_USER_USERNAME, username->getCString());
+    S_UD->setIntegerForKey(UDKEY_USER_UID, uid->intValue());
     
     CCString* fd=CCString::createWithFormat("欢迎您，%s",username->getCString());
     S_TT->makeText(fd->getCString());
-    this->replaceDialog(ParentLayer::create());
+    this->popDialog();
     
     UserBarLayer* userBarLayer=S_LM->getDelegate();
     if (userBarLayer!=NULL) {

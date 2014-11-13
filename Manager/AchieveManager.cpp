@@ -39,7 +39,7 @@ int AchieveManager::achieveLevel(AchieveKey key){
     CCARRAY_FOREACH(array, obj){
         CCString* item=(CCString*)obj;
         int number=item->intValue();
-        if (value>number) {
+        if (value>=number) {
             level++;
         }else{
             break;
@@ -48,7 +48,7 @@ int AchieveManager::achieveLevel(AchieveKey key){
     return level;
 }
 
-void AchieveManager::achieveUp(AchieveKey key, int upValue,CCObject* target,SEL_CallFunc selector){
+bool AchieveManager::achieveUp(AchieveKey key, int upValue,CCObject* target,SEL_CallFunc selector){
     const char* udkey=achieveStruts[key].UD_key.c_str();
     int oldValue=S_UD->getIntegerForKey(achieveStruts[key].UD_key.c_str(), 0);
     int newValue=oldValue+upValue;
@@ -61,9 +61,9 @@ void AchieveManager::achieveUp(AchieveKey key, int upValue,CCObject* target,SEL_
     CCARRAY_FOREACH(array, obj){
         CCString* item=(CCString*)obj;
         int number=item->intValue();
-        if (newValue>number) {
+        if (newValue>=number) {
             newLevel++;
-            if (oldValue>number) {
+            if (oldValue>=number) {
                 oldLevel++;
             }
         }else{
@@ -75,5 +75,7 @@ void AchieveManager::achieveUp(AchieveKey key, int upValue,CCObject* target,SEL_
         AchieveRewardLayer* layer= AchieveRewardLayer::create(key, newLevel);
         layer->setTarget(target, selector);
         scene->addChild(layer,INT_MAX);
+        return true;
     }
+    return false;
 }

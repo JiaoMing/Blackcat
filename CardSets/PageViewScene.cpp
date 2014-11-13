@@ -157,8 +157,12 @@ void PageViewScene::menuCallback(CCObject* pSender)
     CCMenuItem *menuItem = (CCMenuItem *)pSender;
     int tag=menuItem->getTag();
     if (menuItem->getTag()==TAG_MENU_BACK) {
-        S_AE->stopBackgroundMusic();
-        S_AE->playBackgroundMusic("bg_musicbox.mp3",true);
+        //注意修改需要两个地方！！
+        bool isBgMusicRunning=S_UD->getBoolForKey("BG_MUSIC",true);
+        if (isBgMusicRunning) {
+            S_AE->stopBackgroundMusic();
+            S_AE->playBackgroundMusic("bg_musicbox.mp3",true);
+        }
         S_DR->replaceScene(CardShelfScene::scene());
     }else{
         S_AE->playEffect("E4.mp3");
@@ -170,6 +174,12 @@ void PageViewScene::menuCallback(CCObject* pSender)
 }
 
 void PageViewScene::keyBackClicked(){
+    //注意修改需要两个地方！！
+    bool isBgMusicRunning=S_UD->getBoolForKey("BG_MUSIC",true);
+    if (isBgMusicRunning) {
+        S_AE->stopBackgroundMusic();
+        S_AE->playBackgroundMusic("bg_musicbox.mp3",true);
+    }
     S_DR->replaceScene(CardShelfScene::scene());
 }
 

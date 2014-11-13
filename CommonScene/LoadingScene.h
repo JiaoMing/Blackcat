@@ -28,14 +28,18 @@ public:
     ~LoadingScene();
     virtual bool init();
     void repalceScene();
-    void processReplaceScene();
     virtual void onEnter();
+    
+    void countdown(float t);
 private:
     const char* m_sceneName;//需要转向的目标scene
     bool m_isReleaseCurrentScene;
     LoadingRole m_loadingRole;
     int m_resTotal;//需要加载的资源总数
     int m_resCurrent;//当前已加载的资源数量
+    
+    bool m_isLoadFinish;
+    bool m_isTimeEnd;
 };
 
 #endif /* defined(__Blackcat__LoadingScene__) */

@@ -38,14 +38,14 @@ static pthread_t s_installThread;
 static bool need_quit = false;
 
 static void* installThread(void* data){
-    // create autorelease pool for iOS
-    CCThread thread;
-    thread.createAutoreleasePool();
     
     InstallStruct* installStruct;
     
     while (true)
     {
+        // create autorelease pool for iOS
+        CCThread thread;
+        thread.createAutoreleasePool();
         
         std::queue<InstallStruct*> *pQueue = s_installStructQueue;
         pthread_mutex_lock(&s_installStructQueueMutex);// get async struct from queue
@@ -95,7 +95,6 @@ static void* installThread(void* data){
                 }
             }
             
-            
             pthread_mutex_lock(&s_installStructFinishedQueueMutex);
             s_installStructFinishedQueue->push(installStruct);
             pthread_mutex_unlock(&s_installStructFinishedQueueMutex);
@@ -107,7 +106,7 @@ static void* installThread(void* data){
     
     if( s_installStructQueue != NULL )
     {
-        
+        CCLog("DELETE");
         CC_SAFE_DELETE(s_installStructQueue);
         CC_SAFE_DELETE(s_installStructFinishedQueue);
         
@@ -166,11 +165,12 @@ void ResInstall::install(const char* filename,CCObject *target, SEL_CallFunc sel
     is->srcFulPath=CCFileUtils::sharedFileUtils()->fullPathForFilename(filename);
     is->descPath=CCFileUtils::sharedFileUtils()->getWritablePath();
     
+    
     // add async struct into queue
     pthread_mutex_lock(&s_installStructQueueMutex);
     s_installStructQueue->push(is);
-    pthread_mutex_unlock(&s_installStructQueueMutex);
     pthread_cond_signal(&s_SleepCondition);
+    pthread_mutex_unlock(&s_installStructQueueMutex);
     
 }
 

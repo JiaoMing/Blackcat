@@ -8,7 +8,6 @@
 
 #include "CCAlbum.h"
 #include "EAGLView.h"
-#import "AGSimpleImageEditorView.h"
 
 #define AVATAR_DELEGATE (((CCAlbum*)m_ccAvatar)->getDelegate())
 
@@ -67,8 +66,8 @@
         simpleImageEditorView.ratioViewBorderColor = [UIColor greenColor];
         
         
-//        ratioSegmentedControl = [[UISegmentedControl alloc] initWithItems:[NSArray arrayWithObjects:@"None", @"4:3", @"3:2", @"16:10", @"18:10", nil]];
-//        [ratioSegmentedControl addTarget:self action:@selector(didChangeRatio:) forControlEvents:UIControlEventValueChanged];
+        //        ratioSegmentedControl = [[UISegmentedControl alloc] initWithItems:[NSArray arrayWithObjects:@"None", @"4:3", @"3:2", @"16:10", @"18:10", nil]];
+        //        [ratioSegmentedControl addTarget:self action:@selector(didChangeRatio:) forControlEvents:UIControlEventValueChanged];
         
         rotateLeftButton = [[UIButton buttonWithType:UIButtonTypeRoundedRect] retain];
         [rotateLeftButton setTitle:@"<-" forState:UIControlStateNormal];
@@ -83,12 +82,12 @@
         
         [self arrangeItemsForInterfaceOrientation:self.interfaceOrientation];
         [self.view addSubview:simpleImageEditorView];
-//        [self.view addSubview:ratioSegmentedControl];
+        //        [self.view addSubview:ratioSegmentedControl];
         [self.view addSubview:rotateLeftButton];
         [self.view addSubview:rotateRightButton];
         [self.view addSubview:saveButton];
         
-//        simpleImageEditorView.cropRect=CGRectMake(0, 0, 180, 180);
+        //        simpleImageEditorView.cropRect=CGRectMake(0, 0, 180, 180);
         simpleImageEditorView.ratio=1;
         
         
@@ -193,23 +192,21 @@
         AVATAR_DELEGATE->pickCallback(texture,image.size.width,image.size.height);
         
     }
-    
-    
 }
 
 @end
 
-
-
 #import "AGImagePickerController.h"
 
-@interface CCAlbumIOS : NSObject<AGImagePickerControllerDelegate,UIActionSheetDelegate,UINavigationControllerDelegate,UIImagePickerControllerDelegate>{
+@interface CCAlbumIOS : NSObject<AGImagePickerControllerDelegate,UIActionSheetDelegate,UINavigationControllerDelegate,UIImagePickerControllerDelegate,KEImagePickerControllerDelegate>{
     NSMutableArray* selectedPhotos;
     void* m_ccAvatar;
 }
 
 @property (nonatomic, strong) NSMutableArray *selectedPhotos;
 @property(nonatomic, assign) void*  ccAvatar;
+@property (strong,nonatomic) UIPopoverController *popoverImageViewController;
+@property (strong,nonatomic) ALAssetsLibrary *assetsLibrary;
 
 -(id) initWithAvatar:(void*)avatar;
 @end
@@ -244,9 +241,77 @@
     {
         self.ccAvatar=avatar;
         
+//        UIActionSheet *chooseImageSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"拍照",@"从相册获取", nil];
+//        [chooseImageSheet showInView:[EAGLView sharedEGLView]];
         
-        UIActionSheet *chooseImageSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"拍照",@"从相册获取", nil];
-        [chooseImageSheet showInView:[EAGLView sharedEGLView]];
+        
+        
+        self.assetsLibrary = [[ALAssetsLibrary alloc] init];
+        dispatch_queue_t dispatchQueue =dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+        dispatch_async(dispatchQueue, ^(void) {
+            // 遍历所有相册
+            [self.assetsLibrary enumerateGroupsWithTypes:ALAssetsGroupAll
+                                              usingBlock:^(ALAssetsGroup *group, BOOL *stop) {
+                                                  // 遍历每个相册中的项ALAsset
+                                                  [group enumerateAssetsUsingBlock:^(ALAsset *result, NSUInteger index,BOOL *stop) {
+                                                      ;
+                                                      
+                                                      __block BOOL foundThePhoto = NO;
+                                                      if (foundThePhoto){
+                                                          *stop = YES;
+                                                      }
+                                                      // ALAsset的类型
+                                                      NSString *assetType = [result valueForProperty:ALAssetPropertyType];
+                                                      if ([assetType isEqualToString:ALAssetTypePhoto]){
+                                                          foundThePhoto = YES;
+                                                          *stop = YES;
+                                                          ALAssetRepresentation *assetRepresentation =[result defaultRepresentation];
+                                                          CGFloat imageScale = [assetRepresentation scale];
+                                                          UIImageOrientation imageOrientation = (UIImageOrientation)[assetRepresentation orientation];
+                                                          dispatch_async(dispatch_get_main_queue(), ^(void) {
+                                                              CGImageRef imageReference = [assetRepresentation fullResolutionImage];
+                                                              
+                                                              NSLog(@"%@",[group valueForProperty:ALAssetsGroupPropertyName]);
+                                                              
+                                                              // 查看 ALAsset thumbnail
+                                                              NSLog(@"%@",[assetRepresentation filename]);
+                                                              
+                                                              // 查看 ALAsset thumbnail
+                                                              NSLog(@"url=%@",[assetRepresentation url]);
+                                                              
+                                                              
+                                                              UIImage* image =[[UIImage alloc] initWithCGImage:[result thumbnail] scale:imageScale orientation:imageOrientation];
+                                                              
+                                                              
+                                                              //获得编辑过的图片
+                                                              AGViewController* agv=[[AGViewController alloc]initWithImage:image avatar:m_ccAvatar];
+                                                              agv.modalPresentationStyle=UIModalPresentationFormSheet;
+                                                              UIViewController* rvc=[UIApplication sharedApplication].keyWindow.rootViewController;
+                                                              [rvc presentViewController:agv animated:true completion:nil];
+                                                              agv.view.superview.bounds=CGRectMake(0, 0, 500, 300);
+                                                              
+                                                              
+                                                              // 对找到的图片进行操作
+//                                                              UIImage *image =[[UIImage alloc] initWithCGImage:imageReference scale:imageScale orientation:imageOrientation];
+                                                              if (image != nil){
+                                                                  
+                                                                  //                                                                  self.imageView = [[UIImageView alloc] initWithFrame:self.view.bounds];
+                                                                  //                                                                  self.imageView.contentMode = UIViewContentModeScaleAspectFit;
+                                                                  //                                                                  self.imageView.image = image;
+                                                                  //                                                                  [self.view addSubview:self.imageView];
+                                                              } else {
+                                                                  NSLog(@"Failed to create the image.");
+                                                              } });
+                                                      }
+                                                  }];
+                                              }
+                                            failureBlock:^(NSError *error) {
+                                                NSLog(@"Failed to enumerate the asset groups.");
+                                            }];
+            
+        });
+        
+        
         
     }
     
@@ -273,32 +338,58 @@
         //获得编辑过的图片
         UIImage* scaleImage = [self scaleImage:original_image toScale:0.3];
         AGViewController* agv=[[AGViewController alloc]initWithImage:scaleImage avatar:m_ccAvatar];
+        agv.modalPresentationStyle=UIModalPresentationFormSheet;
         [picker presentViewController:agv animated:true completion:nil];
     }
     [picker release];
     [self dealloc];
 }
 
--(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+-(void)didTakePicture:(UIImage *)picture{
+    
+}
+
+-(void)actionSheet:(UIActionSheet *)actionSheet didDismissWithButtonIndex:(NSInteger)buttonIndex
 {
-    UIImagePickerController * picker = [[UIImagePickerController alloc] init];
-    picker.delegate = self;
+    
+    UIViewController* rvc=[UIApplication sharedApplication].keyWindow.rootViewController;
     
     switch (buttonIndex) {
         case 0://Take picture
+        {
+            //            KEImagePickerController* picker = [[KEImagePickerController alloc] init];
+            UIImagePickerController* picker = [[UIImagePickerController alloc] init];
+            picker.view.frame=CGRectMake(0, 0, 500, 300);
+            picker.delegate = self;
+            //            if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
+            //                picker.sourceType=UIImagePickerControllerSourceTypeCamera;
+            ////                [picker setupImagePicker:UIImagePickerControllerSourceTypeCamera];
+            //            }else{
+            //                NSLog(@"模拟器无法打开相机");
+            //            }
+            //            picker.showsCameraControls = NO;
+            //            picker.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
+            //            picker.modalPresentationStyle=UIModalPresentationPageSheet;
+            //            picker.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+            //            picker.allowsEditing=true;
+            //            picker.title=@"选择图片";
+            //            [rvc presentViewController:picker animated:YES completion:nil];
             
-            if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
-                picker.sourceType = UIImagePickerControllerSourceTypeCamera;
-                
-            }else{
-                NSLog(@"模拟器无法打开相机");
+            //            picker.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
+            //            picker.allowsEditing=true;
+            if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
+                UIPopoverController *popover = [[UIPopoverController alloc] initWithContentViewController:picker];
+                popover.popoverContentSize=CGSizeMake(500, 500);
+                [popover presentPopoverFromRect:CGRectMake([[UIScreen mainScreen] bounds].size.width/2,[[UIScreen mainScreen] bounds].size.height/2, 0, 0) inView:rvc.view permittedArrowDirections:0 animated:YES];
+                self.popoverImageViewController = popover;
+            } else {
+                [rvc presentViewController:picker animated:YES completion:nil];
             }
-            [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:picker animated:YES completion:nil];
-            break;
+        }
             
+            break;
         case 1://From album
         {
-            
             self.selectedPhotos = [NSMutableArray array];
             
             __block CCAlbumIOS *blockSelf = self;
@@ -335,21 +426,32 @@
                         UIImage* scaleImage = [self scaleImage:originImage toScale:0.3];
                         
                         AGViewController* agv=[[AGViewController alloc]initWithImage:scaleImage avatar:m_ccAvatar];
-                        
+                        agv.modalPresentationStyle=UIModalPresentationFormSheet;
                         [ipc presentViewController:agv animated:true completion:nil];
                     }
-                    
                 }
                 //            [self dealloc];
             };
-            
             
             ipc.shouldShowSavedPhotosOnTop = NO;
             ipc.shouldChangeStatusBarStyle = YES;
             ipc.selection = self.selectedPhotos;
             ipc.maximumNumberOfPhotosToBeSelected = 1;
             ipc.shouldShowSavedPhotosOnTop=false;
-            [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:ipc animated:true completion:nil];
+            ipc.modalPresentationStyle=UIModalPresentationFormSheet;
+            ipc.view.frame=CGRectMake(100, 100, 500, 300);
+            [rvc.view addSubview:ipc.view];
+            
+            //            if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
+            //                UIPopoverController *popover = [[UIPopoverController alloc] initWithContentViewController:ipc ];
+            //                popover.popoverContentSize=CGSizeMake(500, 500);
+            //                [popover presentPopoverFromRect:CGRectMake(512.0f, 384.0f, 0, 0) inView:rvc.view permittedArrowDirections:0 animated:YES];
+            //                self.popoverImageViewController = popover;
+            //            } else {
+            //                [rvc presentViewController:ipc animated:YES completion:nil];
+            //                ipc.view.superview.frame=CGRectMake(0, 0, 500, 300);
+            //            }
+            
         }
             break;
             
@@ -359,9 +461,7 @@
     }
 }
 
-
 @end
-
 
 
 

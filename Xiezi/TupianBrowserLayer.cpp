@@ -29,7 +29,7 @@ TupianBrowserLayer::TupianBrowserLayer(){
 
 TupianBrowserLayer::~TupianBrowserLayer(){
     if (m_tupian!=NULL) {
-        string path=CCFileUtils::sharedFileUtils()->getWritablePath()+m_tupian->geticonPath();
+        string path=FileUtils::getContentFilePath(m_tupian->geticonPath());
         CCTextureCache::sharedTextureCache()->removeTextureForKey(path.c_str());
     }
 }
@@ -88,15 +88,14 @@ bool TupianBrowserLayer::init(){
 }
 
 void TupianBrowserLayer::setMainTupianSprite(bool isFromInit){
-    
-    S_AE->playEffect((CCFileUtils::sharedFileUtils()->getWritablePath()+m_tupian->getcnAudioPath()).c_str());
+    S_AE->playEffect(FileUtils::getContentFilePath(m_tupian->getcnAudioPath()).c_str());
 
     CCSprite* sprite=(CCSprite*)this->getChildByTag(kTagCurrentTupianSprite);
     if (sprite!=NULL) {
         this->removeChild(sprite, false);
     }
     
-#define COLLECTED_SPRITE  string path=CCFileUtils::sharedFileUtils()->getWritablePath()+m_tupian->geticonPath();\
+#define COLLECTED_SPRITE  string path=FileUtils::getContentFilePath(m_tupian->geticonPath());\
     sprite=CCSprite::create(path.c_str());\
     sprite->setPosition(S_RM->getPositionWithName("tupian_fangda"));\
     sprite->setTag(kTagCurrentTupianSprite);\
@@ -113,7 +112,7 @@ void TupianBrowserLayer::setMainTupianSprite(bool isFromInit){
         if (count>=COLLECT_LIMIT) {
             GuideDialog* guideDialog=new GuideDialog();
             guideDialog->autorelease();
-            guideDialog->setText("非常抱歉，收藏的卡片数量已经超出了免费版本限制，请检查账号状态。");
+            guideDialog->setText("非常抱歉，收藏的卡片数量已经超出了限制，请检查账号状态。");
             guideDialog->setMode(kGuideDialogOk);
             m_gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
             m_gudieDialogLayer->setDelegate(this);
@@ -315,7 +314,7 @@ void TupianBrowserLayer::tupianTouchCallBack(Tupian* tupian,bool isOverLimit){
     if (isOverLimit) {
         GuideDialog* guideDialog=new GuideDialog();
         guideDialog->autorelease();
-        guideDialog->setText("非常抱歉，收藏的卡片数量已经超出了免费版本限制，请检查账号状态。");
+        guideDialog->setText("非常抱歉，收藏的卡片数量已经超出了限制，请检查账号状态。");
         guideDialog->setMode(kGuideDialogOk);
         GuideDialogLayer* gudieDialogLayer=GuideDialogLayer::create(kDialogWithText);
         gudieDialogLayer->setDelegate(this);

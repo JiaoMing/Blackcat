@@ -21,6 +21,9 @@ bool CopyRightLayer::init(){
 }
 
 bool CopyRightLayer::ccTouchBegan(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent){
-    this->removeFromParent();
     return true;
+}
+
+void CopyRightLayer::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent){
+    this->removeFromParent();
 }

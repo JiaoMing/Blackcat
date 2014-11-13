@@ -46,7 +46,7 @@ static RankStruct rankStruts[] = {
 		"data_zi.png",
 		"home_zi_diwen",
         COLLECT_HANZI_COUNT,
-        15,
+        18,
 		"rank_zi.png",
         "zika"
 	},

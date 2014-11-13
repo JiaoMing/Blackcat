@@ -18,6 +18,10 @@ using namespace cocostudio::timeline;
 Zi800Scene::Zi800Scene(){
     m_hanzis=new vector<Hanzi*>();
     m_contentMap=new map<string, Content*>();
+    m_isBgMusicStart=false;
+    
+    CCString* audioPath=CCString::createWithFormat("800zi/%d.mp3",CURRENT_ECARDPAGE->getid()-21);
+    S_AE->preloadBackgroundMusic(audioPath->getCString());
 }
 
 Zi800Scene::~Zi800Scene(){
@@ -195,14 +199,23 @@ bool Zi800Scene::init(){
         listView->pushBackCustomItem(widget);
     }
     
+    if (CURRENT_ECARDPAGENUMBER>=5) {
+        CCLayer* cover=CCLayerColor::create(ccc4(0, 0, 0, 150));
+        this->addChild(cover);
+        CCPoint middle=S_RM->getJpgBgPosition();
+        CCLabelTTF* label=CCLabelTTF::create("此内容暂未上线，请等待升级版本。", "KaiTi.ttf", 40);
+        label->setPosition(ccp(middle.x,middle.y+20));
+        cover->addChild(label);
+//        CCSprite* suo=CCSprite::create("suo.png");
+//        suo->setPosition(ccp(middle.x,middle.y-20));
+//        this->addChild(suo);
+    }
     
     return true;
 }
 
 void Zi800Scene::onEnter(){
     PageViewScene::onEnter();
-    CCString* audioPath=CCString::createWithFormat("800zi/%d.mp3",CURRENT_ECARDPAGE->getid()-21);
-    S_AE->playBackgroundMusic(audioPath->getCString());
 }
 
 void Zi800Scene::onExit(){
@@ -214,34 +227,50 @@ void Zi800Scene::beforeReplace(){
 }
 
 void Zi800Scene::touchEvent(cocos2d::CCObject *sender, TouchEventType type){
+    if (CURRENT_ECARDPAGENUMBER>=5)return;
     if (type ==TOUCH_EVENT_ENDED)
 	{
-        //关闭朗读
-        S_AE->stopBackgroundMusic();
-        
         UILabel* label=(UILabel*)sender;
         int tag=label->getTag();
         if (strcmp(label->getName(), "tu")==0) {
             S_ALP->stop();
-            CCString* audioPath=CCString::createWithFormat("800zi/%d.mp3",CURRENT_ECARDPAGE->getid()-21);
-            S_AE->playBackgroundMusic(audioPath->getCString());
-        }else if (strcmp(label->getName(), "hanzi")==0) {
-            ECard* ecard = (*S_CM->getECards())[tag];
-            Hanzi* hanzi=NULL;
-            for (vector<Hanzi*>::iterator it = m_hanzis->begin(); it != m_hanzis->end(); it ++){
-                hanzi=*it;
-                if (ecard->gethid()==hanzi->getid()) {
-                    break;
+            
+            if (m_isBgMusicStart) {
+                if (S_AE->isBackgroundMusicPlaying()) {
+                    S_AE->pauseBackgroundMusic();
+                }else{
+                    S_AE->resumeBackgroundMusic();
                 }
+            }else{
+                CCString* audioPath=CCString::createWithFormat("800zi/%d.mp3",CURRENT_ECARDPAGE->getid()-21);
+                S_AE->playBackgroundMusic(audioPath->getCString(),true);
+                m_isBgMusicStart=true;
             }
-            XieziCoverLayer* xieziCoverLayer=XieziCoverLayer::create(hanzi->getid(),NULL,"",ecard->getpyyd());
-            xieziCoverLayer->setDelegate(this);
-            this->addChild(xieziCoverLayer,INT_MAX);
+            
         }else{
-            CCString* key=CCString::createWithFormat("%s_%d",label->getName(),label->getTag());
-            Content* content=m_contentMap->find(key->getCString())->second;
-            string url=CCFileUtils::sharedFileUtils()->getWritablePath()+"blackcat/uploadfile/"+content->getfileUrl();
-            S_ALP->play(url.c_str(),NULL);
+            //暂停朗读
+            if (S_AE->isBackgroundMusicPlaying()) {
+                S_AE->pauseBackgroundMusic();
+            }
+            
+            if (strcmp(label->getName(), "hanzi")==0) {
+                ECard* ecard = (*S_CM->getECards())[tag];
+                Hanzi* hanzi=NULL;
+                for (vector<Hanzi*>::iterator it = m_hanzis->begin(); it != m_hanzis->end(); it ++){
+                    hanzi=*it;
+                    if (ecard->gethid()==hanzi->getid()) {
+                        break;
+                    }
+                }
+                XieziCoverLayer* xieziCoverLayer=XieziCoverLayer::create(hanzi->getid(),NULL,"",ecard->getpyyd());
+                xieziCoverLayer->setDelegate(this);
+                this->addChild(xieziCoverLayer,INT_MAX);
+            }else{
+                CCString* key=CCString::createWithFormat("%s_%d",label->getName(),label->getTag());
+                Content* content=m_contentMap->find(key->getCString())->second;
+                string url=FileUtils::getContentFilePath(content->getfileUrl());
+                S_ALP->play(url.c_str(),NULL);
+            }
         }
     }
 }

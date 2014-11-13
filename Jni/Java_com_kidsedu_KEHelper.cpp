@@ -43,7 +43,7 @@ extern "C" {
     
     JNIEXPORT void JNICALL Java_com_kidsedu_KEHelper_updateAvatar(JNIEnv * env) {
         UserBarLayer* userBarLayer=S_LM->getDelegate();
-        CCDirector::sharedDirector()->getScheduler()->scheduleSelector(schedule_selector(UserBarLayer::freshAvatar),userBarLayer, 0.0f,0, 0,false);
+        CCDirector::sharedDirector()->getScheduler()->scheduleSelector(schedule_selector(UserBarLayer::delayToFreshAvatar),userBarLayer, 0.0f,0, 0,false);
     }
     
     JNIEXPORT void JNICALL Java_com_kidsedu_KEHelper_logout(JNIEnv * env) {

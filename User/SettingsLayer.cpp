@@ -23,7 +23,7 @@ enum
     kTagLogout,
     kTagWeixin,
     kTagChild,
-    kTagClear,
+    kTagReset,
     kTagTime,
     kTagMenu,
     kTagMenuClose,
@@ -38,25 +38,17 @@ bool SettingsLayer::init(){
     
     this->setTitle("设  置");
     
-    string token=S_UD->getStringForKey("USER_TOKEN", "");
-    string username=S_UD->getStringForKey("USER_USERNAME", "");
+    
     CCLabelTTF* acountLabel=CCLabelTTF::create("账  号:", "", 20);
     acountLabel->setPosition(S_RM->getPositionWithName("setting_acountLabel"));
     acountLabel->setColor(ccc3(0, 0, 0));
     this->addChild(acountLabel);
-    int loginTag=kTagLoginin;
-    if (username=="") {
-        username="登  陆";
-        loginTag=kTagLoginin;
-    }else{
-        loginTag=kTagLogout;
-    }
-    Button9* userLabel=Button9::create(username,CCSizeMake(400, 50),20);
-    CCMenuItemSprite* userItem=CCMenuItemSprite::create(userLabel, userLabel, this, menu_selector(SettingsLayer::menuCallback));
-    userItem->setPosition(S_RM->getPositionWithName("setting_acountItem"));
-    userItem->setAnchorPoint(ccp(0,0.5));
-    userItem->setTag(loginTag);
-    this->addMenuItem(userItem);
+    
+    Button9* userLabel=Button9::create("",CCSizeMake(400, 50),20);
+    m_userItem=CCMenuItemSprite::create(userLabel, userLabel, this, menu_selector(SettingsLayer::menuCallback));
+    m_userItem->setPosition(S_RM->getPositionWithName("setting_acountItem"));
+    m_userItem->setAnchorPoint(ccp(0,0.5));
+    this->addMenuItem(m_userItem);
     
     CCLabelTTF* childLabel=CCLabelTTF::create("儿  童:", "", 20);
     childLabel->setPosition(S_RM->getPositionWithName("setting_childLabel"));
@@ -77,7 +69,7 @@ bool SettingsLayer::init(){
     CCMenuItemSprite* resetItem=CCMenuItemSprite::create(reset, reset, this, menu_selector(SettingsLayer::menuCallback));
     resetItem->setPosition(S_RM->getPositionWithName("setting_resetItem"));
     resetItem->setAnchorPoint(ccp(0,0.5));
-    resetItem->setTag(kTagClear);
+    resetItem->setTag(kTagReset);
     this->addMenuItem(resetItem);
     
     CCLabelTTF* timeLabel=CCLabelTTF::create("时间控制: ", "", 20);
@@ -137,6 +129,23 @@ bool SettingsLayer::init(){
     return true;
 }
 
+void SettingsLayer::onEnter(){
+    DialogLayer::onEnter();
+    string token=S_UD->getStringForKey("USER_TOKEN", "");
+    string username=S_UD->getStringForKey("USER_USERNAME", "");
+    int loginTag=kTagLoginin;
+    if (username=="") {
+        username="登  陆";
+        loginTag=kTagLoginin;
+    }else{
+        loginTag=kTagLogout;
+    }
+    Button9* userLabel=(Button9*)m_userItem->getNormalImage();
+    userLabel->setString(username.c_str(),CCSizeMake(400, 50));
+    m_userItem->setTag(loginTag);
+    
+}
+
 void SettingsLayer::enableTouch(){
     DialogLayer::enableTouch();
     CCControlSlider* slider=(CCControlSlider*)this->getChildByTag(kTagVolume);
@@ -152,7 +161,7 @@ void SettingsLayer::menuCallback(CCObject *obj){
             case kTagLoginin:{
                 UserLoginLayer* layer=UserLoginLayer::create();
                 layer->setIsFromSetting(true);
-                this->replaceDialog(layer);
+                this->pushDialog(layer);
             }
                 break;
             case kTagLogout:{
@@ -169,7 +178,7 @@ void SettingsLayer::menuCallback(CCObject *obj){
                 this->replaceDialog(ParentLayer::create());
             }
                 break;
-            case kTagClear:{
+            case kTagReset:{
                 GuideDialog* guideDialog=GuideDialog::create();
                 guideDialog->setText("确定要重置学习进度吗？");
                 guideDialog->setMode(kGuideDialogYesOrNo);
@@ -228,11 +237,11 @@ void SettingsLayer::dialogCallBack(GuideDialogCMD cmd){
                 button->setString("登  陆",CCSizeMake(400, 50));
             }
                 break;
-            case kTagClear:{
+            case kTagReset:{
                 
-                S_DM->executeSql("update hanzi set writeCount=0,lastAnswer=0,isCollected=0,isReward=0;update ciyu set isCollected=0,viewCount=0;update hanzi set isCollected=1 where zi in('生','火','男','木','白','菜','手','大','下','一','十','百','天','日','花');update ciyu set isCollected=1 where ci in('哭笑','杨树','飞机','书包','大象','啄木鸟','黄瓜','苹果','洗手','爸爸','妈妈','红色','铅笔','水盆','大海','老师');");
+                S_DM->executeSql("update hanzi set writeCount=0,lastAnswer=0,isCollected=0,isReward=0;update ciyu set isCollected=0,viewCount=0;update hanzi set isCollected=1 where zi in('一','二','三','四','五','六','上','下','大','小','左','右','人','光','土','天','水','火');update ciyu set isCollected=1 where ci in('哭笑','杨树','飞机','书包','大象','啄木鸟','黄瓜','苹果','洗手','爸爸','妈妈','红色','铅笔','水盆','大海','老师');");
                 
-                S_UD->setIntegerForKey(COLLECT_HANZI_COUNT, 15);
+                S_UD->setIntegerForKey(COLLECT_HANZI_COUNT, 18);
                 S_UD->setIntegerForKey(COLLECT_TUPIAN_COUNT, 15);
                 S_UD->setIntegerForKey(LAST_KECHENG_ID, 0);
                 S_UD->setIntegerForKey(LAST_RENWU_DAY_COUNT, 0);
@@ -244,7 +253,6 @@ void SettingsLayer::dialogCallBack(GuideDialogCMD cmd){
                 S_UD->setIntegerForKey(UDKEY_ACHIEVE_TKSCJ, 0);
                 S_UD->setIntegerForKey(UDKEY_ACHIEVE_CGYS, 0);
                 S_UD->setIntegerForKey(UDKEY_ACHIEVE_CSJJ, 0);
-                
                 
                 static_uploadRanking();
                 

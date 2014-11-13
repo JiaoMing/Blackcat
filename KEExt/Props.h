@@ -11,6 +11,7 @@
 
 #include "cocos2d.h"
 #include "ClickableSprite.h"
+#include "Prop.h"
 using namespace cocos2d;
 using namespace std;
 
@@ -28,7 +29,7 @@ public:
 class Props : public ClickableSprite
 {
 public:
-    Props();
+    Props(string key);
     ~Props();
 public:
     /**
@@ -57,10 +58,11 @@ public:
     //每次结束动作后是否立即显示stoppos
     CC_SYNTHESIZE(bool, m_isShowStopPosAfterARun, IsShowStopPosAfterARun);
     CC_SYNTHESIZE(bool, m_isClickable, IsClickAble);
-    CC_SYNTHESIZE(string, m_name, Name);
+    CC_SYNTHESIZE(bool, m_hasXingxing, HasXingxing);
     CC_SYNTHESIZE(CCSpriteFrame*, m_stopPos, StopPos);
     CC_SYNTHESIZE(CCArray*, m_animates, Animates);
     CC_SYNTHESIZE(CCRect, m_touchRect, TouchRect);
+    CC_SYNTHESIZE(Prop*, m_prop, Prop);
 private:
     CCPoint m_oPointBegan;
 public:

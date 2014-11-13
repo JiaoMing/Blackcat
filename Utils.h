@@ -186,7 +186,17 @@ public:
 
 class FileUtils{
 public:
+    static string getContentFilePath(string relativePath){
+        relativePath="blackcat/uploadfile/"+relativePath;
+        string path=CCFileUtils::sharedFileUtils()->getWritablePath().append(relativePath);
+        if (access(path.c_str(), 0)) {
+            path=relativePath;
+        }
+        return path;
+    }
+    
     static bool depositFile(string srcFullPath,string descFullPath){
+        CCLog(" depositFile start");
         
         // 检查不存在并复制
         if (access(descFullPath.c_str(), 0)) {
@@ -214,7 +224,9 @@ public:
 //        }else{
 //            return false;
 //        }
-//        fclose(descFile);
+        //        fclose(descFile);
+        
+        CCLog(" depositFile end");
         return true;
     }
     
@@ -274,7 +286,7 @@ public:
             unz_global_info  globalInfo = {0};
             if( unzGetGlobalInfo(_unzFile, &globalInfo )==UNZ_OK )
             {
-                CCLog("upzip success %s",fileFullPath.c_str());
+                CCLog("UNZ_OK %s",fileFullPath.c_str());
             }
             
             int ret = unzGoToFirstFile( _unzFile );
@@ -342,6 +354,11 @@ public:
         }else{
             success=false;
         }
+        
+        if(success){
+            CCLog("upzip success %s",fileFullPath.c_str());
+        }
+        
         return success;
     }
 };

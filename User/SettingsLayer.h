@@ -20,6 +20,8 @@ public:
     virtual bool init();
     CREATE_FUNC(SettingsLayer);
     
+    virtual void onEnter();
+    
     virtual void enableTouch();
     
     virtual int topHandlerPriority(){return kCCMenuHandlerPriority-1;};
@@ -29,6 +31,7 @@ public:
     void volumeValueChanged(CCObject *sender, CCControlEvent controlEvent);
 private:
     int m_tag;//用于dialog返回判断
+    CCMenuItemSprite* m_userItem;
 };
 
 #endif /* defined(__Blackcat__SettingsLayer__) */

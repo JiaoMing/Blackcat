@@ -91,6 +91,8 @@ private:
     
     int m_xieziLogId;//写字LOG生成的ID
     int m_todayXieziCount;//今天当前汉字书写次数
+    
+    bool m_collected;//当前是否收藏
 };
 
 class XieziLayerDelegate{

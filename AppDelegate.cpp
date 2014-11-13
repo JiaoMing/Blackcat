@@ -19,6 +19,7 @@
 #include "LoadscapeScene.h"
 #include "WelcomeStudioScene.h"
 #include "GushiScene.h"
+#include "PlatformAction.h"
 
 #include "SimpleAudioEngine.h"
 using namespace CocosDenshion;
@@ -46,22 +47,17 @@ bool AppDelegate::applicationDidFinishLaunching()
     std::vector<std::string> searchPaths;
     searchPaths.push_back("audio");
     searchPaths.push_back("audio/dialog");
-    searchPaths.push_back("audio/zuciju");
     searchPaths.push_back("global");
-    searchPaths.push_back("global/lihe");
+    
     if (target == kTargetIpad)
     {
-        searchPaths.push_back("ipad");
+        searchPaths.push_back("1024*768");
         CCEGLView::sharedOpenGLView()->setDesignResolutionSize(1024, 768, kResolutionShowAll);
-        
-//        searchPaths.push_back("android");
-//        CCEGLView::sharedOpenGLView()->setDesignResolutionSize(1280, 720, kResolutionShowAll);
     }else{
-        searchPaths.push_back("android");
+        searchPaths.push_back("1280*720");
         CCEGLView::sharedOpenGLView()->setDesignResolutionSize(1280, 720, kResolutionShowAll);
     }
     CCFileUtils::sharedFileUtils()->setSearchPaths(searchPaths);
-    
     
     S_DR->setDepthTest(false);
     
@@ -69,20 +65,14 @@ bool AppDelegate::applicationDidFinishLaunching()
     S_UD->setBoolForKey(NEW_OPEN_KECHENG, true);
     S_UD->flush();
     
-    
     //初始化坐标
     S_RM->init("position",ratio);
     
-    
-//    S_DR->runWithScene(GushiScene::scene());
-    
-    
-    
-    S_RM->addSceneRes("global", "global,loading");
+    S_RM->addSceneRes("global", "global,loading,achieve");
     if(S_UD->getBoolForKey(IS_INSTALLED, false)){
         if (target == kTargetIpad||target == kTargetIphone)
         {
-            S_DR->runWithScene(WelcomeScene::scene());
+            S_DR->runWithScene(LoadingScene::scene("WelcomeScene"));
         }else{
             S_DR->runWithScene(LoadscapeScene::scene());
         }

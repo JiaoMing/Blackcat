@@ -28,6 +28,7 @@ void KechengController::purgeInstance()
 }
 
 KechengController::KechengController(){
+    m_kcid=0;
     m_dayRenwuCount=0;
     m_hanziVector=new vector<Hanzi*>();
     this->initData();
@@ -56,15 +57,15 @@ void KechengController::initData(){
     
     //初始化kcid、m_lastKechengId、m_dayRenwuCount
     m_lastKechengId=S_UD->getIntegerForKey(LAST_KECHENG_ID,0);
-    m_kcid=m_lastKechengId+1;
+    this->changeKecheng(m_lastKechengId+1);
+    
     this->fetchDayRenwuCount();
-    
-    this->freshDataWithKcid(m_kcid);
-    
 }
 
-
-void KechengController::freshDataWithKcid(int kcid){
+bool KechengController::changeKecheng(int kcid){
+    if (m_kcid==kcid&&m_hanziVector->size()>0) {
+        return false;
+    }
     m_kcid=kcid;
     DELETE_MODEL_VECTOR(Hanzi, m_hanziVector);
     m_hanziVector=new vector<Hanzi*>();
@@ -74,7 +75,8 @@ void KechengController::freshDataWithKcid(int kcid){
     whereClause.push_back(where->getCString());
     orderbyClause.push_back("sort asc");
     
-    S_DM->findScrollData(m_hanziVector,"id,zi,lastAnswer,cnAudioPath",whereClause, orderbyClause, groupByClause);
+    S_DM->findScrollData(m_hanziVector,"id,zi,lastAnswer,cnAudioPath,isCollected,sort",whereClause, orderbyClause, groupByClause);
+    return true;
 }
 
 int KechengController::fetchDayRenwuCount(){
@@ -91,9 +93,13 @@ bool KechengController::updateDataWhenCompleteKecheng(){
     if (m_kcid==m_lastKechengId+1){
         
         for (vector<Hanzi *>::iterator it = m_hanziVector->begin(); it != m_hanziVector->end(); it ++){
-            if (NULL != *it){
-                CCString* sql=CCString::createWithFormat("update hanzi set isReward=1,isCollected=1 where id=%d",(*it)->getid());
+            Hanzi* hanzi=*it;
+            if (NULL != hanzi){
+                CCString* sql=CCString::createWithFormat("update hanzi set isReward=1,isCollected=1 where id=%d",hanzi->getid());
                 S_DM->executeSql(sql->getCString());
+                if (hanzi->getisCollected()==0) {
+                    static_userDefaultIncrement(COLLECT_HANZI_COUNT,18);
+                }
             }
         }
 
@@ -114,7 +120,7 @@ bool KechengController::updateDataWhenCompleteKecheng(){
         //自动进入下一个任务
 //        if (m_kcid<m_kcCount&&m_dayRenwuCount<2) {
         if (m_kcid<m_kcCount) {
-            this->freshDataWithKcid(++m_kcid);
+            this->changeKecheng(m_kcid+1);
         }
         return true;
     }
@@ -158,4 +164,35 @@ bool KechengController::updateKecheng(bool isWin){
     }
     CC_SAFE_DELETE(kecheng);
     return S_DM->executeSql(sql->getCString());
+}
+
+void KechengController::disOrderHanzi(){
+    size_t size=S_KC->getHanziVector()->size();
+    int i=0,random=0;
+    for (i=0; i<size; i++) {
+        random=(int) (CCRANDOM_0_1()*size);
+        Hanzi* swp=(*S_KC->getHanziVector())[i];
+        (*S_KC->getHanziVector())[i]=(*S_KC->getHanziVector())[random];
+        (*S_KC->getHanziVector())[random]=swp;
+    }
+}
+
+void KechengController::reOrderHanzi(){
+    size_t size=S_KC->getHanziVector()->size();
+    for (int i=0; i<size; i++) {
+        int swpCount=0;
+        for (int j=0; j<size-i-1; j++) {
+            Hanzi* hanzi1=(*S_KC->getHanziVector())[j];
+            Hanzi* hanzi2=(*S_KC->getHanziVector())[j+1];
+            if (hanzi1->getsort()>hanzi2->getsort()) {
+                Hanzi* swp=(*S_KC->getHanziVector())[j];
+                (*S_KC->getHanziVector())[j]=(*S_KC->getHanziVector())[j+1];
+                (*S_KC->getHanziVector())[j+1]=swp;
+                swpCount++;
+            }
+        }
+        if (swpCount==0) {
+            break;
+        }
+    }
 }

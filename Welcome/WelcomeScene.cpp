@@ -142,7 +142,13 @@ void WelcomeScene::onEnter(){
     bool isOpenInto=S_UD->getBoolForKey(NEW_OPEN,true);
     if (isOpenInto) {
         S_ALP->play("heimao001_1.mp3",NULL);
-        this->scheduleOnce(schedule_selector(WelcomeScene::playBgAduio), 4);
+        
+//        this->scheduleOnce(schedule_selector(WelcomeScene::playBgAduio), 4);
+    }
+    
+    bool isBgMusicRunning=S_UD->getBoolForKey("BG_MUSIC",true);
+    if (isBgMusicRunning) {
+        S_AE->playBackgroundMusic("bg.mp3");
     }
 }
 
@@ -150,6 +156,7 @@ void WelcomeScene::onExit(){
     S_ALP->stop();
     CCLayer::onExit();
     S_DR->getTouchDispatcher()->removeDelegate(this);
+    S_AE->stopBackgroundMusic();
 }
 
 void WelcomeScene::keyBackClicked(){
@@ -163,56 +170,51 @@ void WelcomeScene::keyMenuClicked(){
 }
 
 void WelcomeScene::playBgAduio(float t){
-    S_UD->setBoolForKey("BG_MUSIC",true);
-    S_AE->playBackgroundMusic("bg_musicbox.mp3",true);
-    S_UD->flush();
+    
     S_UD->setIntegerForKey(NEW_OPEN, false);
     S_UD->flush();
 }
 
 bool WelcomeScene::ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent){
-    S_ALP->stop();
     S_AE->playEffect("default.mp3");
     return false;
 }
 
 void WelcomeScene::menuCallback(cocos2d::CCObject *object){
+    S_ALP->stop();
     CCNode* node=(CCNode*)object;
-    S_UD->setBoolForKey("HomeScene_YindaoOpen", false);
+    
+    bool isFirstOpen=S_UD->getBoolForKey("IS_FIRST_OPEN", true);
+    if (isFirstOpen) {
+        S_UD->setBoolForKey("HomeScene_YindaoOpen", true);
+        S_UD->setBoolForKey("IS_FIRST_OPEN", false);
+        S_UD->flush();
+    }else{
+        S_UD->setBoolForKey("HomeScene_YindaoOpen", false);
+    }
     switch (node->getTag()) {
         case kTagJianjie:
             S_DR->pushScene(SummaryScene::scene(kSumHome));
             break;
         case kTagYouxibeijing:{
             PlatformAction::playMovie();
+            S_AE->pauseBackgroundMusic();
         }
             break;
         case kTagXinshouyindao:{
             S_UD->setBoolForKey("HomeScene_YindaoOpen", true);
             S_UD->flush();
             S_UD->setStringForKey("HomeScene_First","heimao_1");
-            if (!S_AE->isBackgroundMusicPlaying()) {
-                S_UD->setBoolForKey("BG_MUSIC",true);
-                S_AE->playBackgroundMusic("bg_musicbox.mp3",true);
-            }
             S_DR->replaceScene(LoadingScene::scene("HomeScene"));
         }
             break;
         case kTagJiazhangcaidan:{
             S_UD->setBoolForKey("HomeScene_ParentOpen", true);
             S_UD->flush();
-            if (!S_AE->isBackgroundMusicPlaying()) {
-                S_UD->setBoolForKey("BG_MUSIC",true);
-                S_AE->playBackgroundMusic("bg_musicbox.mp3",true);
-            }
             S_DR->replaceScene(LoadingScene::scene("HomeScene"));
         }
             break;
         case kTagXuexi:{
-            if (!S_AE->isBackgroundMusicPlaying()) {
-                S_UD->setBoolForKey("BG_MUSIC",true);
-                S_AE->playBackgroundMusic("bg_musicbox.mp3",true);
-            }
             S_DR->replaceScene(LoadingScene::scene("HomeScene"));
         }
             break;

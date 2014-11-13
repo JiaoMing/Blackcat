@@ -38,6 +38,7 @@ private:
     CCNode* m_rootNode;
     vector<Hanzi*>* m_hanzis;
     map<string, Content*>* m_contentMap;
+    bool m_isBgMusicStart;
 };
 
 #endif /* defined(__Blackcat__Zi800Scene__) */

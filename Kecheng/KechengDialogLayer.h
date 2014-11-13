@@ -16,8 +16,11 @@
 #include "KechengExamScene.h"
 #include "Heimao.h"
 USING_NS_CC;
+#include "cocos-ext.h"
+USING_NS_CC_EXT;
+using namespace ui;
 
-class KechengDialogLayer : public GuideDialogLayer,public KechengDialogTableLayerDelegate,public KechengExamSceneDelegate{
+class KechengDialogLayer : public GuideDialogLayer,public KechengDialogTableLayerDelegate,public KechengExamSceneDelegate,public GuideDialogDelegate{
 public:
     static KechengDialogLayer* create(Heimao* heimao);
     KechengDialogLayer();
@@ -32,7 +35,7 @@ public:
     
     virtual bool ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent);
     
-    virtual void examAllRightCallback();
+    virtual void examAllRightCallback(bool isSuccessNew);
     
     void heimaoAction();
     
@@ -44,16 +47,26 @@ public:
     void ceShiTiXing(float t);
     void dingShiTiXing(float t);
     
+    virtual void dialogCallBack(GuideDialogCMD cmd);
+    
+    virtual int topHandlerPriority(){return this->getDelegate()->topHandlerPriority()-1;};
 public:
-    void setKecheng(int kcid);
+    void freshKecheng(bool isInit);
+private:
+    void freshKechengEndCallback(CCNode* node);
+    void delayTofreshKecheng(float t);
 protected:
     KechengDialogTableLayer* m_tableLayer;
     CCMenu* m_hanziLabelMenu;
+    CCLayer* m_kuangziLayer;
     CCLabelTTF* m_kechengLabel;
     CCMenuItem* m_ceshiItem;
     Heimao* m_heimao;
     int m_badgeCallBackCount;
     CCArray* m_jiangpaiArray;
+    CCClippingNode* m_clippingNode;
+    
+    int m_dialogKcid;//用于界面现实的kcid记录
 };
 
 #endif /* defined(__Blackcat__KechengFloatLayer__) */

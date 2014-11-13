@@ -22,6 +22,7 @@ public:
     virtual void onEnter();
     CREATE_FUNC(InstallScene);
     
+    void delayToHomeScene(float t);
     void gotoHomeScene();
     void installCallback();
     void loadingProcessFresh(float t);

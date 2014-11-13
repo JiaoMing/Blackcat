@@ -13,10 +13,15 @@
 #include "ObjectManager.h"
 #include "UpgradeLayer.h"
 #include "RankingLayer.h"
-#include "PlatformAction.h"
 #include "DownloadManager.h"
+#include "PlatformAction.h"
+#if (CC_TARGET_PLATFORM==CC_PLATFORM_IOS)
+#include "ImageDialogLayer.h"
+#endif
 
 #define TAG_XINGXING_FLOAT 10
+#define AVATAR_WIDHT 58
+#define USERNAME_WIDTH 150
 
 UserBarLayer::UserBarLayer(){
     m_levelObject=(LevelObject*)(S_LM->getLevelObject())->copy();
@@ -69,7 +74,7 @@ bool UserBarLayer::init(){
         m_touxiang=CCSprite::create("default_avatar.png");
     }else{
         m_touxiang=CCSprite::create(avatarPath.c_str());
-        m_touxiang->setScale(60/m_touxiang->getContentSize().width);
+        m_touxiang->setScale(AVATAR_WIDHT/m_touxiang->getContentSize().width);
     }
     m_touxiang->setPosition(S_RM->getRelativePosition("user_touxiang", relativeHeight));
     this->addChild(m_touxiang);
@@ -82,9 +87,9 @@ bool UserBarLayer::init(){
     m_mingzi9Sprite->setAnchorPoint(ccp(0, 0.5));
     m_mingzi9Sprite->setPosition(S_RM->getRelativePosition("user_mingzi_left", relativeHeight));
     CCSize size=CCSizeMake(m_username->getContentSize().width+20, 37);
-    if (size.width>150) {
-        m_username->setScale(150/size.width);
-        size.width=150;
+    if (size.width>USERNAME_WIDTH) {
+        m_username->setScale(USERNAME_WIDTH/size.width);
+        size.width=USERNAME_WIDTH;
     }
     m_username->setPosition(ccp(size.width/2,size.height/2));
     m_mingzi9Sprite->addChild(m_username);
@@ -163,15 +168,20 @@ void UserBarLayer::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEve
             layer->setPosition(this->convertToNodeSpace(CCPointZero));
             this->addChild(layer,INT_MAX);
         }else{
-//            PlatformAction::avatar();
-//            RankingLayer* layer=RankingLayer::create(kRankLevel);
-//            layer->setDelegate(this);
-//            layer->setPosition(this->convertToNodeSpace(CCPointZero));
-//            this->addChild(layer,INT_MAX);
             
-//            CCAlbum* layer=CCAlbum::create();
-//            layer->setDelegate(this);
-//            this->addChild(layer);
+#if (CC_TARGET_PLATFORM==CC_PLATFORM_ANDROID)
+            PlatformAction::avatar();
+            RankingLayer* layer=RankingLayer::create(kRankLevel);
+            layer->setDelegate(this);
+            layer->setPosition(this->convertToNodeSpace(CCPointZero));
+            this->addChild(layer,INT_MAX);
+#else
+            ImageDialogLayer* layer=ImageDialogLayer::create();
+            layer->setDelegate(this);
+            layer->setPosition(this->convertToNodeSpace(CCPointZero));
+            this->addChild(layer,INT_MAX);
+#endif
+            
         }
     }
 }
@@ -196,9 +206,9 @@ void UserBarLayer::fresh(){
     }
     m_username->setString(username.c_str());
     CCSize size=CCSizeMake(m_username->getContentSize().width+20, 37);
-    if (size.width>150) {
-        m_username->setScale(150/size.width);
-        size.width=150;
+    if (size.width>USERNAME_WIDTH) {
+        m_username->setScale(USERNAME_WIDTH/size.width);
+        size.width=USERNAME_WIDTH;
     }
     m_username->setPosition(ccp(size.width/2,size.height/2));
     m_mingzi9Sprite->setContentSize(size);
@@ -322,7 +332,8 @@ void UserBarLayer::scheduleReOrder(float t){
     }
 }
 
-void UserBarLayer::freshAvatar(){
+void UserBarLayer::freshAvatar(CCNode* node){
+    if(node)node->removeFromParent();
     CCTexture2D* texture;
     string avatarPath=CCFileUtils::sharedFileUtils()->getWritablePath().append("/avatar.jpg");
     if (access(avatarPath.c_str(), 0)) {
@@ -335,13 +346,33 @@ void UserBarLayer::freshAvatar(){
         texture=CCTextureCache::sharedTextureCache()->addImage(avatarPath.c_str());
     }
     m_touxiang->setTexture(texture);
-    m_touxiang->setScale(60/m_touxiang->getContentSize().width);
+    m_touxiang->setScale(AVATAR_WIDHT/m_touxiang->getContentSize().width);
+}
+
+void UserBarLayer::delayToFreshAvatar(){CCTexture2D* texture;
+    string avatarPath=CCFileUtils::sharedFileUtils()->getWritablePath().append("/avatar.jpg");
+    if (access(avatarPath.c_str(), 0)) {
+        texture=CCTextureCache::sharedTextureCache()->textureForKey("default_avatar.png");
+        if (texture==NULL) {
+            texture=CCTextureCache::sharedTextureCache()->addImage("default_avatar.png");
+        }
+    }else{
+        CCTextureCache::sharedTextureCache()->removeTextureForKey(avatarPath.c_str());
+        texture=CCTextureCache::sharedTextureCache()->addImage(avatarPath.c_str());
+    }
+    CCSprite* flyAvatar=CCSprite::createWithTexture(texture);
+    flyAvatar->setPosition(this->convertToNodeSpace(S_RM->getJpgBgPosition()));
+    this->addChild(flyAvatar);
+    
+    CCSpawn* spawnAction=CCSpawn::create(CCMoveTo::create(0.5, m_touxiang->getPosition()),CCScaleTo::create(0.5, m_touxiang->getContentSize().width/flyAvatar->getContentSize().width),CCFadeOut::create(0.5),NULL);
+    CCAction* action=CCSequence::create(spawnAction,CCCallFuncN::create(this, callfuncN_selector(UserBarLayer::freshAvatar)),NULL);
+    flyAvatar->runAction(action);
 }
 
 void UserBarLayer::downloadAvatar(cocos2d::CCObject *obj){
     DownloadObject* dlObj=(DownloadObject*)obj;
     if (dlObj->getIsMerged()) {
-        this->freshAvatar();
+        this->freshAvatar(NULL);
     }
 }
 

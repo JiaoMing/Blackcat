@@ -13,6 +13,7 @@
 #include "resource.h"
 #include "CCWebView.h"
 #include "Hanzi.h"
+#include "Content.h"
 #include "XiaoboWriteLayer.h"
 
 
@@ -47,6 +48,7 @@ private:
     CCWebView* m_webView;
     int userStrokeIndex;
     Hanzi* m_hanzi;
+    Content* m_content;
     XiaoboWriteLayer* m_xiaoboWriteLayer;
     XiaoboWriteLayer* m_woWriteLayer;
     GameLayerDelegate* m_delegate;
